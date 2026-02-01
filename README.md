@@ -46,6 +46,9 @@ cog run <module> input.json -o output.json --pretty
 # 直接传参数（无需 JSON 文件）
 cog run <module> --args "你的需求描述" -o output.json
 
+# 启用子代理模式（支持 @call 调用其他模块）
+cog run <module> --args "需求" --subagent
+
 # 安装/卸载
 cog install <source>        # 从 git/本地/注册表安装
 cog uninstall <module>      # 卸载模块

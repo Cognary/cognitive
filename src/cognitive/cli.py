@@ -35,6 +35,7 @@ from .registry import (
 )
 from .loader import load_module, detect_format
 from .runner import run_module
+from .subagent import run_with_subagents
 from .validator import validate_module
 from .templates import create_module
 from .providers import check_provider_status
@@ -85,6 +86,7 @@ def run_cmd(
     args: Optional[str] = typer.Option(None, "--args", "-a", help="Direct text input (replaces $ARGUMENTS in prompt)"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON output"),
     no_validate: bool = typer.Option(False, "--no-validate", help="Skip validation"),
+    subagent: bool = typer.Option(False, "--subagent", "-s", help="Enable subagent mode (@call support)"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="LLM model override"),
 ):
     """Run a cognitive module with input data or direct arguments."""
@@ -104,16 +106,27 @@ def run_cmd(
         rprint("[red]Error: Provide either input file or --args[/red]")
         raise typer.Exit(1)
     
-    rprint(f"[cyan]→[/cyan] Running module: [bold]{module}[/bold]")
+    mode_str = " [dim](subagent mode)[/dim]" if subagent else ""
+    rprint(f"[cyan]→[/cyan] Running module: [bold]{module}[/bold]{mode_str}")
     
     try:
-        result = run_module(
-            module,
-            input_data,
-            validate_input=not no_validate and not skip_input_validation,
-            validate_output=not no_validate,
-            model=model,
-        )
+        if subagent:
+            # Use subagent orchestrator for @call support
+            result = run_with_subagents(
+                module,
+                input_data,
+                model=model,
+                validate_input=not no_validate and not skip_input_validation,
+                validate_output=not no_validate,
+            )
+        else:
+            result = run_module(
+                module,
+                input_data,
+                validate_input=not no_validate and not skip_input_validation,
+                validate_output=not no_validate,
+                model=model,
+            )
         
         indent = 2 if pretty else None
         output_json = json.dumps(result, indent=indent, ensure_ascii=False)
@@ -376,6 +389,11 @@ def info_cmd(
         rprint(f"\n[bold]Excludes:[/bold]")
         for exc in meta['excludes']:
             rprint(f"  - {exc}")
+    
+    if 'context' in meta:
+        ctx = meta['context']
+        ctx_desc = "隔离执行" if ctx == "fork" else "共享执行"
+        rprint(f"\n[bold]Context:[/bold] {ctx} ({ctx_desc})")
     
     if 'constraints' in meta:
         rprint(f"\n[bold]Constraints:[/bold]")
