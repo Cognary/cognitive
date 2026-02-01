@@ -81,7 +81,17 @@ cog run <module> --args "需求" --subagent  # 启用子代理
 # 创建模块
 cog init <name> -d "描述"
 
-# 安装/卸载
+# 从 GitHub 安装（推荐）
+cog add ziel-io/cognitive-modules -m code-simplifier
+cog add org/repo -m module-name --tag v1.0.0   # 安装指定版本
+cog remove <module>                             # 删除模块
+
+# 版本管理
+cog update <module>                 # 更新到最新版本
+cog update <module> --tag v2.0.0    # 更新到指定版本
+cog versions <url>                  # 查看可用版本
+
+# 其他安装方式
 cog install github:user/repo/path
 cog install registry:module-name
 cog uninstall <module>
