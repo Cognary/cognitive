@@ -6,6 +6,8 @@ Commands:
     cog run <module> <input>      Run a module
     cog validate <module>         Validate module structure
     cog add <url> --module <name> Add module from GitHub (recommended)
+    cog update <module>           Update module to latest version
+    cog versions <url>            List available versions for a repo
     cog install <source>          Install module from git/local/registry
     cog remove <module>           Remove an installed module
     cog uninstall <module>        Remove an installed module (alias)
@@ -34,6 +36,10 @@ from .registry import (
     search_registry,
     fetch_registry,
     install_from_github_url,
+    update_module,
+    get_installed_module_info,
+    get_module_version,
+    list_github_tags,
     USER_MODULES_DIR,
 )
 from .loader import load_module, detect_format
@@ -212,6 +218,7 @@ def add_cmd(
     module: str = typer.Option(None, "--module", "-m", help="Module path within repo"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="Override module name"),
     branch: str = typer.Option("main", "--branch", "-b", help="Git branch"),
+    tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Git tag/version (e.g., v1.0.0)"),
 ):
     """
     Add a cognitive module from GitHub.
@@ -222,11 +229,15 @@ def add_cmd(
         
         cog add ziel-io/cognitive-modules -m code-reviewer
         
+        cog add org/repo -m my-module --tag v1.0.0
+        
         cog add org/repo -m path/to/module --name my-module
     """
     rprint(f"[cyan]→[/cyan] Adding module from: {url}")
     if module:
         rprint(f"  Module path: {module}")
+    if tag:
+        rprint(f"  Version: {tag}")
     
     try:
         target = install_from_github_url(
@@ -234,6 +245,7 @@ def add_cmd(
             module_path=module,
             name=name,
             branch=branch,
+            tag=tag,
         )
         
         # Validate installed module
@@ -246,7 +258,11 @@ def add_cmd(
             uninstall_module(target.name)
             raise typer.Exit(1)
         
-        rprint(f"[green]✓ Added: {target.name}[/green]")
+        # Get version info
+        version = get_module_version(target)
+        version_str = f" v{version}" if version else ""
+        
+        rprint(f"[green]✓ Added: {target.name}{version_str}[/green]")
         rprint(f"  Location: {target}")
         
         if warnings:
@@ -266,6 +282,113 @@ def remove_cmd(
 ):
     """Remove an installed cognitive module (alias for uninstall)."""
     uninstall_cmd(module)
+
+
+@app.command("update")
+def update_cmd(
+    module: str = typer.Argument(..., help="Module name to update"),
+    tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Update to specific tag/version"),
+):
+    """
+    Update an installed module to the latest version.
+    
+    Examples:
+    
+        cog update code-simplifier
+        
+        cog update code-simplifier --tag v2.0.0
+    """
+    rprint(f"[cyan]→[/cyan] Updating module: {module}")
+    
+    # Check if module is installed
+    info = get_installed_module_info(module)
+    if not info:
+        rprint(f"[red]✗ Module not found or not installed from GitHub: {module}[/red]")
+        rprint(f"  Only modules installed with 'cog add' can be updated.")
+        raise typer.Exit(1)
+    
+    github_url = info.get("github_url")
+    if not github_url:
+        rprint(f"[red]✗ Module was not installed from GitHub: {module}[/red]")
+        raise typer.Exit(1)
+    
+    # Get current version
+    current_path = USER_MODULES_DIR / module
+    old_version = get_module_version(current_path) if current_path.exists() else None
+    
+    if old_version:
+        rprint(f"  Current version: {old_version}")
+    
+    try:
+        # Re-install from source
+        module_path = info.get("module_path")
+        branch = info.get("branch", "main")
+        
+        # Use specified tag or keep using the same ref type
+        use_tag = tag or info.get("tag")
+        
+        target = install_from_github_url(
+            url=github_url,
+            module_path=module_path,
+            name=module,
+            branch=branch if not use_tag else "main",
+            tag=use_tag,
+        )
+        
+        # Get new version
+        new_version = get_module_version(target)
+        
+        if old_version and new_version:
+            if old_version == new_version:
+                rprint(f"[green]✓ Already up to date: {module} v{new_version}[/green]")
+            else:
+                rprint(f"[green]✓ Updated: {module} v{old_version} → v{new_version}[/green]")
+        elif new_version:
+            rprint(f"[green]✓ Updated: {module} to v{new_version}[/green]")
+        else:
+            rprint(f"[green]✓ Updated: {module}[/green]")
+        
+    except Exception as e:
+        rprint(f"[red]✗ Failed to update module: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("versions")
+def versions_cmd(
+    url: str = typer.Argument(..., help="GitHub URL or org/repo shorthand"),
+    limit: int = typer.Option(10, "--limit", "-l", help="Max versions to show"),
+):
+    """
+    List available versions (tags) for a GitHub repository.
+    
+    Examples:
+    
+        cog versions ziel-io/cognitive-modules
+        
+        cog versions https://github.com/org/repo
+    """
+    rprint(f"[cyan]→[/cyan] Fetching versions from: {url}\n")
+    
+    try:
+        tags = list_github_tags(url, limit=limit)
+        
+        if not tags:
+            rprint("[yellow]No tags/versions found.[/yellow]")
+            return
+        
+        table = Table(title=f"Available Versions ({len(tags)})")
+        table.add_column("Version", style="cyan")
+        table.add_column("Install Command")
+        
+        for tag in tags:
+            cmd = f"cog add {url} --tag {tag}"
+            table.add_row(tag, f"[dim]{cmd}[/dim]")
+        
+        console.print(table)
+        
+    except Exception as e:
+        rprint(f"[red]✗ Failed to fetch versions: {e}[/red]")
+        raise typer.Exit(1)
 
 
 @app.command("uninstall")
@@ -468,6 +591,20 @@ def info_cmd(
     
     rprint(f"\n[bold]Path:[/bold] {m['path']}")
     rprint(f"[bold]Prompt size:[/bold] {len(m['prompt'])} chars")
+    
+    # Show installation info if available
+    install_info = get_installed_module_info(meta.get('name', module))
+    if install_info:
+        rprint(f"\n[bold]Installation:[/bold]")
+        if install_info.get("github_url"):
+            rprint(f"  Source: {install_info['github_url']}")
+        if install_info.get("tag"):
+            rprint(f"  Tag: {install_info['tag']}")
+        elif install_info.get("branch"):
+            rprint(f"  Branch: {install_info['branch']}")
+        if install_info.get("installed_time"):
+            rprint(f"  Installed: {install_info['installed_time'][:10]}")
+        rprint(f"\n  Update with: [cyan]cog update {meta.get('name', module)}[/cyan]")
 
 
 @app.callback(invoke_without_command=True)

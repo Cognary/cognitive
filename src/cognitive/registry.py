@@ -132,7 +132,15 @@ def install_from_local(source: Path, name: Optional[str] = None) -> Path:
     return target
 
 
-def _record_module_source(name: str, source: Path, github_url: str = None, module_path: str = None):
+def _record_module_source(
+    name: str,
+    source: Path,
+    github_url: str = None,
+    module_path: str = None,
+    tag: str = None,
+    branch: str = None,
+    version: str = None,
+):
     """Record module source info for future updates."""
     manifest_path = Path.home() / ".cognitive" / "installed.json"
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,36 +154,142 @@ def _record_module_source(name: str, source: Path, github_url: str = None, modul
         except:
             pass
     
+    # Get current timestamp
+    from datetime import datetime
+    now = datetime.now().isoformat()
+    
     # Update entry
     manifest[name] = {
         "source": str(source),
         "github_url": github_url,
         "module_path": module_path,
+        "tag": tag,
+        "branch": branch,
+        "version": version,
         "installed_at": str(Path.home() / ".cognitive" / "modules" / name),
+        "installed_time": now,
     }
     
     with open(manifest_path, 'w') as f:
         json.dump(manifest, f, indent=2)
 
 
+def get_installed_module_info(name: str) -> Optional[dict]:
+    """Get installation info for a module."""
+    manifest_path = Path.home() / ".cognitive" / "installed.json"
+    if not manifest_path.exists():
+        return None
+    
+    try:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+        return manifest.get(name)
+    except:
+        return None
+
+
+def get_module_version(module_path: Path) -> Optional[str]:
+    """Extract version from a module's metadata."""
+    import yaml
+    
+    # Try v2 format (module.yaml)
+    yaml_path = module_path / "module.yaml"
+    if yaml_path.exists():
+        try:
+            with open(yaml_path, 'r') as f:
+                data = yaml.safe_load(f)
+            return data.get("version")
+        except:
+            pass
+    
+    # Try v1 format (MODULE.md with frontmatter)
+    md_path = module_path / "MODULE.md"
+    if not md_path.exists():
+        md_path = module_path / "module.md"
+    
+    if md_path.exists():
+        try:
+            with open(md_path, 'r') as f:
+                content = f.read()
+            if content.startswith("---"):
+                parts = content.split("---", 2)
+                if len(parts) >= 3:
+                    meta = yaml.safe_load(parts[1])
+                    return meta.get("version")
+        except:
+            pass
+    
+    return None
+
+
+def update_module(name: str) -> tuple[Path, str, str]:
+    """
+    Update an installed module to the latest version.
+    
+    Returns: (path, old_version, new_version)
+    """
+    info = get_installed_module_info(name)
+    if not info:
+        raise ValueError(f"Module not installed or no source info: {name}")
+    
+    github_url = info.get("github_url")
+    if not github_url:
+        raise ValueError(f"Module was not installed from GitHub, cannot update: {name}")
+    
+    # Get current version
+    current_path = USER_MODULES_DIR / name
+    old_version = get_module_version(current_path) if current_path.exists() else None
+    
+    # Re-install from source
+    module_path = info.get("module_path")
+    tag = info.get("tag")
+    branch = info.get("branch", "main")
+    
+    # If installed with a specific tag, use that tag; otherwise use branch
+    ref = tag if tag else branch
+    
+    new_path = install_from_github_url(
+        url=github_url,
+        module_path=module_path,
+        name=name,
+        tag=tag,
+        branch=branch if not tag else "main",
+    )
+    
+    # Get new version
+    new_version = get_module_version(new_path)
+    
+    return new_path, old_version, new_version
+
+
 def install_from_github_url(
     url: str,
     module_path: Optional[str] = None,
     name: Optional[str] = None,
-    branch: str = "main"
+    branch: str = "main",
+    tag: Optional[str] = None,
 ) -> Path:
     """
     Install a module from a GitHub URL without requiring git.
     
     Uses GitHub's ZIP download feature for lightweight installation.
     
+    Args:
+        url: GitHub URL or org/repo shorthand
+        module_path: Path to module within repository
+        name: Override module name
+        branch: Git branch (default: main)
+        tag: Git tag/release version (takes priority over branch)
+    
     Examples:
         install_from_github_url("https://github.com/ziel-io/cognitive-modules", 
                                 module_path="cognitive/modules/code-simplifier")
         install_from_github_url("ziel-io/cognitive-modules", 
-                                module_path="code-simplifier")
+                                module_path="code-simplifier",
+                                tag="v1.0.0")
     """
     # Parse shorthand (org/repo)
+    original_url = url
     if not url.startswith("http"):
         url = f"https://github.com/{url}"
     
@@ -186,9 +300,14 @@ def install_from_github_url(
     
     org, repo = match.groups()
     repo = repo.rstrip(".git")
+    github_url = f"https://github.com/{org}/{repo}"
     
-    # Build ZIP download URL
-    zip_url = f"https://github.com/{org}/{repo}/archive/refs/heads/{branch}.zip"
+    # Build ZIP download URL (tag takes priority over branch)
+    if tag:
+        # Try tag first, then as a release tag
+        zip_url = f"https://github.com/{org}/{repo}/archive/refs/tags/{tag}.zip"
+    else:
+        zip_url = f"https://github.com/{org}/{repo}/archive/refs/heads/{branch}.zip"
     
     try:
         # Download ZIP
@@ -196,6 +315,8 @@ def install_from_github_url(
         with urlopen(req, timeout=30) as response:
             zip_data = response.read()
     except URLError as e:
+        if tag:
+            raise RuntimeError(f"Failed to download tag '{tag}' from GitHub: {e}")
         raise RuntimeError(f"Failed to download from GitHub: {e}")
     
     # Extract to temp directory
@@ -206,7 +327,7 @@ def install_from_github_url(
         with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
             zf.extractall(tmppath)
         
-        # Find extracted directory (usually repo-branch)
+        # Find extracted directory (usually repo-branch or repo-tag)
         extracted_dirs = list(tmppath.iterdir())
         if not extracted_dirs:
             raise RuntimeError("ZIP file was empty")
@@ -240,11 +361,30 @@ def install_from_github_url(
                     f"Use --module to specify the module path."
                 )
         
-        # Determine module name
+        # Determine module name and version
         module_name = name or source.name
+        version = get_module_version(source)
         
-        # Install
-        return install_from_local(source, module_name)
+        # Install to user modules dir
+        target = ensure_user_modules_dir() / module_name
+        
+        if target.exists():
+            shutil.rmtree(target)
+        
+        shutil.copytree(source, target)
+        
+        # Record source info for future updates
+        _record_module_source(
+            name=module_name,
+            source=source,
+            github_url=github_url,
+            module_path=module_path,
+            tag=tag,
+            branch=branch,
+            version=version,
+        )
+        
+        return target
 
 
 def _is_valid_module(path: Path) -> bool:
@@ -411,3 +551,40 @@ def search_registry(query: str) -> list[dict]:
             })
     
     return results
+
+
+def list_github_tags(url: str, limit: int = 10) -> list[str]:
+    """
+    List available tags/releases from a GitHub repository.
+    
+    Args:
+        url: GitHub URL or org/repo shorthand
+        limit: Maximum number of tags to return
+    
+    Returns:
+        List of tag names (e.g., ["v1.2.0", "v1.1.0", "v1.0.0"])
+    """
+    # Parse shorthand
+    if not url.startswith("http"):
+        url = f"https://github.com/{url}"
+    
+    match = re.match(r"https://github\.com/([^/]+)/([^/]+)/?", url)
+    if not match:
+        raise ValueError(f"Invalid GitHub URL: {url}")
+    
+    org, repo = match.groups()
+    repo = repo.rstrip(".git")
+    
+    # Use GitHub API to get tags
+    api_url = f"https://api.github.com/repos/{org}/{repo}/tags?per_page={limit}"
+    
+    try:
+        req = Request(api_url, headers={
+            "User-Agent": "cognitive-modules/1.0",
+            "Accept": "application/vnd.github.v3+json",
+        })
+        with urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode())
+        return [tag["name"] for tag in data]
+    except URLError as e:
+        return []
