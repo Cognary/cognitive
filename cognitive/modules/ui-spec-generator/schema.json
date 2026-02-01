@@ -6,16 +6,15 @@
   "input": {
     "type": "object",
     "required": ["page_context", "features"],
-    "additionalProperties": false,
     "properties": {
       "page_context": {
         "type": "object",
         "required": ["page_type", "purpose", "target_audience"],
         "properties": {
           "page_type": { "type": "string" },
-          "purpose": { "type": "string", "minLength": 10 },
-          "target_audience": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-          "platform": { "type": "string", "enum": ["web", "mobile-web", "hybrid"], "default": "web" }
+          "purpose": { "type": "string" },
+          "target_audience": { "type": "array", "items": { "type": "string" } },
+          "platform": { "type": "string" }
         }
       },
       "features": {
@@ -27,7 +26,8 @@
           "properties": {
             "name": { "type": "string" },
             "description": { "type": "string" },
-            "priority": { "type": "string", "enum": ["must-have", "should-have", "nice-to-have"] }
+            "priority": { "type": "string" },
+            "user_stories": { "type": "array", "items": { "type": "string" } }
           }
         }
       },
@@ -39,14 +39,14 @@
         }
       },
       "design_tokens": { "type": "object" },
-      "constraints": { "type": "object" }
+      "constraints": { "type": "object" },
+      "existing_patterns": { "type": "array" }
     }
   },
 
   "output": {
     "type": "object",
     "required": ["specification", "rationale", "confidence"],
-    "additionalProperties": false,
     "properties": {
       "specification": {
         "type": "object",
@@ -62,63 +62,30 @@
         "properties": {
           "information_architecture": {
             "type": "object",
-            "required": ["sections", "hierarchy"],
-            "properties": {
-              "sections": { "type": "array", "minItems": 1 },
-              "hierarchy": { "type": "object" },
-              "navigation_flow": { "type": "array" }
-            }
+            "required": ["sections", "hierarchy"]
           },
           "components": {
             "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "required": ["id", "type", "section_id", "props", "states"]
-            }
+            "minItems": 1
           },
           "interactions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["id", "trigger", "event", "action", "target"]
-            }
+            "type": "array"
           },
           "responsive": {
             "type": "object",
-            "required": ["breakpoints", "layout_rules"],
-            "properties": {
-              "breakpoints": { "type": "array", "minItems": 1 },
-              "layout_rules": { "type": "array" },
-              "fluid_typography": { "type": "boolean" }
-            }
+            "required": ["breakpoints", "layout_rules"]
           },
           "accessibility": {
             "type": "object",
-            "required": ["level", "requirements"],
-            "properties": {
-              "level": { "type": "string", "enum": ["WCAG-A", "WCAG-AA", "WCAG-AAA"] },
-              "requirements": { "type": "array", "minItems": 1 },
-              "keyboard_navigation": { "type": "object" },
-              "aria_landmarks": { "type": "array" }
-            }
+            "required": ["level", "requirements"]
           },
           "design_tokens": {
             "type": "object",
-            "required": ["status"],
-            "properties": {
-              "status": { "type": "string", "enum": ["provided", "partial", "unknown"] },
-              "tokens": { "type": "object" },
-              "unknown_tokens": { "type": "array" }
-            }
+            "required": ["status"]
           },
           "acceptance_criteria": {
             "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "required": ["id", "description", "type", "testable_condition"]
-            }
+            "minItems": 1
           }
         }
       },
@@ -128,11 +95,7 @@
         "properties": {
           "decisions": {
             "type": "array",
-            "minItems": 1,
-            "items": {
-              "type": "object",
-              "required": ["aspect", "decision", "reasoning"]
-            }
+            "minItems": 1
           },
           "assumptions": { "type": "array" },
           "open_questions": { "type": "array" }
@@ -144,8 +107,7 @@
         "maximum": 1
       },
       "confidence_breakdown": {
-        "type": "object",
-        "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        "type": "object"
       }
     }
   }
