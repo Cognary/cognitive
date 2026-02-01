@@ -1,0 +1,5 @@
+{
+  "code": "async function fetchData(url) {\n  const cache = await redis.get(url);\n  if (cache) return JSON.parse(cache);\n  const res = await fetch(url);\n  const data = await res.json();\n  await redis.set(url, JSON.stringify(data), 'EX', 3600);\n  return data;\n}",
+  "language": "javascript",
+  "query": "simplify this caching logic"
+}

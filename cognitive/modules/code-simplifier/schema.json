@@ -44,7 +44,9 @@
               "type": "string",
               "enum": ["remove_redundancy", "improve_naming", "reduce_nesting", "extract_pattern", "simplify_logic", "other"]
             },
-            "description": { "type": "string" },
+            "description": {
+              "type": "string"
+            },
             "scope": {
               "type": "string",
               "enum": ["local", "function", "file", "project"],
@@ -55,8 +57,12 @@
               "enum": ["none", "low", "medium", "high"],
               "description": "Risk level of this change"
             },
-            "before": { "type": "string" },
-            "after": { "type": "string" }
+            "before": {
+              "type": "string"
+            },
+            "after": {
+              "type": "string"
+            }
           }
         }
       },
@@ -85,7 +91,8 @@
       "confidence": {
         "type": "number",
         "minimum": 0,
-        "maximum": 1
+        "maximum": 1,
+        "description": "Confidence score. Must be <= 0.7 if behavior_equivalence is false"
       }
     }
   },
@@ -97,10 +104,8 @@
         "type": "string",
         "enum": ["PARSE_ERROR", "UNSUPPORTED_LANGUAGE", "NO_SIMPLIFICATION_POSSIBLE", "BEHAVIOR_CHANGE_REQUIRED", "INTERNAL_ERROR"]
       },
-      "message": { "type": "string" },
-      "partial": {
-        "type": "object",
-        "description": "Partial result if available"
+      "message": {
+        "type": "string"
       }
     }
   }

@@ -1,0 +1,29 @@
+{
+  "$comment": "Contract validation for parse error - must return error envelope",
+  "$validate": {
+    "ok": {
+      "const": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "const": "PARSE_ERROR"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$example": {
+    "ok": false,
+    "error": {
+      "code": "PARSE_ERROR",
+      "message": "Unable to parse Python code: unexpected EOF while parsing"
+    },
+    "partial_data": null
+  }
+}

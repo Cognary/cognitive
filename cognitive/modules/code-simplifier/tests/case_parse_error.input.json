@@ -1,0 +1,4 @@
+{
+  "code": "def broken(\n    # incomplete function, missing closing",
+  "language": "python"
+}

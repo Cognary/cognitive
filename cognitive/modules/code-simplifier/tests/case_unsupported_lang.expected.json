@@ -1,0 +1,29 @@
+{
+  "$comment": "Contract validation for unsupported language - must return error envelope",
+  "$validate": {
+    "ok": {
+      "const": false
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "const": "UNSUPPORTED_LANGUAGE"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$example": {
+    "ok": false,
+    "error": {
+      "code": "UNSUPPORTED_LANGUAGE",
+      "message": "Language 'brainfuck' is not supported for code simplification"
+    },
+    "partial_data": null
+  }
+}

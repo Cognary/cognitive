@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://ziel-io.github.io/cognitive-modules/schema/v2.json",
   "title": "Cognitive Module Schema v2",
-  "description": "Schema definition for Cognitive Module input/output contracts",
+  "description": "Schema definition for Cognitive Module with envelope response format",
   "type": "object",
   "properties": {
     "input": {
@@ -24,7 +24,7 @@
     },
     "output": {
       "type": "object",
-      "description": "Output schema for the module",
+      "description": "Output data schema (wrapped in envelope.data)",
       "required": ["type", "required", "properties"],
       "properties": {
         "type": { "const": "object" },
@@ -46,11 +46,34 @@
               "required": ["type", "minimum", "maximum"]
             },
             "rationale": {
-              "type": "object",
-              "properties": {
-                "type": { "const": "string" }
-              },
-              "required": ["type"]
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": { "const": "string" }
+                  },
+                  "required": ["type"]
+                },
+                {
+                  "type": "object",
+                  "description": "Structured rationale format",
+                  "properties": {
+                    "type": { "const": "object" },
+                    "required": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "properties": {
+                      "type": "object",
+                      "properties": {
+                        "summary": { "$ref": "#/definitions/propertySchema" },
+                        "assumptions": { "$ref": "#/definitions/propertySchema" },
+                        "blocking_reasons": { "$ref": "#/definitions/propertySchema" }
+                      }
+                    }
+                  }
+                }
+              ]
             },
             "behavior_equivalence": {
               "type": "object",
@@ -68,7 +91,8 @@
     },
     "error": {
       "type": "object",
-      "description": "Error response schema",
+      "description": "Error response schema (wrapped in envelope.error)",
+      "required": ["type", "required", "properties"],
       "properties": {
         "type": { "const": "object" },
         "required": {
@@ -81,11 +105,13 @@
           "properties": {
             "code": {
               "type": "object",
+              "required": ["type", "enum"],
               "properties": {
                 "type": { "const": "string" },
                 "enum": {
                   "type": "array",
-                  "items": { "type": "string" }
+                  "items": { "type": "string" },
+                  "minItems": 1
                 }
               }
             },
@@ -93,13 +119,11 @@
               "type": "object",
               "properties": {
                 "type": { "const": "string" }
-              }
-            },
-            "partial": {
-              "type": "object",
-              "description": "Partial result if available"
+              },
+              "required": ["type"]
             }
-          }
+          },
+          "required": ["code", "message"]
         }
       }
     }
@@ -131,6 +155,40 @@
           "items": { "type": "string" }
         }
       }
+    },
+    "envelope": {
+      "description": "Standard response envelope format",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Success response",
+          "required": ["ok", "data"],
+          "properties": {
+            "ok": { "const": true },
+            "data": { "type": "object" }
+          }
+        },
+        {
+          "type": "object",
+          "description": "Error response",
+          "required": ["ok", "error"],
+          "properties": {
+            "ok": { "const": false },
+            "error": {
+              "type": "object",
+              "required": ["code", "message"],
+              "properties": {
+                "code": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            },
+            "partial_data": {
+              "type": "object",
+              "description": "Partial result if failure.partial_allowed is true"
+            }
+          }
+        }
+      ]
     }
   }
 }

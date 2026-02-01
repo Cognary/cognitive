@@ -79,21 +79,27 @@ def load_v2_format(module_path: Path) -> dict:
         output_schema = {}
         error_schema = {}
     
-    # Extract constraints
+    # Extract constraints (supports both old and new format)
     constraints_raw = manifest.get("constraints", {})
+    policies_raw = manifest.get("policies", {})
+    
     constraints = {
         "operational": {
-            "no_external_network": constraints_raw.get("no_network", True),
-            "no_side_effects": constraints_raw.get("no_side_effects", True),
-            "no_file_write": constraints_raw.get("no_file_write", True),
+            "no_external_network": constraints_raw.get("no_network", True) or policies_raw.get("network") == "deny",
+            "no_side_effects": constraints_raw.get("no_side_effects", True) or policies_raw.get("side_effects") == "deny",
+            "no_file_write": constraints_raw.get("no_file_write", True) or policies_raw.get("filesystem_write") == "deny",
             "no_inventing_data": constraints_raw.get("no_inventing_data", True),
         },
         "output_quality": {
             "require_confidence": manifest.get("output", {}).get("require_confidence", True),
             "require_rationale": manifest.get("output", {}).get("require_rationale", True),
             "require_behavior_equivalence": manifest.get("output", {}).get("require_behavior_equivalence", False),
-        }
+        },
+        "behavior_equivalence_false_max_confidence": constraints_raw.get("behavior_equivalence_false_max_confidence", 0.7),
     }
+    
+    # Extract policies (v2.1)
+    policies = manifest.get("policies", {})
     
     # Extract tools policy
     tools = manifest.get("tools", {})
@@ -103,6 +109,9 @@ def load_v2_format(module_path: Path) -> dict:
     
     # Extract failure contract
     failure_contract = manifest.get("failure", {})
+    
+    # Extract runtime requirements
+    runtime_requirements = manifest.get("runtime_requirements", {})
     
     return {
         "name": manifest.get("name", module_path.name),
@@ -116,9 +125,11 @@ def load_v2_format(module_path: Path) -> dict:
         "output_schema": output_schema,
         "error_schema": error_schema,
         "constraints": constraints,
+        "policies": policies,
         "tools": tools,
         "output_contract": output_contract,
         "failure_contract": failure_contract,
+        "runtime_requirements": runtime_requirements,
         "prompt": prompt,
     }
 

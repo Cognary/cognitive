@@ -1,42 +1,71 @@
-# Cognitive Module Manifest (Machine Layer)
-# Version: 2.0.0 - Separated from prompt
+# Cognitive Module Manifest v2.1
+# Machine-readable layer, separated from prompt.md
 
 name: code-simplifier
-version: 2.0.0
+version: 2.1.0
 responsibility: Simplify code while preserving behavior
 
-# Constraints (what the module CANNOT do)
-constraints:
-  no_network: true
-  no_side_effects: true
-  no_file_write: true
-  no_inventing_data: true
+# Explicit exclusions (what this module WILL NOT do)
+excludes:
+  - changing observable behavior
+  - adding new features
+  - removing functionality
+  - executing code
+  - writing files
+
+# Runtime policies (unified namespace)
+policies:
+  network: deny
+  filesystem_write: deny
+  side_effects: deny
+  code_execution: deny
+
+# Tools policy
+tools:
+  policy: deny_by_default
+  allowed: []
+  denied:
+    - write_file
+    - shell
+    - network
+    - code_interpreter
 
 # Output contract
 output:
-  mode: json_strict
-  require_confidence: true
-  require_rationale: true
-  require_behavior_equivalence: true
+  format: json_strict
+  envelope: true  # Enables {ok, data/error} wrapper
+  require:
+    - confidence
+    - rationale
+    - behavior_equivalence
 
-# Tools policy (empty = no tools allowed, safest)
-tools:
-  allowed: []
-  # Future: ["read_file", "run_tests"]
+# Confidence constraints
+constraints:
+  # If behavior_equivalence=false, confidence must be <= 0.7
+  behavior_equivalence_false_max_confidence: 0.7
 
 # Failure contract
 failure:
-  schema:
-    error:
-      code: string
-      message: string
-    partial: object?  # Optional partial result
+  contract: error_union  # Uses {ok:false, error:{...}} format
+  partial_allowed: true
+  must_return_error_schema: true
+
+# Runtime requirements (for provider selection)
+runtime_requirements:
+  structured_output: true
+  max_input_tokens: 8000
+  preferred_capabilities:
+    - json_mode
+    - long_context
 
 # IO schemas
 io:
   input: ./schema.json#/input
   output: ./schema.json#/output
+  error: ./schema.json#/error
 
 # Test cases
 tests:
-  - case1.input.json -> case1.expected.json
+  - tests/case1.input.json -> tests/case1.expected.json
+  - tests/case2.input.json -> tests/case2.expected.json
+  - tests/case_parse_error.input.json -> tests/case_parse_error.expected.json

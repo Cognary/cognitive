@@ -1,49 +1,60 @@
 {
-  "$comment": "This is a contract validation file, not exact output match",
+  "$comment": "Contract validation for successful simplification with envelope format",
   "$validate": {
-    "simplified_code": {
-      "type": "string",
-      "minLength": 1
-    },
-    "changes": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "required": ["type", "description", "scope", "risk"]
-      }
-    },
-    "behavior_equivalence": {
-      "type": "boolean",
+    "ok": {
       "const": true
     },
-    "confidence": {
-      "type": "number",
-      "minimum": 0.5,
-      "maximum": 1
-    },
-    "rationale": {
-      "type": "string",
-      "minLength": 10
-    },
-    "summary": {
-      "type": "string",
-      "minLength": 5
+    "data": {
+      "type": "object",
+      "required": ["simplified_code", "changes", "behavior_equivalence", "rationale", "confidence"],
+      "properties": {
+        "simplified_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "required": ["type", "description", "scope", "risk"]
+          }
+        },
+        "behavior_equivalence": {
+          "const": true
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 10
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 5
+        }
+      }
     }
   },
   "$example": {
-    "simplified_code": "def calc(x):\n    if 0 < x < 10:\n        return x * 2\n    elif x > 0:\n        return x\n    return 0",
-    "changes": [
-      {
-        "type": "reduce_nesting",
-        "description": "Combined nested if statements using chained comparison",
-        "scope": "function",
-        "risk": "none"
-      }
-    ],
-    "behavior_equivalence": true,
-    "complexity_reduction": 30,
-    "summary": "Simplified nested conditionals using Python's chained comparison",
-    "rationale": "The nested if statements can be flattened using Python's chained comparison operator (0 < x < 10), making the code more readable while preserving the exact same behavior.",
-    "confidence": 0.95
+    "ok": true,
+    "data": {
+      "simplified_code": "def calc(x):\n    if 0 < x < 10:\n        return x * 2\n    elif x > 0:\n        return x\n    return 0",
+      "changes": [
+        {
+          "type": "reduce_nesting",
+          "description": "Combined nested if statements using chained comparison",
+          "scope": "function",
+          "risk": "none"
+        }
+      ],
+      "behavior_equivalence": true,
+      "complexity_reduction": 30,
+      "summary": "Simplified nested conditionals using Python's chained comparison",
+      "rationale": "The nested if statements can be flattened using Python's chained comparison operator (0 < x < 10), making the code more readable while preserving the exact same behavior.",
+      "confidence": 0.95
+    }
   }
 }

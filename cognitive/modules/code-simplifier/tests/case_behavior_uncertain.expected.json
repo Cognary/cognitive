@@ -1,0 +1,47 @@
+{
+  "$comment": "Contract validation for behavior_equivalence=false case - confidence must be <= 0.7",
+  "$validate": {
+    "ok": {
+      "const": true
+    },
+    "data": {
+      "type": "object",
+      "required": ["simplified_code", "changes", "behavior_equivalence", "rationale", "confidence"],
+      "properties": {
+        "simplified_code": {
+          "type": "string"
+        },
+        "behavior_equivalence": {
+          "const": false
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.7
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    }
+  },
+  "$example": {
+    "ok": true,
+    "data": {
+      "simplified_code": "async function fetchData(url) {\n  return await redis.get(url)\n    ? JSON.parse(await redis.get(url))\n    : await fetch(url).then(r => r.json()).then(d => (redis.set(url, JSON.stringify(d), 'EX', 3600), d));\n}",
+      "changes": [
+        {
+          "type": "simplify_logic",
+          "description": "Condensed cache check and fetch into ternary expression",
+          "scope": "function",
+          "risk": "medium"
+        }
+      ],
+      "behavior_equivalence": false,
+      "summary": "Condensed caching logic but may have race condition",
+      "rationale": "Cannot guarantee behavior equivalence because: 1) The simplified version makes two redis.get calls which could return different values in a race condition, 2) Async behavior with side effects (redis.set) in ternary is harder to reason about",
+      "confidence": 0.6
+    }
+  }
+}

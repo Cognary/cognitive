@@ -6,7 +6,7 @@ Cognitive Modules 支持三种格式，推荐使用 v2 格式。
 
 | 格式 | 文件 | 特点 | 状态 |
 |------|------|------|------|
-| **v2** | `module.yaml` + `prompt.md` + `schema.json` | 机器可读与人类可读分离 | ✅ 推荐 |
+| **v2** | `module.yaml` + `prompt.md` + `schema.json` | 机器可读与人类可读分离，envelope 响应格式 | ✅ 推荐 |
 | **v1** | `MODULE.md` + `schema.json` | 简单，适合快速原型 | ✅ 支持 |
 | **v0** | 6 个文件 | 过于繁琐 | ⚠️ 废弃 |
 
@@ -21,40 +21,79 @@ my-module/
 ├── schema.json     # 输入/输出/错误契约
 └── tests/          # Golden 测试
     ├── case1.input.json
-    └── case1.expected.json
+    ├── case1.expected.json
+    ├── case_error.input.json
+    └── case_error.expected.json
 ```
 
 ### module.yaml
 
-机器可读的模块清单：
+机器可读的模块清单（v2.1）：
 
 ```yaml
 name: code-simplifier
-version: 1.0.0
+version: 2.1.0
 responsibility: simplify code while preserving behavior
 
+# 明确排除的行为
 excludes:
   - changing observable behavior
   - adding new features
   - removing functionality
 
-constraints:
-  no_network: true
-  no_side_effects: true
-  no_file_write: true
+# 统一的策略命名空间
+policies:
+  network: deny
+  filesystem_write: deny
+  side_effects: deny
+  code_execution: deny
 
-output:
-  json_strict: true
-  require_confidence: true
-  require_rationale: true
-  require_behavior_equivalence: true
-
+# 工具策略
 tools:
+  policy: deny_by_default
   allowed: []
+  denied:
+    - write_file
+    - shell
+    - network
 
+# 输出契约
+output:
+  format: json_strict
+  envelope: true  # 启用 {ok, data/error} 包装
+  require:
+    - confidence
+    - rationale
+    - behavior_equivalence
+
+# 约束条件
+constraints:
+  behavior_equivalence_false_max_confidence: 0.7
+
+# 失败契约
 failure:
-  must_return_error_schema: true
+  contract: error_union  # 使用 {ok:false, error:{...}} 格式
   partial_allowed: true
+  must_return_error_schema: true
+
+# 运行时要求
+runtime_requirements:
+  structured_output: true
+  max_input_tokens: 8000
+  preferred_capabilities:
+    - json_mode
+    - long_context
+
+# IO 引用
+io:
+  input: ./schema.json#/input
+  output: ./schema.json#/output
+  error: ./schema.json#/error
+
+# 测试用例
+tests:
+  - tests/case1.input.json -> tests/case1.expected.json
+  - tests/case_error.input.json -> tests/case_error.expected.json
 ```
 
 #### 字段说明
@@ -65,10 +104,72 @@ failure:
 | `version` | ✅ | 语义化版本 |
 | `responsibility` | ✅ | 一句话描述模块职责 |
 | `excludes` | ✅ | 明确列出模块**不做**的事情 |
-| `constraints` | ❌ | 运行时约束 |
-| `output` | ❌ | 输出契约要求 |
+| `policies` | ❌ | 统一的策略命名空间 |
 | `tools` | ❌ | 工具调用策略 |
+| `output` | ❌ | 输出契约要求 |
+| `constraints` | ❌ | 约束条件 |
 | `failure` | ❌ | 失败处理契约 |
+| `runtime_requirements` | ❌ | 运行时能力要求 |
+
+---
+
+## 响应格式（Envelope）
+
+v2 格式使用统一的信封（Envelope）响应格式：
+
+### 成功响应
+
+```json
+{
+  "ok": true,
+  "data": {
+    "simplified_code": "...",
+    "changes": [...],
+    "behavior_equivalence": true,
+    "summary": "...",
+    "rationale": "...",
+    "confidence": 0.95
+  }
+}
+```
+
+### 错误响应
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "PARSE_ERROR",
+    "message": "Unable to parse code"
+  },
+  "partial_data": null
+}
+```
+
+### 带部分结果的错误
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "BEHAVIOR_CHANGE_REQUIRED",
+    "message": "Simplification requires behavior change"
+  },
+  "partial_data": {
+    "simplified_code": "...",
+    "behavior_equivalence": false,
+    "confidence": 0.6
+  }
+}
+```
+
+这种格式的好处：
+
+- **一眼判断成功/失败**：检查 `ok` 字段
+- **类型安全**：成功时有 `data`，失败时有 `error`
+- **支持部分结果**：`partial_data` 用于 `failure.partial_allowed: true`
+
+---
 
 ### prompt.md
 
@@ -80,25 +181,23 @@ failure:
 You are a code simplification expert. Your task is to simplify code 
 while **strictly preserving its observable behavior**.
 
-## Critical Rule
+## Critical Rules
 
-If you cannot guarantee behavior equivalence, you MUST set 
-`behavior_equivalence: false` and explain why in the rationale.
+1. If you cannot guarantee behavior equivalence, set `behavior_equivalence: false`
+2. If `behavior_equivalence` is false, `confidence` must be <= 0.7
 
-## Input
+## Response Format (Envelope)
 
-- `code`: The source code to simplify
-- `language`: Programming language (optional)
-- `query`: Specific simplification request (optional)
+Wrap your response in the envelope format:
+- Success: { "ok": true, "data": { ... } }
+- Error: { "ok": false, "error": { "code": "...", "message": "..." } }
 
-## Output Requirements
+## Error Codes
 
-Return JSON with:
-- `simplified`: The simplified code
-- `changes`: Array of changes made (each with scope and risk)
-- `behavior_equivalence`: true/false
-- `rationale`: Your reasoning
-- `confidence`: 0-1
+- PARSE_ERROR: Code cannot be parsed
+- UNSUPPORTED_LANGUAGE: Language not supported
+- NO_SIMPLIFICATION_POSSIBLE: Code is already optimal
+- BEHAVIOR_CHANGE_REQUIRED: Simplification requires behavior change
 ```
 
 ### schema.json
@@ -114,28 +213,28 @@ Return JSON with:
     "properties": {
       "code": { "type": "string", "description": "Source code to simplify" },
       "language": { "type": "string" },
-      "query": { "type": "string" },
-      "options": { "type": "object" }
+      "query": { "type": "string" }
     }
   },
   "output": {
     "type": "object",
-    "required": ["simplified", "changes", "behavior_equivalence", "rationale", "confidence"],
+    "required": ["simplified_code", "changes", "behavior_equivalence", "rationale", "confidence"],
     "properties": {
-      "simplified": { "type": "string" },
+      "simplified_code": { "type": "string" },
       "changes": {
         "type": "array",
         "items": {
           "type": "object",
+          "required": ["type", "description", "scope", "risk"],
           "properties": {
+            "type": { "type": "string", "enum": ["remove_redundancy", "improve_naming", "reduce_nesting", "simplify_logic", "other"] },
             "description": { "type": "string" },
-            "scope": { "enum": ["local", "function", "file", "project"] },
-            "risk": { "enum": ["none", "low", "medium", "high"] }
+            "scope": { "type": "string", "enum": ["local", "function", "file", "project"] },
+            "risk": { "type": "string", "enum": ["none", "low", "medium", "high"] }
           }
         }
       },
       "behavior_equivalence": { "type": "boolean" },
-      "diff_unified": { "type": "string" },
       "rationale": { "type": "string" },
       "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
     }
@@ -144,27 +243,26 @@ Return JSON with:
     "type": "object",
     "required": ["code", "message"],
     "properties": {
-      "code": { "enum": ["PARSE_ERROR", "UNSUPPORTED_LANGUAGE", "TOO_COMPLEX", "BEHAVIOR_UNCERTAIN"] },
-      "message": { "type": "string" },
-      "partial": { "type": "object" }
+      "code": { "type": "string", "enum": ["PARSE_ERROR", "UNSUPPORTED_LANGUAGE", "NO_SIMPLIFICATION_POSSIBLE", "BEHAVIOR_CHANGE_REQUIRED"] },
+      "message": { "type": "string" }
     }
   }
 }
 ```
 
-#### v2 schema 新增字段
+#### Schema 要点
 
-| 字段 | 说明 |
+| 要点 | 说明 |
 |------|------|
-| `behavior_equivalence` | 行为是否等价（布尔值）|
-| `changes[].scope` | 变更影响范围：local/function/file/project |
-| `changes[].risk` | 风险等级：none/low/medium/high |
-| `diff_unified` | 可选的 unified diff 格式 |
-| `error` | 错误时的标准输出格式 |
+| `changes.items.required` | 每个 change 必须有 type, description, scope, risk |
+| `scope/risk` 有 `type: "string"` | 确保 JSON Schema 兼容性 |
+| `error` 有 `required` | 错误必须有 code 和 message |
 
 ### tests/ 目录
 
 Golden 测试用于验证模块契约：
+
+#### 成功用例
 
 ```json
 // tests/case1.input.json
@@ -177,10 +275,36 @@ Golden 测试用于验证模块契约：
 ```json
 // tests/case1.expected.json
 {
-  "_validate": {
-    "required": ["simplified", "behavior_equivalence", "confidence"],
-    "behavior_equivalence": true,
-    "confidence_min": 0.8
+  "$validate": {
+    "ok": { "const": true },
+    "data": {
+      "required": ["simplified_code", "behavior_equivalence", "confidence"],
+      "behavior_equivalence": true,
+      "confidence_min": 0.8
+    }
+  }
+}
+```
+
+#### 失败用例
+
+```json
+// tests/case_parse_error.input.json
+{
+  "code": "def broken(\n    # incomplete",
+  "language": "python"
+}
+```
+
+```json
+// tests/case_parse_error.expected.json
+{
+  "$validate": {
+    "ok": { "const": false },
+    "error": {
+      "required": ["code", "message"],
+      "code": "PARSE_ERROR"
+    }
   }
 }
 ```
@@ -231,32 +355,9 @@ constraints:
 - `confidence`: 置信度
 ```
 
-### schema.json (v1)
-
-```json
-{
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
-  "input": {
-    "type": "object",
-    "properties": {
-      "$ARGUMENTS": { "type": "string" }
-    }
-  },
-  "output": {
-    "type": "object",
-    "required": ["result", "rationale", "confidence"],
-    "properties": {
-      "result": { ... },
-      "rationale": { "type": "string" },
-      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
-    }
-  }
-}
-```
-
-!!! warning "v1 的 $ARGUMENTS"
-    v1 格式中 `$ARGUMENTS` 是 CLI 概念，会污染模块 schema。
-    v2 格式移除了这个字段，CLI 参数映射到 `input.code` 或 `input.query`。
+!!! warning "v1 不支持 Envelope"
+    v1 格式返回原始 JSON，不包装在 `{ok, data}` 中。
+    建议新项目使用 v2 格式。
 
 ---
 
@@ -303,6 +404,7 @@ cog validate my-module
 
 1. 模块文件存在且格式正确
 2. schema.json 是有效的 JSON Schema
-3. 示例输入符合输入 Schema
-4. 示例输出符合输出 Schema
+3. output.required 字段完整
+4. changes.items 有 required 定义
 5. (v2) Golden 测试通过
+6. (v2) 失败用例覆盖所有 error.code
