@@ -1,0 +1,27 @@
+{
+  "name": "cogn",
+  "version": "1.0.0",
+  "description": "Cognitive Modules CLI - Structured AI Task Execution (alias for cognitive-modules-cli)",
+  "bin": {
+    "cogn": "./bin.js"
+  },
+  "scripts": {},
+  "keywords": [
+    "cognitive",
+    "ai",
+    "llm",
+    "cli",
+    "modules",
+    "npx"
+  ],
+  "license": "MIT",
+  "author": "ziel-io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ziel-io/cognitive-modules.git"
+  },
+  "homepage": "https://ziel-io.github.io/cognitive-modules/",
+  "dependencies": {
+    "cognitive-modules-cli": "^1.1.0"
+  }
+}
