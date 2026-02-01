@@ -2,7 +2,7 @@
 
 Cognitive Modules CLI - 结构化 AI 任务执行工具。
 
-这是 `cognitive-modules-cli` 的短名别名包。
+这是 `cognitive-modules-cli` 的短名别名包，安装后提供 `cog` 命令。
 
 ## 一行代码使用
 
@@ -23,7 +23,7 @@ npx cogn --help
 npm install -g cogn
 
 # 然后直接使用
-cogn run code-reviewer --args "..."
+cog run code-reviewer --args "..."
 ```
 
 ## 更多信息

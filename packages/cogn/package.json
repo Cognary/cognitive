@@ -1,9 +1,9 @@
 {
   "name": "cogn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cognitive Modules CLI - Structured AI Task Execution (alias for cognitive-modules-cli)",
   "bin": {
-    "cogn": "./bin.js"
+    "cog": "./bin.js"
   },
   "scripts": {},
   "keywords": [
