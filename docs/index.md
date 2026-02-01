@@ -81,3 +81,4 @@ cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM us
 - [安装指南](getting-started/installation.md) - 安装 Cognitive Modules
 - [第一个模块](getting-started/first-module.md) - 创建你的第一个模块
 - [模块库](modules/index.md) - 查看内置模块
+
