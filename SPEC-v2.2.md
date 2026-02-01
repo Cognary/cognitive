@@ -34,46 +34,66 @@ Module = Manifest + Prompt + Contract
 
 ### Contract（契约）
 
-**Contract** 是模块与调用者之间的可验证承诺，由 JSON Schema 定义，存放在 `schema.json` 中。
+Contract 是模块与调用者之间的可验证承诺，分为两层：
 
-Contract 包含三个部分：
+#### Schema Contract（模式契约）
 
-| Contract | 说明 | 对应字段 |
-|----------|------|----------|
-| **Input Contract** | 调用者必须提供什么 | `schema.json#/input` |
-| **Output Contract** | 模块成功时返回什么 | `schema.json#/meta` + `schema.json#/data` |
-| **Error Contract** | 模块失败时返回什么 | `schema.json#/error` |
+定义在 `schema.json` 中，描述数据的**结构**：
+
+| Schema Contract | 说明 | 对应字段 |
+|-----------------|------|----------|
+| **Input Schema** | 输入数据结构 | `schema.json#/input` |
+| **Meta Schema** | 控制面数据结构 | `schema.json#/meta` |
+| **Data Schema** | 业务数据结构 | `schema.json#/data` |
+| **Error Schema** | 错误数据结构 | `schema.json#/error` |
+
+#### Envelope Contract（信封契约）
+
+定义响应的**固定包装格式**，与具体模块无关：
+
+```json
+// 成功响应
+{ "ok": true,  "meta": {...}, "data": {...} }
+
+// 失败响应
+{ "ok": false, "meta": {...}, "error": {...}, "partial_data"?: {...} }
+```
+
+| 字段 | 类型 | 成功时 | 失败时 |
+|------|------|--------|--------|
+| `ok` | boolean | `true` | `false` |
+| `meta` | object | ✅ 必填 | ✅ 必填 |
+| `data` | object | ✅ 必填 | ❌ 无 |
+| `error` | object | ❌ 无 | ✅ 必填 |
+| `partial_data` | object | ❌ 无 | ❌ 可选 |
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Contract (schema.json)                │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌─────────────────┐                                   │
-│  │ Input Contract  │  调用者 → 模块                    │
-│  └────────┬────────┘                                   │
-│           │                                             │
-│           ▼                                             │
-│  ┌─────────────────┐                                   │
-│  │ Output Contract │  模块 → 调用者 (成功)             │
-│  │  • meta (控制面)│                                   │
-│  │  • data (数据面)│                                   │
-│  └─────────────────┘                                   │
-│           │                                             │
-│           ▼                                             │
-│  ┌─────────────────┐                                   │
-│  │ Error Contract  │  模块 → 调用者 (失败)             │
-│  │  • error.code   │                                   │
-│  │  • error.message│                                   │
-│  └─────────────────┘                                   │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      Contract 两层结构                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  Schema Contract (schema.json)                           │   │
+│  │  定义数据结构，每个模块不同                              │   │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       │   │
+│  │  │  input  │ │  meta   │ │  data   │ │  error  │       │   │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘       │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                              │                                  │
+│                              ▼                                  │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  Envelope Contract (固定格式)                            │   │
+│  │  包装格式，所有模块统一                                  │   │
+│  │  { ok: bool, meta: {...}, data|error: {...} }           │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 Contract 是 Cognitive Modules 的核心：
-- **可验证**：输入输出都通过 JSON Schema 验证
-- **可预测**：调用者知道会得到什么
-- **可组合**：模块间可以安全编排
+- **可验证**：Schema Contract 通过 JSON Schema 验证
+- **可路由**：Envelope Contract 让中间件无需解析业务即可决策
+- **可组合**：统一格式让模块间可以安全编排
 
 ---
 
@@ -291,7 +311,38 @@ tests:
 | `model` | string | ❌ | provider/model 标识 |
 | `latency_ms` | number | ❌ | 执行耗时（毫秒） |
 
-**risk 聚合规则**：`meta.risk = max(data.changes[*].risk)`
+#### confidence 语义定义
+
+> **`meta.confidence` is the module's self-assessed confidence in meeting the declared contract, not a calibrated probability of correctness.**
+
+即：confidence 表示模块对「输出符合契约」的自我评估，而非「结果正确」的校准概率。
+
+| 场景 | confidence | 说明 |
+|------|------------|------|
+| 正常执行，高把握 | 0.8-1.0 | 模块确信输出符合契约 |
+| 正常执行，有不确定性 | 0.5-0.8 | 模块有一定把握 |
+| 输入非法 (`INVALID_INPUT`) | 0.0 | 无法执行，`explain` 必须说明是调用方错误 |
+| 执行失败 | 0.0-0.5 | 模块无法完成任务 |
+
+#### risk 聚合规则
+
+**默认规则**：`meta.risk = max(data.changes[*].risk)`（如果存在 changes 数组）
+
+**模块可覆写**：在 `module.yaml` 中声明自定义规则：
+
+```yaml
+meta:
+  risk_rule: max_changes_risk   # 默认
+  # 或：max_issues_risk, explicit, custom_function
+```
+
+| risk_rule | 说明 |
+|-----------|------|
+| `max_changes_risk` | `max(data.changes[*].risk)`，默认 |
+| `max_issues_risk` | `max(data.issues[*].risk)`，适用于审查类模块 |
+| `explicit` | 模块自行计算，不聚合 |
+
+如果 risk 来源字段不存在，默认使用 `"medium"`
 
 ### 2.5 explain vs rationale
 
@@ -480,8 +531,10 @@ LLM 输出
 **Repair Pass 规则**：
 1. 补全缺失的 `meta` 字段（使用保守默认值）
 2. 截断超长的 `explain`（保留前 280 字符）
-3. 规范化 enum 值（大小写、空格）
+3. 去除字符串字段的首尾空格
 4. **不修改业务语义**
+
+> **Repair pass MUST NOT invent new enum values.** It may only apply lossless normalization (trim whitespace). Enum 值错误应视为 validation failed，不尝试修复。
 
 ### 4.2 默认值填充
 
@@ -495,11 +548,13 @@ LLM 输出
 
 ### 4.3 三档严格度行为
 
-| schema_strictness | required 字段 | enum 策略 | overflow |
-|-------------------|---------------|-----------|----------|
-| `high` | 严格，全部必填 | strict | 关闭 |
-| `medium` | 核心必填，辅助可选 | extensible | 开启，max 5 |
-| `low` | 最小必填 | extensible | 开启，无上限 |
+| schema_strictness | required 字段 | enum 策略 | overflow.max_items |
+|-------------------|---------------|-----------|-------------------|
+| `high` | 严格，全部必填 | strict | 0（关闭） |
+| `medium` | 核心必填，辅助可选 | extensible | 5（默认） |
+| `low` | 最小必填 | extensible | 20（宽松） |
+
+> **注意**：`overflow.max_items` 永远有值，不存在"无上限"。模块可在 `module.yaml` 中覆写默认值。
 
 ---
 
@@ -526,15 +581,20 @@ LLM 输出
   "meta": {
     "confidence": 0.0,
     "risk": "high",
-    "explain": "..."
+    "explain": "Input validation failed: missing required field 'code'"
   },
   "error": {
-    "code": "ERROR_CODE",
+    "code": "INVALID_INPUT",
     "message": "Human-readable description"
   },
   "partial_data": null
 }
 ```
+
+**注意**：
+- 对于 `INVALID_INPUT` 错误，`confidence: 0.0` 表示"无法执行"而非"模型不靠谱"
+- `explain` 必须明确指出是调用方错误，例如："Input validation failed: ..."
+- 这让上游系统能区分"模型失败"与"调用错误"
 
 ---
 
@@ -908,7 +968,7 @@ tests:
 |------|------|----------|
 | v0.1 | 2024 | 初始规范 |
 | v2.1 | 2024 | Envelope 格式、Failure Contract、Tools Policy |
-| v2.2 | 2025 | Control/Data 分离、Tier、Overflow、Extensible Enum、迁移策略 |
+| v2.2 | 2026-02 | Control/Data 分离、Tier、Overflow、Extensible Enum、迁移策略、Contract 两层定义 |
 
 ---
 
