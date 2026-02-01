@@ -1,10 +1,10 @@
 site_name: Cognitive Modules
-site_url: https://leizii.github.io/cognitive-modules
+site_url: https://ziel-io.github.io/cognitive-modules
 site_description: 可验证的结构化 AI 任务规范
-site_author: leizii
+site_author: ziel-io
 
-repo_name: leizii/cognitive-modules
-repo_url: https://github.com/leizii/cognitive-modules
+repo_name: ziel-io/cognitive-modules
+repo_url: https://github.com/ziel-io/cognitive-modules
 edit_uri: edit/main/docs/
 
 theme:
@@ -144,7 +144,7 @@ extra:
   generator: false
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/leizii/cognitive-modules
+      link: https://github.com/ziel-io/cognitive-modules
       name: GitHub
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/cognitive-modules/
@@ -157,5 +157,5 @@ extra_css:
   - stylesheets/extra.css
 
 copyright: >
-  Copyright &copy; 2026 leizii –
+  Copyright &copy; 2026 ziel-io –
   <a href="#__consent">Cookie 设置</a>

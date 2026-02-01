@@ -31,7 +31,7 @@ SEARCH_PATHS = [
 USER_MODULES_DIR = Path.home() / ".cognitive" / "modules"
 
 # Default registry URL
-DEFAULT_REGISTRY_URL = "https://raw.githubusercontent.com/leizii/cognitive-modules/main/cognitive-registry.json"
+DEFAULT_REGISTRY_URL = "https://raw.githubusercontent.com/ziel-io/cognitive-modules/main/cognitive-registry.json"
 
 # Local registry cache
 REGISTRY_CACHE = Path.home() / ".cognitive" / "registry-cache.json"

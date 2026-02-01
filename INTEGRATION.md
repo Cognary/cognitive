@@ -223,7 +223,7 @@ result = run_module("ui-spec-generator", input_data)
   "modules": {
     "ui-spec-generator": {
       "description": "...",
-      "source": "github:leizii/cognitive-modules/cognitive/modules/ui-spec-generator"
+      "source": "github:ziel-io/cognitive-modules/cognitive/modules/ui-spec-generator"
     }
   }
 }
@@ -234,7 +234,7 @@ result = run_module("ui-spec-generator", input_data)
 ```bash
 cog install registry:ui-spec-generator
 # 或
-cog install github:leizii/cognitive-modules/cognitive/modules/ui-spec-generator
+cog install github:ziel-io/cognitive-modules/cognitive/modules/ui-spec-generator
 ```
 
 ---
@@ -260,5 +260,5 @@ cog install github:leizii/cognitive-modules/cognitive/modules/ui-spec-generator
 
 ## 联系
 
-- GitHub: https://github.com/leizii/cognitive-modules
+- GitHub: https://github.com/ziel-io/cognitive-modules
 - 规范文档: SPEC.md

@@ -14,7 +14,7 @@ hide:
     <a href="getting-started/installation/" class="md-button md-button--primary">
       快速开始
     </a>
-    <a href="https://github.com/leizii/cognitive-modules" class="md-button">
+    <a href="https://github.com/ziel-io/cognitive-modules" class="md-button">
       GitHub
     </a>
   </p>

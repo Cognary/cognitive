@@ -1,6 +1,6 @@
 # 规范文档
 
-完整的 Cognitive Modules 规范请参阅项目根目录的 [SPEC.md](https://github.com/leizii/cognitive-modules/blob/main/SPEC.md)。
+完整的 Cognitive Modules 规范请参阅项目根目录的 [SPEC.md](https://github.com/ziel-io/cognitive-modules/blob/main/SPEC.md)。
 
 ## 快速概览
 
