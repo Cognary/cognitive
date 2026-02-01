@@ -16,6 +16,7 @@ Commands:
     cogn doctor                    Check environment setup
     cogn info <module>             Show module details
     cogn serve                     Start HTTP API server
+    cogn mcp                       Start MCP server for Claude/Cursor
 """
 
 import json
@@ -639,6 +640,37 @@ def serve_cmd(
     rprint()
     
     uvicorn.run("cognitive.server:app", host=host, port=port, reload=False)
+
+
+@app.command("mcp")
+def mcp_cmd():
+    """
+    Start MCP (Model Context Protocol) server.
+    
+    Enables Claude Code, Cursor, and other MCP-compatible tools to use Cognitive Modules.
+    
+    Example:
+        cogn mcp
+        
+    Configure in Claude Desktop (claude_desktop_config.json):
+        {
+          "mcpServers": {
+            "cognitive": {
+              "command": "cogn",
+              "args": ["mcp"]
+            }
+          }
+        }
+    """
+    try:
+        from .mcp_server import serve
+    except ImportError:
+        rprint("[red]Error:[/red] MCP dependencies not installed.")
+        rprint("\nInstall with:")
+        rprint("  [cyan]pip install cognitive-modules[mcp][/cyan]")
+        raise typer.Exit(1)
+    
+    serve()
 
 
 @app.callback(invoke_without_command=True)

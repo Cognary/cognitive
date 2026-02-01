@@ -141,6 +141,7 @@ nav:
       - ui-spec-generator: modules/ui-spec-generator.md
   - 集成:
       - HTTP API: integration/http-api.md
+      - MCP Server: integration/mcp.md
       - 与 AI 工具集成: integration/ai-tools.md
       - Agent 协议: integration/agent-protocol.md
   - 规范: spec.md
