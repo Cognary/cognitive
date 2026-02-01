@@ -43,6 +43,9 @@ cog init <name> -d "描述"    # 从模板创建新模块
 # 运行模块
 cog run <module> input.json -o output.json --pretty
 
+# 直接传参数（无需 JSON 文件）
+cog run <module> --args "你的需求描述" -o output.json
+
 # 安装/卸载
 cog install <source>        # 从 git/本地/注册表安装
 cog uninstall <module>      # 卸载模块

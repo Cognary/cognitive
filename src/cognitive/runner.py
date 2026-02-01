@@ -29,10 +29,31 @@ def validate_data(data: dict, schema: dict, label: str = "Data") -> list[str]:
     return errors
 
 
+def substitute_arguments(text: str, input_data: dict) -> str:
+    """Substitute $ARGUMENTS and $N placeholders in text."""
+    # Get arguments
+    args_value = input_data.get("$ARGUMENTS", input_data.get("query", ""))
+    
+    # Replace $ARGUMENTS
+    text = text.replace("$ARGUMENTS", str(args_value))
+    
+    # Replace $ARGUMENTS[N] and $N for indexed access
+    if isinstance(args_value, str):
+        args_list = args_value.split()
+        for i, arg in enumerate(args_list):
+            text = text.replace(f"$ARGUMENTS[{i}]", arg)
+            text = text.replace(f"${i}", arg)
+    
+    return text
+
+
 def build_prompt(module: dict, input_data: dict) -> str:
     """Build the complete prompt for the LLM."""
+    # Substitute $ARGUMENTS in prompt
+    prompt = substitute_arguments(module["prompt"], input_data)
+    
     parts = [
-        module["prompt"],
+        prompt,
         "\n\n## Constraints\n",
         yaml.dump(module["constraints"], default_flow_style=False),
         "\n\n## Input\n",

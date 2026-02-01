@@ -80,19 +80,29 @@ def list_cmd(
 @app.command("run")
 def run_cmd(
     module: str = typer.Argument(..., help="Module name or path"),
-    input_file: Path = typer.Argument(..., help="Input JSON file"),
+    input_file: Optional[Path] = typer.Argument(None, help="Input JSON file (optional if using --args)"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file"),
+    args: Optional[str] = typer.Option(None, "--args", "-a", help="Direct text input (replaces $ARGUMENTS in prompt)"),
     pretty: bool = typer.Option(False, "--pretty", help="Pretty-print JSON output"),
     no_validate: bool = typer.Option(False, "--no-validate", help="Skip validation"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="LLM model override"),
 ):
-    """Run a cognitive module with input data."""
-    if not input_file.exists():
-        rprint(f"[red]Error: Input file not found: {input_file}[/red]")
+    """Run a cognitive module with input data or direct arguments."""
+    # Determine input source
+    skip_input_validation = False
+    if args:
+        # Direct text input via --args (skip input schema validation)
+        input_data = {"$ARGUMENTS": args, "query": args}
+        skip_input_validation = True
+    elif input_file:
+        if not input_file.exists():
+            rprint(f"[red]Error: Input file not found: {input_file}[/red]")
+            raise typer.Exit(1)
+        with open(input_file, 'r', encoding='utf-8') as f:
+            input_data = json.load(f)
+    else:
+        rprint("[red]Error: Provide either input file or --args[/red]")
         raise typer.Exit(1)
-    
-    with open(input_file, 'r', encoding='utf-8') as f:
-        input_data = json.load(f)
     
     rprint(f"[cyan]→[/cyan] Running module: [bold]{module}[/bold]")
     
@@ -100,7 +110,7 @@ def run_cmd(
         result = run_module(
             module,
             input_data,
-            validate_input=not no_validate,
+            validate_input=not no_validate and not skip_input_validation,
             validate_output=not no_validate,
             model=model,
         )
