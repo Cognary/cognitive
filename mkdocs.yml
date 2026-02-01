@@ -125,6 +125,9 @@ nav:
       - 参数传递: guide/arguments.md
       - 子代理: guide/subagent.md
       - 上下文哲学: guide/context-philosophy.md
+      - TypeScript Runtime: guide/typescript-runtime.md
+      - 程序化 API: guide/programmatic-api.md
+      - 模块测试: guide/testing.md
   - CLI 参考:
       - 命令概览: cli/overview.md
       - cog run: cli/run.md
@@ -132,6 +135,7 @@ nav:
   - 模块库:
       - 概览: modules/index.md
       - code-reviewer: modules/code-reviewer.md
+      - code-simplifier: modules/code-simplifier.md
       - task-prioritizer: modules/task-prioritizer.md
       - api-designer: modules/api-designer.md
       - ui-spec-generator: modules/ui-spec-generator.md
