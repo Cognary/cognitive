@@ -46,7 +46,7 @@ Installed Modules: 5
 ## 从源码安装
 
 ```bash
-git clone https://github.com/leizii/cognitive-modules.git
+git clone https://github.com/ziel-io/cognitive-modules.git
 cd cognitive-modules
 
 # 安装开发依赖
