@@ -4,13 +4,14 @@ Cognitive Modules 提供多个内置模块，开箱即用。
 
 ## 内置模块
 
-| 模块 | 功能 | 分类 |
-|------|------|------|
-| [code-reviewer](code-reviewer.md) | 代码审查 | 代码质量 |
-| [task-prioritizer](task-prioritizer.md) | 任务优先级排序 | 项目管理 |
-| [api-designer](api-designer.md) | REST API 设计 | 设计规范 |
-| [ui-spec-generator](ui-spec-generator.md) | UI 规范生成 | 设计规范 |
-| product-analyzer | 产品分析（子代理示例） | 编排示例 |
+| 模块 | 功能 | 格式 | 分类 |
+|------|------|:----:|------|
+| [code-reviewer](code-reviewer.md) | 代码审查 | v1 | 代码质量 |
+| [code-simplifier](code-simplifier.md) | 代码简化（行为等价） | **v2** | 代码质量 |
+| [task-prioritizer](task-prioritizer.md) | 任务优先级排序 | v1 | 项目管理 |
+| [api-designer](api-designer.md) | REST API 设计 | v1 | 设计规范 |
+| [ui-spec-generator](ui-spec-generator.md) | UI 规范生成 | v1 | 设计规范 |
+| product-analyzer | 产品分析（子代理示例） | v1 | 编排示例 |
 
 ## 快速使用
 

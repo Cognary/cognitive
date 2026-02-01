@@ -104,12 +104,13 @@ hide:
 
 ## 📦 内置模块
 
-| 模块 | 功能 | 命令 |
-|------|------|------|
-| :material-code-braces: **code-reviewer** | 代码审查 | `cog run code-reviewer --args "代码"` |
-| :material-format-list-numbered: **task-prioritizer** | 任务排序 | `cog run task-prioritizer --args "任务列表"` |
-| :material-api: **api-designer** | API 设计 | `cog run api-designer --args "资源名"` |
-| :material-palette: **ui-spec-generator** | UI 规范 | `cog run ui-spec-generator --args "页面需求"` |
+| 模块 | 功能 | 格式 | 命令 |
+|------|------|:----:|------|
+| :material-code-braces: **code-reviewer** | 代码审查 | v1 | `cog run code-reviewer --args "代码"` |
+| :material-auto-fix: **code-simplifier** | 代码简化 | v2 | `cog run code-simplifier --args "代码"` |
+| :material-format-list-numbered: **task-prioritizer** | 任务排序 | v1 | `cog run task-prioritizer --args "任务列表"` |
+| :material-api: **api-designer** | API 设计 | v1 | `cog run api-designer --args "资源名"` |
+| :material-palette: **ui-spec-generator** | UI 规范 | v1 | `cog run ui-spec-generator --args "页面需求"` |
 
 [:octicons-arrow-right-24: 查看所有模块](modules/index.md)
 
