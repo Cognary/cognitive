@@ -22,7 +22,39 @@ hide:
 
 ---
 
-## ✨ 为什么选择 Cognitive Modules？
+## ✨ v2.2 新特性
+
+<div class="grid cards" markdown>
+
+-   :material-layers:{ .lg .middle } **Control/Data 分离**
+
+    ---
+
+    `meta` 控制面 + `data` 数据面，中间件无需解析业务即可路由
+
+-   :material-stairs:{ .lg .middle } **模块分级 (Tier)**
+
+    ---
+
+    `exec` / `decision` / `exploration` 三级约束，按需选择
+
+-   :material-lightbulb-on:{ .lg .middle } **可回收溢出**
+
+    ---
+
+    `extensions.insights` 保留 LLM 的额外洞察，不丢失灵感
+
+-   :material-shield-check:{ .lg .middle } **可扩展 Enum**
+
+    ---
+
+    允许自定义类型值，不牺牲类型安全
+
+</div>
+
+---
+
+## ✨ 核心特性
 
 <div class="grid cards" markdown>
 
@@ -30,7 +62,7 @@ hide:
 
     ---
 
-    JSON Schema 双向验证输入输出，确保数据结构正确，告别格式错误
+    JSON Schema 双向验证输入输出，确保数据结构正确
 
     [:octicons-arrow-right-24: 了解模块格式](guide/module-format.md)
 
@@ -38,7 +70,7 @@ hide:
 
     ---
 
-    强制输出 `confidence` 和 `rationale`，知道 AI 为什么这样决策
+    `meta.explain` 快速决策 + `data.rationale` 详细审计
 
     [:octicons-arrow-right-24: 上下文哲学](guide/context-philosophy.md)
 
@@ -80,23 +112,30 @@ hide:
 === "运行模块"
 
     ```bash
-    cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+    cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
     ```
 
-**输出示例：**
+**v2.2 输出示例：**
 
 ```json
 {
-  "issues": [
-    {
-      "severity": "critical",
-      "category": "security",
-      "description": "SQL 注入漏洞：直接使用 f-string 拼接用户输入",
-      "suggestion": "使用参数化查询"
-    }
-  ],
-  "confidence": 0.95,
-  "rationale": "检测到 f-string 直接拼接用户输入到 SQL 查询..."
+  "ok": true,
+  "meta": {
+    "confidence": 0.95,
+    "risk": "high",
+    "explain": "检测到 1 个严重安全问题：SQL 注入风险"
+  },
+  "data": {
+    "issues": [
+      {
+        "severity": "critical",
+        "category": "security",
+        "description": "SQL 注入漏洞",
+        "risk": "high"
+      }
+    ],
+    "rationale": "代码使用 f-string 直接拼接用户输入到 SQL 查询，攻击者可构造恶意输入绕过认证..."
+  }
 }
 ```
 
@@ -104,15 +143,28 @@ hide:
 
 ## 📦 内置模块
 
-| 模块 | 功能 | 格式 | 命令 |
-|------|------|:----:|------|
-| :material-code-braces: **code-reviewer** | 代码审查 | v1 | `cog run code-reviewer --args "代码"` |
-| :material-auto-fix: **code-simplifier** | 代码简化 | v2 | `cog run code-simplifier --args "代码"` |
-| :material-format-list-numbered: **task-prioritizer** | 任务排序 | v1 | `cog run task-prioritizer --args "任务列表"` |
-| :material-api: **api-designer** | API 设计 | v1 | `cog run api-designer --args "资源名"` |
-| :material-palette: **ui-spec-generator** | UI 规范 | v1 | `cog run ui-spec-generator --args "页面需求"` |
+| 模块 | Tier | 功能 | 命令 |
+|------|:----:|------|------|
+| :material-code-braces: **code-reviewer** | decision | 代码审查 | `cogn run code-reviewer --args "代码"` |
+| :material-auto-fix: **code-simplifier** | decision | 代码简化 | `cogn run code-simplifier --args "代码"` |
+| :material-format-list-numbered: **task-prioritizer** | decision | 任务排序 | `cogn run task-prioritizer --args "任务列表"` |
+| :material-api: **api-designer** | decision | API 设计 | `cogn run api-designer --args "资源名"` |
+| :material-palette: **ui-spec-generator** | exploration | UI 规范 | `cogn run ui-spec-generator --args "页面需求"` |
+| :material-chart-bar: **product-analyzer** | exploration | 产品分析 | `cogn run product-analyzer --args "产品" -s` |
 
 [:octicons-arrow-right-24: 查看所有模块](modules/index.md)
+
+---
+
+## 🔄 v2.2 响应格式
+
+| 层 | 字段 | 用途 |
+|---|------|------|
+| **Control Plane** | `meta.confidence` | 路由/降级决策 |
+| **Control Plane** | `meta.risk` | 人工审核触发 |
+| **Control Plane** | `meta.explain` | 日志/卡片 UI（≤280字符） |
+| **Data Plane** | `data.rationale` | 详细审计（无限制） |
+| **Data Plane** | `data.extensions` | 可回收洞察 |
 
 ---
 
@@ -122,11 +174,11 @@ hide:
 |------|:------:|:-----------------:|
 | 输入验证 | :material-close: | :material-check: JSON Schema |
 | 输出验证 | :material-close: | :material-check: JSON Schema |
-| 置信度 | :material-close: | :material-check: 必须 0-1 |
-| 推理过程 | :material-close: | :material-check: 必须 rationale |
-| 可测试 | :material-close: 困难 | :material-check: 示例验证 |
+| 置信度 | :material-close: | :material-check: meta.confidence |
+| 推理过程 | :material-close: | :material-check: data.rationale |
+| Control/Data 分离 | :material-close: | :material-check: meta + data |
+| 可测试 | :material-close: 困难 | :material-check: Golden 测试 |
 | 子代理 | :material-check: | :material-check: @call 语法 |
-| 参数传递 | :material-check: | :material-check: $ARGUMENTS |
 
 ---
 
@@ -158,14 +210,12 @@ hide:
 
     [:octicons-arrow-right-24: 了解集成](integration/ai-tools.md)
 
--   :material-file-document:{ .lg .middle } **规范文档**
+-   :material-file-document:{ .lg .middle } **v2.2 规范**
 
     ---
 
-    深入了解 Cognitive Modules 设计
+    深入了解 Control/Data 分离设计
 
     [:octicons-arrow-right-24: 阅读规范](spec.md)
 
 </div>
-
-<!-- trigger -->
