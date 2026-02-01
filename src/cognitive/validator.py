@@ -1,5 +1,6 @@
 """
 Module Validator - Validate cognitive module structure and examples.
+Supports both old and new module formats.
 """
 
 import json
@@ -15,6 +16,7 @@ from .registry import find_module
 def validate_module(name_or_path: str) -> tuple[bool, list[str], list[str]]:
     """
     Validate a cognitive module's structure and examples.
+    Supports both old and new formats.
     
     Returns:
         Tuple of (is_valid, errors, warnings)
@@ -30,6 +32,144 @@ def validate_module(name_or_path: str) -> tuple[bool, list[str], list[str]]:
         module_path = find_module(name_or_path)
         if not module_path:
             return False, [f"Module not found: {name_or_path}"], []
+    
+    # Detect format
+    has_new = (module_path / "MODULE.md").exists()
+    has_old = (module_path / "module.md").exists()
+    
+    if not has_new and not has_old:
+        return False, ["Missing MODULE.md or module.md"], []
+    
+    format_type = "new" if has_new else "old"
+    
+    if format_type == "new":
+        return _validate_new_format(module_path)
+    else:
+        return _validate_old_format(module_path)
+
+
+def _validate_new_format(module_path: Path) -> tuple[bool, list[str], list[str]]:
+    """Validate new format (MODULE.md + schema.json)."""
+    errors = []
+    warnings = []
+    
+    # Check MODULE.md
+    module_md = module_path / "MODULE.md"
+    if module_md.stat().st_size == 0:
+        errors.append("MODULE.md is empty")
+        return False, errors, warnings
+    
+    # Parse frontmatter
+    try:
+        with open(module_md, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        if not content.startswith('---'):
+            errors.append("MODULE.md must start with YAML frontmatter (---)")
+        else:
+            parts = content.split('---', 2)
+            if len(parts) < 3:
+                errors.append("MODULE.md frontmatter not properly closed")
+            else:
+                frontmatter = yaml.safe_load(parts[1])
+                body = parts[2].strip()
+                
+                # Check required fields
+                required_fields = ['name', 'version', 'responsibility', 'excludes']
+                for field in required_fields:
+                    if field not in frontmatter:
+                        errors.append(f"MODULE.md missing required field: {field}")
+                
+                if 'excludes' in frontmatter:
+                    if not isinstance(frontmatter['excludes'], list):
+                        errors.append("'excludes' must be a list")
+                    elif len(frontmatter['excludes']) == 0:
+                        warnings.append("'excludes' list is empty")
+                
+                # Check body has content
+                if len(body) < 50:
+                    warnings.append("MODULE.md body seems too short (< 50 chars)")
+                    
+    except yaml.YAMLError as e:
+        errors.append(f"Invalid YAML in MODULE.md: {e}")
+    
+    # Check schema.json (optional but recommended)
+    schema_path = module_path / "schema.json"
+    if not schema_path.exists():
+        warnings.append("Missing schema.json (recommended for validation)")
+    else:
+        try:
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                schema = json.load(f)
+            
+            if "input" not in schema:
+                warnings.append("schema.json missing 'input' definition")
+            if "output" not in schema:
+                warnings.append("schema.json missing 'output' definition")
+            
+            # Check output has required fields
+            output = schema.get("output", {})
+            required = output.get("required", [])
+            if "confidence" not in required:
+                warnings.append("output schema should require 'confidence'")
+            if "rationale" not in required:
+                warnings.append("output schema should require 'rationale'")
+                
+        except json.JSONDecodeError as e:
+            errors.append(f"Invalid JSON in schema.json: {e}")
+    
+    # Check examples (optional but recommended)
+    examples_path = module_path / "examples"
+    if not examples_path.exists():
+        warnings.append("Missing examples directory (recommended)")
+    else:
+        if not (examples_path / "input.json").exists():
+            warnings.append("Missing examples/input.json")
+        if not (examples_path / "output.json").exists():
+            warnings.append("Missing examples/output.json")
+        
+        # Validate examples against schema if both exist
+        if schema_path.exists():
+            try:
+                with open(schema_path, 'r', encoding='utf-8') as f:
+                    schema = json.load(f)
+                
+                # Validate input example
+                input_example_path = examples_path / "input.json"
+                if input_example_path.exists() and "input" in schema:
+                    with open(input_example_path, 'r', encoding='utf-8') as f:
+                        input_example = json.load(f)
+                    try:
+                        jsonschema.validate(instance=input_example, schema=schema["input"])
+                    except jsonschema.ValidationError as e:
+                        errors.append(f"Example input fails schema: {e.message}")
+                
+                # Validate output example
+                output_example_path = examples_path / "output.json"
+                if output_example_path.exists() and "output" in schema:
+                    with open(output_example_path, 'r', encoding='utf-8') as f:
+                        output_example = json.load(f)
+                    try:
+                        jsonschema.validate(instance=output_example, schema=schema["output"])
+                    except jsonschema.ValidationError as e:
+                        errors.append(f"Example output fails schema: {e.message}")
+                    
+                    # Check confidence
+                    if "confidence" in output_example:
+                        conf = output_example["confidence"]
+                        if not (0 <= conf <= 1):
+                            errors.append(f"Confidence must be 0-1, got: {conf}")
+                            
+            except (json.JSONDecodeError, KeyError):
+                pass
+    
+    return len(errors) == 0, errors, warnings
+
+
+def _validate_old_format(module_path: Path) -> tuple[bool, list[str], list[str]]:
+    """Validate old format (6 files)."""
+    errors = []
+    warnings = []
     
     # Check required files
     required_files = [
@@ -150,7 +290,6 @@ def validate_module(name_or_path: str) -> tuple[bool, list[str], list[str]]:
                 example_output = json.load(f)
             jsonschema.validate(instance=example_output, schema=output_schema)
             
-            # Check confidence
             if 'confidence' in example_output:
                 conf = example_output['confidence']
                 if not (0 <= conf <= 1):

@@ -1,18 +1,24 @@
 """
-Module Registry - Discover and manage cognitive modules.
+Module Registry - Discover, manage, and install cognitive modules.
 
 Search order:
 1. ./cognitive/modules (project-local)
 2. ~/.cognitive/modules (user-global)
 3. /usr/local/share/cognitive/modules (system-wide, optional)
+
+Registry:
+- cognitive-registry.json indexes public modules
 """
 
+import json
 import os
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Optional
+from urllib.request import urlopen
+from urllib.error import URLError
 
 # Standard module search paths
 SEARCH_PATHS = [
@@ -23,6 +29,12 @@ SEARCH_PATHS = [
 
 # User global install location
 USER_MODULES_DIR = Path.home() / ".cognitive" / "modules"
+
+# Default registry URL
+DEFAULT_REGISTRY_URL = "https://raw.githubusercontent.com/leizii/cognitive-modules/main/cognitive-registry.json"
+
+# Local registry cache
+REGISTRY_CACHE = Path.home() / ".cognitive" / "registry-cache.json"
 
 
 def get_search_paths() -> list[Path]:
@@ -42,8 +54,10 @@ def find_module(name: str) -> Optional[Path]:
     """Find a module by name, searching all paths in order."""
     for base_path in get_search_paths():
         module_path = base_path / name
-        if module_path.exists() and (module_path / "module.md").exists():
-            return module_path
+        # Support both new and old format
+        if module_path.exists():
+            if (module_path / "MODULE.md").exists() or (module_path / "module.md").exists():
+                return module_path
     return None
 
 
@@ -61,14 +75,19 @@ def list_modules() -> list[dict]:
                 continue
             if module_dir.name in seen:
                 continue
-            if not (module_dir / "module.md").exists():
+            # Support both formats
+            if not ((module_dir / "MODULE.md").exists() or (module_dir / "module.md").exists()):
                 continue
+            
+            # Detect format
+            fmt = "new" if (module_dir / "MODULE.md").exists() else "old"
             
             seen.add(module_dir.name)
             modules.append({
                 "name": module_dir.name,
                 "path": module_dir,
                 "location": "local" if base_path == SEARCH_PATHS[0] else "global",
+                "format": fmt,
             })
     
     return modules
@@ -86,8 +105,9 @@ def install_from_local(source: Path, name: Optional[str] = None) -> Path:
     if not source.exists():
         raise FileNotFoundError(f"Source not found: {source}")
     
-    if not (source / "module.md").exists():
-        raise ValueError(f"Not a valid module (missing module.md): {source}")
+    # Check for valid module (either format)
+    if not ((source / "MODULE.md").exists() or (source / "module.md").exists()):
+        raise ValueError(f"Not a valid module (missing MODULE.md or module.md): {source}")
     
     module_name = name or source.name
     target = ensure_user_modules_dir() / module_name
@@ -155,6 +175,22 @@ def install_from_git(url: str, subdir: Optional[str] = None, name: Optional[str]
         return install_from_local(source, module_name)
 
 
+def install_from_registry(module_name: str) -> Path:
+    """Install a module from the public registry."""
+    registry = fetch_registry()
+    
+    if module_name not in registry.get("modules", {}):
+        raise ValueError(f"Module not found in registry: {module_name}")
+    
+    module_info = registry["modules"][module_name]
+    source = module_info.get("source")
+    
+    if not source:
+        raise ValueError(f"No source defined for module: {module_name}")
+    
+    return install_module(source, name=module_name)
+
+
 def install_module(source: str, name: Optional[str] = None) -> Path:
     """
     Install a module from various sources.
@@ -165,9 +201,12 @@ def install_module(source: str, name: Optional[str] = None) -> Path:
     - git+https://github.com/org/repo#subdir=path
     - /absolute/path (treated as local)
     - ./relative/path (treated as local)
+    - registry:module-name (from public registry)
     """
     if source.startswith("local:"):
         return install_from_local(Path(source[6:]), name)
+    elif source.startswith("registry:"):
+        return install_from_registry(source[9:])
     elif source.startswith("github:") or source.startswith("git+"):
         return install_from_git(source, name=name)
     elif source.startswith("/") or source.startswith("./") or source.startswith(".."):
@@ -175,8 +214,11 @@ def install_module(source: str, name: Optional[str] = None) -> Path:
     elif source.startswith("https://github.com"):
         return install_from_git(source, name=name)
     else:
-        # Assume it's a local path
-        return install_from_local(Path(source), name)
+        # Try registry first, then local
+        try:
+            return install_from_registry(source)
+        except:
+            return install_from_local(Path(source), name)
 
 
 def uninstall_module(name: str) -> bool:
@@ -186,3 +228,49 @@ def uninstall_module(name: str) -> bool:
         shutil.rmtree(target)
         return True
     return False
+
+
+def fetch_registry(url: Optional[str] = None, use_cache: bool = True) -> dict:
+    """Fetch the public module registry."""
+    url = url or os.environ.get("COGNITIVE_REGISTRY_URL", DEFAULT_REGISTRY_URL)
+    
+    # Try cache first
+    if use_cache and REGISTRY_CACHE.exists():
+        try:
+            with open(REGISTRY_CACHE, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    
+    # Fetch from URL
+    try:
+        with urlopen(url, timeout=5) as response:
+            data = json.loads(response.read().decode())
+        
+        # Cache it
+        REGISTRY_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        with open(REGISTRY_CACHE, 'w') as f:
+            json.dump(data, f)
+        
+        return data
+    except (URLError, json.JSONDecodeError) as e:
+        # Return empty registry if fetch fails
+        return {"modules": {}, "error": str(e)}
+
+
+def search_registry(query: str) -> list[dict]:
+    """Search the registry for modules matching query."""
+    registry = fetch_registry()
+    results = []
+    
+    query_lower = query.lower()
+    for name, info in registry.get("modules", {}).items():
+        if query_lower in name.lower() or query_lower in info.get("description", "").lower():
+            results.append({
+                "name": name,
+                "description": info.get("description", ""),
+                "source": info.get("source", ""),
+                "version": info.get("version", ""),
+            })
+    
+    return results
