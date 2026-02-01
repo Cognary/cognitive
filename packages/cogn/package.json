@@ -1,6 +1,6 @@
 {
   "name": "cogn",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Cognitive Modules CLI - Structured AI Task Execution (alias for cognitive-modules-cli)",
   "bin": {
     "cog": "./bin.js"
@@ -22,6 +22,6 @@
   },
   "homepage": "https://ziel-io.github.io/cognitive-modules/",
   "dependencies": {
-    "cognitive-modules-cli": "^1.1.0"
+    "cognitive-modules-cli": "^1.2.0"
   }
 }

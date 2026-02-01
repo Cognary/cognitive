@@ -6,7 +6,21 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import yaml from 'js-yaml';
-import type { CognitiveModule, ModuleConstraints, ModulePolicies, ToolsPolicy, OutputContract, FailureContract, RuntimeRequirements } from '../types.js';
+import type { 
+  CognitiveModule, 
+  ModuleConstraints, 
+  ModulePolicies, 
+  ToolsPolicy, 
+  OutputContract, 
+  FailureContract, 
+  RuntimeRequirements,
+  OverflowConfig,
+  EnumConfig,
+  CompatConfig,
+  MetaConfig,
+  ModuleTier,
+  SchemaStrictness
+} from '../types.js';
 
 const FRONTMATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/;
 
@@ -24,6 +38,19 @@ async function detectFormat(modulePath: string): Promise<'v1' | 'v2'> {
 }
 
 /**
+ * Detect v2.x sub-version from manifest
+ */
+function detectV2Version(manifest: Record<string, unknown>): string {
+  if (manifest.tier || manifest.overflow || manifest.enums) {
+    return 'v2.2';
+  }
+  if (manifest.policies || manifest.failure) {
+    return 'v2.1';
+  }
+  return 'v2.0';
+}
+
+/**
  * Load v2 format module (module.yaml + prompt.md)
  */
 async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
@@ -34,6 +61,9 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
   // Read module.yaml
   const manifestContent = await fs.readFile(manifestFile, 'utf-8');
   const manifest = yaml.load(manifestContent) as Record<string, unknown>;
+
+  // Detect v2.x version
+  const formatVersion = detectV2Version(manifest);
 
   // Read prompt.md
   let prompt = '';
@@ -46,17 +76,67 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
   // Read schema.json
   let inputSchema: object | undefined;
   let outputSchema: object | undefined;
+  let dataSchema: object | undefined;
+  let metaSchema: object | undefined;
   let errorSchema: object | undefined;
   
   try {
     const schemaContent = await fs.readFile(schemaFile, 'utf-8');
     const schema = JSON.parse(schemaContent);
     inputSchema = schema.input;
-    outputSchema = schema.output;
+    // Support both "data" (v2.2) and "output" (v2.1) aliases
+    dataSchema = schema.data || schema.output;
+    outputSchema = dataSchema; // Backward compat
+    metaSchema = schema.meta;
     errorSchema = schema.error;
   } catch {
     // Schema file is optional but recommended
   }
+
+  // Extract v2.2 fields
+  const tier = manifest.tier as ModuleTier | undefined;
+  const schemaStrictness = (manifest.schema_strictness as SchemaStrictness) || 'medium';
+  
+  // Determine default max_items based on strictness (SPEC-v2.2)
+  const strictnessMaxItems: Record<SchemaStrictness, number> = {
+    high: 0,
+    medium: 5,
+    low: 20
+  };
+  const defaultMaxItems = strictnessMaxItems[schemaStrictness] ?? 5;
+  const defaultEnabled = schemaStrictness !== 'high';
+  
+  // Parse overflow config with strictness-based defaults
+  const overflowRaw = (manifest.overflow as Record<string, unknown>) || {};
+  const overflow: OverflowConfig = {
+    enabled: (overflowRaw.enabled as boolean) ?? defaultEnabled,
+    recoverable: (overflowRaw.recoverable as boolean) ?? true,
+    max_items: (overflowRaw.max_items as number) ?? defaultMaxItems,
+    require_suggested_mapping: (overflowRaw.require_suggested_mapping as boolean) ?? true
+  };
+  
+  // Parse enums config
+  const enumsRaw = (manifest.enums as Record<string, unknown>) || {};
+  const enums: EnumConfig = {
+    strategy: (enumsRaw.strategy as 'strict' | 'extensible') ?? 
+      (tier === 'exec' ? 'strict' : 'extensible'),
+    unknown_tag: (enumsRaw.unknown_tag as string) ?? 'custom'
+  };
+  
+  // Parse compat config
+  const compatRaw = (manifest.compat as Record<string, unknown>) || {};
+  const compat: CompatConfig = {
+    accepts_v21_payload: (compatRaw.accepts_v21_payload as boolean) ?? true,
+    runtime_auto_wrap: (compatRaw.runtime_auto_wrap as boolean) ?? true,
+    schema_output_alias: (compatRaw.schema_output_alias as 'data' | 'output') ?? 'data'
+  };
+  
+  // Parse meta config (including risk_rule)
+  const metaRaw = (manifest.meta as Record<string, unknown>) || {};
+  const metaConfig: MetaConfig = {
+    required: metaRaw.required as string[] | undefined,
+    risk_rule: metaRaw.risk_rule as 'max_changes_risk' | 'max_issues_risk' | 'explicit' | undefined,
+  };
 
   return {
     name: manifest.name as string || path.basename(modulePath),
@@ -69,13 +149,26 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
     output: manifest.output as OutputContract | undefined,
     failure: manifest.failure as FailureContract | undefined,
     runtimeRequirements: manifest.runtime_requirements as RuntimeRequirements | undefined,
+    // v2.2 fields
+    tier,
+    schemaStrictness,
+    overflow,
+    enums,
+    compat,
+    metaConfig,
+    // Context and prompt
     context: manifest.context as 'fork' | 'main' | undefined,
     prompt,
+    // Schemas
     inputSchema,
     outputSchema,
+    dataSchema,
+    metaSchema,
     errorSchema,
+    // Metadata
     location: modulePath,
     format: 'v2',
+    formatVersion,
   };
 }
 

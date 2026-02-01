@@ -50,6 +50,9 @@ export type RiskLevel = 'none' | 'low' | 'medium' | 'high';
 /** Enum extension strategy */
 export type EnumStrategy = 'strict' | 'extensible';
 
+/** Risk aggregation rule */
+export type RiskRule = 'max_changes_risk' | 'max_issues_risk' | 'explicit';
+
 // =============================================================================
 // Module Configuration (v2.2)
 // =============================================================================
@@ -93,6 +96,9 @@ export interface CognitiveModule {
   
   // v2.2: Compatibility configuration
   compat?: CompatConfig;
+  
+  // v2.2: Meta configuration (including risk_rule)
+  metaConfig?: MetaConfig;
   
   // Execution context
   context?: 'fork' | 'main';
@@ -179,6 +185,14 @@ export interface CompatConfig {
   accepts_v21_payload?: boolean;
   runtime_auto_wrap?: boolean;
   schema_output_alias?: 'data' | 'output';
+}
+
+/** Meta field configuration (v2.2) */
+export interface MetaConfig {
+  required?: string[];
+  risk_rule?: RiskRule;
+  confidence?: { min?: number; max?: number };
+  explain?: { max_chars?: number };
 }
 
 // =============================================================================
@@ -386,18 +400,21 @@ export function isEnvelopeSuccess<T>(
 }
 
 /** Extract meta from any envelope response */
-export function extractMeta<T>(response: EnvelopeResponse<T>): EnvelopeMeta {
+export function extractMeta<T>(
+  response: EnvelopeResponse<T>,
+  riskRule: RiskRule = 'max_changes_risk'
+): EnvelopeMeta {
   if (isV22Envelope(response)) {
     return response.meta;
   }
   
   // Synthesize meta from v2.1 response
   if (response.ok) {
-    const data = response.data as Record<string, unknown>;
+    const data = (response.data ?? {}) as Record<string, unknown>;
     return {
-      confidence: (data?.confidence as number) ?? 0.5,
-      risk: 'medium',
-      explain: ((data?.rationale as string) ?? '').slice(0, 280) || 'No explanation',
+      confidence: (data.confidence as number) ?? 0.5,
+      risk: aggregateRisk(data, riskRule),
+      explain: ((data.rationale as string) ?? '').slice(0, 280) || 'No explanation',
     };
   } else {
     return {
@@ -408,22 +425,48 @@ export function extractMeta<T>(response: EnvelopeResponse<T>): EnvelopeMeta {
   }
 }
 
-/** Aggregate risk from list of changes */
-export function aggregateRisk(changes: Array<{ risk?: RiskLevel }>): RiskLevel {
+/** Aggregate risk from list of items */
+function aggregateRiskFromList(items: Array<{ risk?: RiskLevel }>): RiskLevel {
   const riskLevels: Record<RiskLevel, number> = { none: 0, low: 1, medium: 2, high: 3 };
   const riskNames: RiskLevel[] = ['none', 'low', 'medium', 'high'];
   
-  if (!changes || changes.length === 0) {
+  if (!items || items.length === 0) {
     return 'medium';
   }
   
   let maxLevel = 0;
-  for (const change of changes) {
-    const level = riskLevels[change.risk ?? 'medium'];
+  for (const item of items) {
+    const level = riskLevels[item.risk ?? 'medium'];
     maxLevel = Math.max(maxLevel, level);
   }
   
   return riskNames[maxLevel];
+}
+
+/** 
+ * Aggregate risk based on configured rule.
+ * 
+ * Rules:
+ * - max_changes_risk: max(data.changes[*].risk) - default
+ * - max_issues_risk: max(data.issues[*].risk) - for review modules
+ * - explicit: return "medium", module should set risk explicitly
+ */
+export function aggregateRisk(
+  data: Record<string, unknown>,
+  riskRule: RiskRule = 'max_changes_risk'
+): RiskLevel {
+  if (riskRule === 'max_changes_risk') {
+    const changes = (data.changes as Array<{ risk?: RiskLevel }>) ?? [];
+    return aggregateRiskFromList(changes);
+  } else if (riskRule === 'max_issues_risk') {
+    const issues = (data.issues as Array<{ risk?: RiskLevel }>) ?? [];
+    return aggregateRiskFromList(issues);
+  } else if (riskRule === 'explicit') {
+    return 'medium'; // Module should override
+  }
+  // Fallback to changes
+  const changes = (data.changes as Array<{ risk?: RiskLevel }>) ?? [];
+  return aggregateRiskFromList(changes);
 }
 
 /** Check if result should be escalated to human review */
