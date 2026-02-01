@@ -1,0 +1,107 @@
+{
+  "$schema": "https://cognitive-modules.io/schema/v2",
+  "input": {
+    "type": "object",
+    "required": ["code"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "description": "The code to simplify"
+      },
+      "language": {
+        "type": "string",
+        "description": "Programming language (auto-detected if not provided)"
+      },
+      "query": {
+        "type": "string",
+        "description": "Natural language instructions (optional)"
+      },
+      "options": {
+        "type": "object",
+        "properties": {
+          "preserve_comments": { "type": "boolean", "default": true },
+          "max_line_length": { "type": "integer", "default": 100 },
+          "style_guide": { "type": "string" }
+        }
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["simplified_code", "changes", "behavior_equivalence", "summary", "rationale", "confidence"],
+    "properties": {
+      "simplified_code": {
+        "type": "string",
+        "description": "The simplified version of the code"
+      },
+      "changes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["type", "description", "scope", "risk"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["remove_redundancy", "improve_naming", "reduce_nesting", "extract_pattern", "simplify_logic", "other"]
+            },
+            "description": { "type": "string" },
+            "scope": {
+              "type": "string",
+              "enum": ["local", "function", "file", "project"],
+              "description": "Impact scope of this change"
+            },
+            "risk": {
+              "type": "string",
+              "enum": ["none", "low", "medium", "high"],
+              "description": "Risk level of this change"
+            },
+            "before": { "type": "string" },
+            "after": { "type": "string" }
+          }
+        }
+      },
+      "behavior_equivalence": {
+        "type": "boolean",
+        "description": "True ONLY if the simplified code behaves identically to the original"
+      },
+      "complexity_reduction": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Estimated reduction in complexity (percentage)"
+      },
+      "diff_unified": {
+        "type": "string",
+        "description": "Unified diff format for tooling integration (optional)"
+      },
+      "summary": {
+        "type": "string",
+        "description": "Brief description of what was simplified"
+      },
+      "rationale": {
+        "type": "string",
+        "description": "Explanation of simplification decisions"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    }
+  },
+  "error": {
+    "type": "object",
+    "required": ["code", "message"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": ["PARSE_ERROR", "UNSUPPORTED_LANGUAGE", "NO_SIMPLIFICATION_POSSIBLE", "BEHAVIOR_CHANGE_REQUIRED", "INTERNAL_ERROR"]
+      },
+      "message": { "type": "string" },
+      "partial": {
+        "type": "object",
+        "description": "Partial result if available"
+      }
+    }
+  }
+}

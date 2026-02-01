@@ -99,6 +99,7 @@ cog doctor
 | 模块 | 功能 | 示例 |
 |------|------|------|
 | `code-reviewer` | 代码审查 | `cog run code-reviewer --args "你的代码"` |
+| `code-simplifier` | 代码简化 | `cog run code-simplifier --args "复杂代码"` |
 | `task-prioritizer` | 任务优先级排序 | `cog run task-prioritizer --args "任务1,任务2"` |
 | `api-designer` | REST API 设计 | `cog run api-designer --args "订单系统"` |
 | `ui-spec-generator` | UI 规范生成 | `cog run ui-spec-generator --args "电商首页"` |
@@ -189,6 +190,134 @@ export LLM_PROVIDER=ollama
 cog doctor
 ```
 
+## 创建新模块（完整流程）
+
+以 `code-simplifier` 为例：
+
+### Step 1: 创建目录结构
+
+```bash
+mkdir -p cognitive/modules/code-simplifier
+```
+
+### Step 2: 编写 MODULE.md
+
+```bash
+cat > cognitive/modules/code-simplifier/MODULE.md << 'EOF'
+---
+name: code-simplifier
+version: 1.0.0
+responsibility: Simplify complex code while preserving functionality
+
+excludes:
+  - Changing the code's behavior
+  - Adding new features
+  - Removing functionality
+
+constraints:
+  no_network: true
+  no_side_effects: true
+  require_confidence: true
+  require_rationale: true
+---
+
+# Code Simplifier Module
+
+You are an expert at refactoring and simplifying code.
+
+## Input
+
+Code to simplify: $ARGUMENTS
+
+## Simplification Strategies
+
+1. **Remove redundancy** - Eliminate duplicate code
+2. **Improve naming** - Use clear, descriptive names
+3. **Reduce nesting** - Flatten deep conditionals
+4. **Simplify logic** - Use built-in functions
+
+## Output Requirements
+
+Return JSON containing:
+- `simplified_code`: The simplified version
+- `changes`: List of changes made
+- `summary`: Brief description
+- `rationale`: Explanation of decisions
+- `confidence`: Confidence score [0-1]
+EOF
+```
+
+### Step 3: 编写 schema.json
+
+```bash
+cat > cognitive/modules/code-simplifier/schema.json << 'EOF'
+{
+  "$schema": "https://cognitive-modules.io/schema/v1",
+  "input": {
+    "type": "object",
+    "properties": {
+      "code": { "type": "string" },
+      "language": { "type": "string" },
+      "$ARGUMENTS": { "type": "string" }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["simplified_code", "changes", "summary", "rationale", "confidence"],
+    "properties": {
+      "simplified_code": { "type": "string" },
+      "changes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        }
+      },
+      "summary": { "type": "string" },
+      "rationale": { "type": "string" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    }
+  }
+}
+EOF
+```
+
+### Step 4: 验证模块
+
+```bash
+cog validate code-simplifier
+cog list  # 确认模块出现在列表中
+```
+
+### Step 5: 测试运行
+
+```bash
+cog run code-simplifier --args "def calc(x): if x > 0: if x < 10: return x * 2 else: return x else: return 0" --pretty
+```
+
+### Step 6: 添加示例（可选）
+
+```bash
+mkdir -p cognitive/modules/code-simplifier/examples
+# 添加 input.json 和 output.json 作为测试用例
+```
+
+### 模块设计要点
+
+| 要素 | 必须 | 说明 |
+|------|------|------|
+| `name` | ✅ | 唯一标识符，kebab-case |
+| `version` | ✅ | 语义化版本 |
+| `responsibility` | ✅ | 一句话描述职责 |
+| `excludes` | ✅ | 明确列出不做的事 |
+| `$ARGUMENTS` | ✅ | 支持命令行参数 |
+| `confidence` | ✅ | 输出必须包含 0-1 置信度 |
+| `rationale` | ✅ | 输出必须包含推理过程 |
+| `schema.json` | ✅ | 定义输入输出契约 |
+
 ## 开发
 
 ```bash
@@ -202,7 +331,7 @@ pip install -e ".[dev]"
 # 运行测试
 pytest tests/ -v
 
-# 创建新模块
+# 创建新模块（使用模板）
 cog init my-module -d "模块描述"
 cog validate my-module
 ```

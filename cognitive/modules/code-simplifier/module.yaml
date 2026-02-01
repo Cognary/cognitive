@@ -1,0 +1,42 @@
+# Cognitive Module Manifest (Machine Layer)
+# Version: 2.0.0 - Separated from prompt
+
+name: code-simplifier
+version: 2.0.0
+responsibility: Simplify code while preserving behavior
+
+# Constraints (what the module CANNOT do)
+constraints:
+  no_network: true
+  no_side_effects: true
+  no_file_write: true
+  no_inventing_data: true
+
+# Output contract
+output:
+  mode: json_strict
+  require_confidence: true
+  require_rationale: true
+  require_behavior_equivalence: true
+
+# Tools policy (empty = no tools allowed, safest)
+tools:
+  allowed: []
+  # Future: ["read_file", "run_tests"]
+
+# Failure contract
+failure:
+  schema:
+    error:
+      code: string
+      message: string
+    partial: object?  # Optional partial result
+
+# IO schemas
+io:
+  input: ./schema.json#/input
+  output: ./schema.json#/output
+
+# Test cases
+tests:
+  - case1.input.json -> case1.expected.json

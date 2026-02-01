@@ -1,0 +1,4 @@
+{
+  "code": "function processData(data) {\n  let result = [];\n  for (let i = 0; i < data.length; i++) {\n    let item = data[i];\n    if (item !== null && item !== undefined) {\n      result.push(item * 2);\n    }\n  }\n  return result;\n}",
+  "language": "javascript"
+}
