@@ -10,7 +10,7 @@ from cognitive.loader import (
     detect_format,
     parse_frontmatter,
     load_module,
-    load_new_format,
+    load_v1_format,
 )
 
 
@@ -50,11 +50,15 @@ version: 1.0.0
 class TestDetectFormat:
     """Test format detection."""
 
-    def test_detect_new_format(self, tmp_path):
-        (tmp_path / "MODULE.md").write_text("---\nname: test\n---\n")
-        assert detect_format(tmp_path) == "new"
+    def test_detect_v2_format(self, tmp_path):
+        (tmp_path / "module.yaml").write_text("name: test\n")
+        assert detect_format(tmp_path) == "v2"
 
-    def test_detect_old_format(self, tmp_path):
+    def test_detect_v1_format(self, tmp_path):
+        (tmp_path / "MODULE.md").write_text("---\nname: test\n---\n")
+        assert detect_format(tmp_path) == "v1"
+
+    def test_detect_v0_format(self, tmp_path):
         # On macOS (case-insensitive), module.md and MODULE.md are same
         # So we skip this test on case-insensitive filesystems
         import sys
@@ -62,15 +66,15 @@ class TestDetectFormat:
             pytest.skip("macOS is case-insensitive, module.md == MODULE.md")
         
         (tmp_path / "module.md").write_text("---\nname: test\n---\n")
-        assert detect_format(tmp_path) == "old"
+        assert detect_format(tmp_path) == "v0"
 
     def test_detect_missing_raises(self, tmp_path):
         with pytest.raises(FileNotFoundError):
             detect_format(tmp_path)
 
 
-class TestLoadNewFormat:
-    """Test loading new format modules."""
+class TestLoadV1Format:
+    """Test loading v1 format modules (MODULE.md)."""
 
     def test_load_minimal_module(self, tmp_path):
         # Create MODULE.md
@@ -92,10 +96,10 @@ Instructions here.
         }
         (tmp_path / "schema.json").write_text(json.dumps(schema))
         
-        module = load_new_format(tmp_path)
+        module = load_v1_format(tmp_path)
         
         assert module["name"] == "test-module"
-        assert module["format"] == "new"
+        assert module["format"] == "v1"
         assert "Instructions here" in module["prompt"]
         assert module["input_schema"]["type"] == "object"
 
@@ -112,7 +116,7 @@ constraints:
 """)
         (tmp_path / "schema.json").write_text("{}")
         
-        module = load_new_format(tmp_path)
+        module = load_v1_format(tmp_path)
         
         assert module["constraints"]["operational"]["no_external_network"] is True
         assert module["constraints"]["operational"]["no_side_effects"] is True
@@ -121,10 +125,10 @@ constraints:
 class TestLoadModule:
     """Test unified module loading."""
 
-    def test_load_auto_detects_new_format(self, tmp_path):
+    def test_load_auto_detects_v1_format(self, tmp_path):
         (tmp_path / "MODULE.md").write_text("---\nname: auto-test\n---\nContent")
         (tmp_path / "schema.json").write_text("{}")
         
         module = load_module(tmp_path)
-        assert module["format"] == "new"
+        assert module["format"] == "v1"
         assert module["name"] == "auto-test"
