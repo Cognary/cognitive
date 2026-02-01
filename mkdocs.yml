@@ -16,16 +16,16 @@ theme:
     # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: deep purple
-      accent: purple
+      primary: white
+      accent: light blue
       toggle:
         icon: material/brightness-7
         name: 切换到深色模式
     # Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: deep purple
-      accent: purple
+      primary: black
+      accent: light blue
       toggle:
         icon: material/brightness-4
         name: 切换到浅色模式
