@@ -17,8 +17,11 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import Optional
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from urllib.error import URLError
+import zipfile
+import io
+import re
 
 # Standard module search paths
 SEARCH_PATHS = [
@@ -54,9 +57,11 @@ def find_module(name: str) -> Optional[Path]:
     """Find a module by name, searching all paths in order."""
     for base_path in get_search_paths():
         module_path = base_path / name
-        # Support both new and old format
+        # Support v2, v1, and v0 formats
         if module_path.exists():
-            if (module_path / "MODULE.md").exists() or (module_path / "module.md").exists():
+            if (module_path / "module.yaml").exists() or \
+               (module_path / "MODULE.md").exists() or \
+               (module_path / "module.md").exists():
                 return module_path
     return None
 
@@ -75,12 +80,16 @@ def list_modules() -> list[dict]:
                 continue
             if module_dir.name in seen:
                 continue
-            # Support both formats
-            if not ((module_dir / "MODULE.md").exists() or (module_dir / "module.md").exists()):
-                continue
             
-            # Detect format
-            fmt = "new" if (module_dir / "MODULE.md").exists() else "old"
+            # Detect format: v2, v1, or v0
+            if (module_dir / "module.yaml").exists():
+                fmt = "v2"
+            elif (module_dir / "MODULE.md").exists():
+                fmt = "v1"
+            elif (module_dir / "module.md").exists():
+                fmt = "v0"
+            else:
+                continue
             
             seen.add(module_dir.name)
             modules.append({
@@ -105,9 +114,9 @@ def install_from_local(source: Path, name: Optional[str] = None) -> Path:
     if not source.exists():
         raise FileNotFoundError(f"Source not found: {source}")
     
-    # Check for valid module (either format)
-    if not ((source / "MODULE.md").exists() or (source / "module.md").exists()):
-        raise ValueError(f"Not a valid module (missing MODULE.md or module.md): {source}")
+    # Check for valid module (v2, v1, or v0 format)
+    if not _is_valid_module(source):
+        raise ValueError(f"Not a valid module (missing module.yaml, MODULE.md, or module.md): {source}")
     
     module_name = name or source.name
     target = ensure_user_modules_dir() / module_name
@@ -116,7 +125,135 @@ def install_from_local(source: Path, name: Optional[str] = None) -> Path:
         shutil.rmtree(target)
     
     shutil.copytree(source, target)
+    
+    # Record source info for update tracking
+    _record_module_source(module_name, source)
+    
     return target
+
+
+def _record_module_source(name: str, source: Path, github_url: str = None, module_path: str = None):
+    """Record module source info for future updates."""
+    manifest_path = Path.home() / ".cognitive" / "installed.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Load existing manifest
+    manifest = {}
+    if manifest_path.exists():
+        try:
+            with open(manifest_path, 'r') as f:
+                manifest = json.load(f)
+        except:
+            pass
+    
+    # Update entry
+    manifest[name] = {
+        "source": str(source),
+        "github_url": github_url,
+        "module_path": module_path,
+        "installed_at": str(Path.home() / ".cognitive" / "modules" / name),
+    }
+    
+    with open(manifest_path, 'w') as f:
+        json.dump(manifest, f, indent=2)
+
+
+def install_from_github_url(
+    url: str,
+    module_path: Optional[str] = None,
+    name: Optional[str] = None,
+    branch: str = "main"
+) -> Path:
+    """
+    Install a module from a GitHub URL without requiring git.
+    
+    Uses GitHub's ZIP download feature for lightweight installation.
+    
+    Examples:
+        install_from_github_url("https://github.com/ziel-io/cognitive-modules", 
+                                module_path="cognitive/modules/code-simplifier")
+        install_from_github_url("ziel-io/cognitive-modules", 
+                                module_path="code-simplifier")
+    """
+    # Parse shorthand (org/repo)
+    if not url.startswith("http"):
+        url = f"https://github.com/{url}"
+    
+    # Extract org/repo from URL
+    match = re.match(r"https://github\.com/([^/]+)/([^/]+)/?", url)
+    if not match:
+        raise ValueError(f"Invalid GitHub URL: {url}")
+    
+    org, repo = match.groups()
+    repo = repo.rstrip(".git")
+    
+    # Build ZIP download URL
+    zip_url = f"https://github.com/{org}/{repo}/archive/refs/heads/{branch}.zip"
+    
+    try:
+        # Download ZIP
+        req = Request(zip_url, headers={"User-Agent": "cognitive-modules/1.0"})
+        with urlopen(req, timeout=30) as response:
+            zip_data = response.read()
+    except URLError as e:
+        raise RuntimeError(f"Failed to download from GitHub: {e}")
+    
+    # Extract to temp directory
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmppath = Path(tmpdir)
+        
+        # Extract ZIP
+        with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+            zf.extractall(tmppath)
+        
+        # Find extracted directory (usually repo-branch)
+        extracted_dirs = list(tmppath.iterdir())
+        if not extracted_dirs:
+            raise RuntimeError("ZIP file was empty")
+        repo_root = extracted_dirs[0]
+        
+        # Determine source path
+        if module_path:
+            # Try different module path patterns
+            source = None
+            possible_paths = [
+                repo_root / module_path,
+                repo_root / "cognitive" / "modules" / module_path,
+                repo_root / "modules" / module_path,
+            ]
+            for p in possible_paths:
+                if p.exists() and _is_valid_module(p):
+                    source = p
+                    break
+            
+            if not source:
+                raise FileNotFoundError(
+                    f"Module not found at: {module_path}\n"
+                    f"Searched in: {[str(p.relative_to(repo_root)) for p in possible_paths]}"
+                )
+        else:
+            # Use repo root as module
+            source = repo_root
+            if not _is_valid_module(source):
+                raise ValueError(
+                    f"Repository root is not a valid module. "
+                    f"Use --module to specify the module path."
+                )
+        
+        # Determine module name
+        module_name = name or source.name
+        
+        # Install
+        return install_from_local(source, module_name)
+
+
+def _is_valid_module(path: Path) -> bool:
+    """Check if a directory is a valid cognitive module."""
+    return (
+        (path / "module.yaml").exists() or  # v2 format
+        (path / "MODULE.md").exists() or     # v1 format
+        (path / "module.md").exists()         # v0 format
+    )
 
 
 def install_from_git(url: str, subdir: Optional[str] = None, name: Optional[str] = None) -> Path:

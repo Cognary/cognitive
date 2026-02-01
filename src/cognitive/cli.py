@@ -5,8 +5,10 @@ Commands:
     cog list                      List installed modules
     cog run <module> <input>      Run a module
     cog validate <module>         Validate module structure
+    cog add <url> --module <name> Add module from GitHub (recommended)
     cog install <source>          Install module from git/local/registry
-    cog uninstall <module>        Remove an installed module
+    cog remove <module>           Remove an installed module
+    cog uninstall <module>        Remove an installed module (alias)
     cog init <name>               Create a new module from template
     cog search <query>            Search the public registry
     cog doctor                    Check environment setup
@@ -31,6 +33,7 @@ from .registry import (
     uninstall_module,
     search_registry,
     fetch_registry,
+    install_from_github_url,
     USER_MODULES_DIR,
 )
 from .loader import load_module, detect_format
@@ -201,6 +204,68 @@ def install_cmd(
     except Exception as e:
         rprint(f"[red]✗ Install failed: {e}[/red]")
         raise typer.Exit(1)
+
+
+@app.command("add")
+def add_cmd(
+    url: str = typer.Argument(..., help="GitHub URL or org/repo shorthand"),
+    module: str = typer.Option(None, "--module", "-m", help="Module path within repo"),
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="Override module name"),
+    branch: str = typer.Option("main", "--branch", "-b", help="Git branch"),
+):
+    """
+    Add a cognitive module from GitHub.
+    
+    Examples:
+    
+        cog add https://github.com/ziel-io/cognitive-modules --module code-simplifier
+        
+        cog add ziel-io/cognitive-modules -m code-reviewer
+        
+        cog add org/repo -m path/to/module --name my-module
+    """
+    rprint(f"[cyan]→[/cyan] Adding module from: {url}")
+    if module:
+        rprint(f"  Module path: {module}")
+    
+    try:
+        target = install_from_github_url(
+            url=url,
+            module_path=module,
+            name=name,
+            branch=branch,
+        )
+        
+        # Validate installed module
+        is_valid, errors, warnings = validate_module(str(target))
+        
+        if not is_valid:
+            rprint(f"[red]✗ Installed module failed validation:[/red]")
+            for e in errors:
+                rprint(f"  - {e}")
+            uninstall_module(target.name)
+            raise typer.Exit(1)
+        
+        rprint(f"[green]✓ Added: {target.name}[/green]")
+        rprint(f"  Location: {target}")
+        
+        if warnings:
+            rprint(f"[yellow]  Warnings: {len(warnings)}[/yellow]")
+        
+        rprint(f"\nRun with:")
+        rprint(f"  [cyan]cog run {target.name} --args \"your input\"[/cyan]")
+        
+    except Exception as e:
+        rprint(f"[red]✗ Failed to add module: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("remove")
+def remove_cmd(
+    module: str = typer.Argument(..., help="Module name to remove"),
+):
+    """Remove an installed cognitive module (alias for uninstall)."""
+    uninstall_cmd(module)
 
 
 @app.command("uninstall")
