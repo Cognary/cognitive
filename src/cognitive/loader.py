@@ -1,17 +1,22 @@
 """
-Module Loader - Load cognitive modules in both old and new formats.
+Module Loader - Load cognitive modules in all formats.
 
-Old format (6 files):
+Format v2 (recommended):
+  - module.yaml (machine-readable manifest)
+  - prompt.md (human-readable prompt)
+  - schema.json (input + output + error)
+  - tests/ (golden tests)
+
+Format v1 (legacy, still supported):
+  - MODULE.md (YAML frontmatter + prompt)
+  - schema.json (input + output)
+
+Format v0 (old, deprecated):
   - module.md (YAML frontmatter)
   - input.schema.json
   - output.schema.json
   - constraints.yaml
   - prompt.txt
-  - examples/
-
-New format (2 files):
-  - MODULE.md (YAML frontmatter + prompt)
-  - schema.json (input + output combined)
 """
 
 import json
@@ -22,13 +27,15 @@ import yaml
 
 
 def detect_format(module_path: Path) -> str:
-    """Detect module format: 'new' or 'old'."""
-    if (module_path / "MODULE.md").exists():
-        return "new"
+    """Detect module format: 'v2', 'v1', or 'v0'."""
+    if (module_path / "module.yaml").exists():
+        return "v2"
+    elif (module_path / "MODULE.md").exists():
+        return "v1"
     elif (module_path / "module.md").exists():
-        return "old"
+        return "v0"
     else:
-        raise FileNotFoundError(f"No MODULE.md or module.md found in {module_path}")
+        raise FileNotFoundError(f"No module.yaml, MODULE.md, or module.md found in {module_path}")
 
 
 def parse_frontmatter(content: str) -> tuple[dict, str]:
@@ -45,8 +52,79 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
     return frontmatter, body
 
 
-def load_new_format(module_path: Path) -> dict:
-    """Load module in new format (MODULE.md + schema.json)."""
+def load_v2_format(module_path: Path) -> dict:
+    """Load module in v2 format (module.yaml + prompt.md + schema.json)."""
+    # Load module.yaml
+    with open(module_path / "module.yaml", 'r', encoding='utf-8') as f:
+        manifest = yaml.safe_load(f)
+    
+    # Load prompt.md
+    prompt_path = module_path / "prompt.md"
+    if prompt_path.exists():
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            prompt = f.read()
+    else:
+        prompt = ""
+    
+    # Load schema.json
+    schema_path = module_path / "schema.json"
+    if schema_path.exists():
+        with open(schema_path, 'r', encoding='utf-8') as f:
+            schema = json.load(f)
+        input_schema = schema.get("input", {})
+        output_schema = schema.get("output", {})
+        error_schema = schema.get("error", {})
+    else:
+        input_schema = {}
+        output_schema = {}
+        error_schema = {}
+    
+    # Extract constraints
+    constraints_raw = manifest.get("constraints", {})
+    constraints = {
+        "operational": {
+            "no_external_network": constraints_raw.get("no_network", True),
+            "no_side_effects": constraints_raw.get("no_side_effects", True),
+            "no_file_write": constraints_raw.get("no_file_write", True),
+            "no_inventing_data": constraints_raw.get("no_inventing_data", True),
+        },
+        "output_quality": {
+            "require_confidence": manifest.get("output", {}).get("require_confidence", True),
+            "require_rationale": manifest.get("output", {}).get("require_rationale", True),
+            "require_behavior_equivalence": manifest.get("output", {}).get("require_behavior_equivalence", False),
+        }
+    }
+    
+    # Extract tools policy
+    tools = manifest.get("tools", {})
+    
+    # Extract output contract
+    output_contract = manifest.get("output", {})
+    
+    # Extract failure contract
+    failure_contract = manifest.get("failure", {})
+    
+    return {
+        "name": manifest.get("name", module_path.name),
+        "version": manifest.get("version", "1.0.0"),
+        "responsibility": manifest.get("responsibility", ""),
+        "excludes": manifest.get("excludes", []),
+        "path": module_path,
+        "format": "v2",
+        "metadata": manifest,
+        "input_schema": input_schema,
+        "output_schema": output_schema,
+        "error_schema": error_schema,
+        "constraints": constraints,
+        "tools": tools,
+        "output_contract": output_contract,
+        "failure_contract": failure_contract,
+        "prompt": prompt,
+    }
+
+
+def load_v1_format(module_path: Path) -> dict:
+    """Load module in v1 format (MODULE.md + schema.json)."""
     # Load MODULE.md
     with open(module_path / "MODULE.md", 'r', encoding='utf-8') as f:
         content = f.read()
@@ -79,8 +157,11 @@ def load_new_format(module_path: Path) -> dict:
     
     return {
         "name": metadata.get("name", module_path.name),
+        "version": metadata.get("version", "1.0.0"),
+        "responsibility": metadata.get("responsibility", ""),
+        "excludes": metadata.get("excludes", []),
         "path": module_path,
-        "format": "new",
+        "format": "v1",
         "metadata": metadata,
         "input_schema": input_schema,
         "output_schema": output_schema,
@@ -89,8 +170,8 @@ def load_new_format(module_path: Path) -> dict:
     }
 
 
-def load_old_format(module_path: Path) -> dict:
-    """Load module in old format (6 files)."""
+def load_v0_format(module_path: Path) -> dict:
+    """Load module in v0 format (old 6-file format)."""
     # Load module.md
     with open(module_path / "module.md", 'r', encoding='utf-8') as f:
         content = f.read()
@@ -114,8 +195,11 @@ def load_old_format(module_path: Path) -> dict:
     
     return {
         "name": metadata.get("name", module_path.name),
+        "version": metadata.get("version", "1.0.0"),
+        "responsibility": metadata.get("responsibility", ""),
+        "excludes": [],
         "path": module_path,
-        "format": "old",
+        "format": "v0",
         "metadata": metadata,
         "input_schema": input_schema,
         "output_schema": output_schema,
@@ -127,7 +211,37 @@ def load_old_format(module_path: Path) -> dict:
 def load_module(module_path: Path) -> dict:
     """Load a module, auto-detecting format."""
     fmt = detect_format(module_path)
-    if fmt == "new":
-        return load_new_format(module_path)
+    if fmt == "v2":
+        return load_v2_format(module_path)
+    elif fmt == "v1":
+        return load_v1_format(module_path)
     else:
-        return load_old_format(module_path)
+        return load_v0_format(module_path)
+
+
+def find_module(name: str, search_paths: list[Path]) -> Optional[dict]:
+    """Find and load a module by name from search paths."""
+    for base_path in search_paths:
+        module_path = base_path / name
+        if module_path.exists():
+            try:
+                return load_module(module_path)
+            except FileNotFoundError:
+                continue
+    return None
+
+
+def list_modules(search_paths: list[Path]) -> list[dict]:
+    """List all modules in search paths."""
+    modules = []
+    for base_path in search_paths:
+        if not base_path.exists():
+            continue
+        for module_dir in base_path.iterdir():
+            if module_dir.is_dir():
+                try:
+                    module = load_module(module_dir)
+                    modules.append(module)
+                except FileNotFoundError:
+                    continue
+    return modules
