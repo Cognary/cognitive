@@ -3,24 +3,39 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cognitive"
+name = "cognitive-modules"
 version = "0.1.0"
-description = "Cognitive Modules CLI - Structured LLM task runner with schema validation"
+description = "Structured LLM task runner with schema validation, confidence scoring, and subagent orchestration"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 authors = [
-    {name = "Lucio", email = "lucio@example.com"}
+    {name = "leizii"}
 ]
-keywords = ["llm", "cognitive", "modules", "ai", "cli"]
+keywords = [
+    "llm",
+    "cognitive",
+    "modules",
+    "ai",
+    "cli",
+    "schema",
+    "validation",
+    "prompt",
+    "agent",
+    "subagent"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
 dependencies = [
@@ -34,19 +49,47 @@ dependencies = [
 openai = ["openai>=1.0.0"]
 anthropic = ["anthropic>=0.18.0"]
 ollama = ["requests>=2.28.0"]
-all = ["openai>=1.0.0", "anthropic>=0.18.0", "requests>=2.28.0"]
-dev = ["pytest>=7.0.0", "pytest-cov>=4.0.0"]
+minimax = ["openai>=1.0.0"]
+all = [
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    "requests>=2.28.0"
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0"
+]
 
 [project.scripts]
 cog = "cognitive.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/your-org/cognitive"
-Documentation = "https://github.com/your-org/cognitive#readme"
-Repository = "https://github.com/your-org/cognitive"
+Homepage = "https://github.com/leizii/cognitive-modules"
+Documentation = "https://github.com/leizii/cognitive-modules#readme"
+Repository = "https://github.com/leizii/cognitive-modules"
+Issues = "https://github.com/leizii/cognitive-modules/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.json", "*.md", "*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/cognitive"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
