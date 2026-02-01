@@ -20,8 +20,9 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 
 ## 安装
 
+### Python (pip)
+
 ```bash
-# 基础安装
 pip install cognitive-modules
 
 # 带 LLM 支持
@@ -29,6 +30,21 @@ pip install cognitive-modules[openai]      # OpenAI
 pip install cognitive-modules[anthropic]   # Claude
 pip install cognitive-modules[all]         # 全部
 ```
+
+### Node.js (npm)
+
+```bash
+# 全局安装
+npm install -g cognitive-modules-cli
+
+# 或 npx 零安装使用
+npx cognitive-modules-cli --help
+```
+
+| 平台 | 包名 | 命令 |
+|------|------|------|
+| pip | `cognitive-modules` | `cogn` |
+| npm | `cognitive-modules-cli` | `cog` |
 
 ## 快速开始
 
