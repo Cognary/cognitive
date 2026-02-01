@@ -5,90 +5,157 @@ site_author: leizii
 
 repo_name: leizii/cognitive-modules
 repo_url: https://github.com/leizii/cognitive-modules
+edit_uri: edit/main/docs/
 
 theme:
   name: material
   language: zh
+  custom_dir: docs/overrides
+  
   palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
       toggle:
         icon: material/brightness-7
         name: 切换到深色模式
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
       toggle:
         icon: material/brightness-4
         name: 切换到浅色模式
-  features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - content.code.copy
-    - content.tabs.link
+
+  font:
+    text: Inter
+    code: JetBrains Mono
+
   icon:
     repo: fontawesome/brands/github
+    logo: material/brain
+
+  features:
+    # Navigation
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    # Search
+    - search.suggest
+    - search.highlight
+    - search.share
+    # Content
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    # Header
+    - header.autohide
+    # TOC
+    - toc.follow
 
 plugins:
   - search:
-      lang: 
+      lang:
         - zh
         - en
+  - tags
 
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
+  # Python Markdown
+  - abbr
   - admonition
-  - pymdownx.details
   - attr_list
+  - def_list
+  - footnotes
   - md_in_html
   - tables
   - toc:
       permalink: true
+      toc_depth: 3
+  
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
 
 nav:
   - 首页: index.md
   - 快速开始:
-    - 安装: getting-started/installation.md
-    - 第一个模块: getting-started/first-module.md
-    - 配置 LLM: getting-started/llm-config.md
+      - 安装: getting-started/installation.md
+      - 第一个模块: getting-started/first-module.md
+      - 配置 LLM: getting-started/llm-config.md
   - 指南:
-    - 模块格式: guide/module-format.md
-    - 参数传递: guide/arguments.md
-    - 子代理: guide/subagent.md
-    - 上下文哲学: guide/context-philosophy.md
+      - 模块格式: guide/module-format.md
+      - 参数传递: guide/arguments.md
+      - 子代理: guide/subagent.md
+      - 上下文哲学: guide/context-philosophy.md
   - CLI 参考:
-    - 命令概览: cli/overview.md
-    - cog run: cli/run.md
-    - cog validate: cli/validate.md
+      - 命令概览: cli/overview.md
+      - cog run: cli/run.md
+      - cog validate: cli/validate.md
   - 模块库:
-    - 概览: modules/index.md
-    - code-reviewer: modules/code-reviewer.md
-    - task-prioritizer: modules/task-prioritizer.md
-    - api-designer: modules/api-designer.md
-    - ui-spec-generator: modules/ui-spec-generator.md
+      - 概览: modules/index.md
+      - code-reviewer: modules/code-reviewer.md
+      - task-prioritizer: modules/task-prioritizer.md
+      - api-designer: modules/api-designer.md
+      - ui-spec-generator: modules/ui-spec-generator.md
   - 集成:
-    - 与 AI 工具集成: integration/ai-tools.md
-    - Agent 协议: integration/agent-protocol.md
+      - 与 AI 工具集成: integration/ai-tools.md
+      - Agent 协议: integration/agent-protocol.md
   - 规范: spec.md
 
 extra:
+  generator: false
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/leizii/cognitive-modules
+      name: GitHub
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/cognitive-modules/
+      name: PyPI
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
 
-copyright: Copyright &copy; 2026 leizii - MIT License
+extra_css:
+  - stylesheets/extra.css
+
+copyright: >
+  Copyright &copy; 2026 leizii –
+  <a href="#__consent">Cookie 设置</a>
