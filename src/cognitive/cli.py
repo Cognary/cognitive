@@ -5,9 +5,12 @@ Commands:
     cog list                      List installed modules
     cog run <module> <input>      Run a module
     cog validate <module>         Validate module structure
-    cog install <source>          Install module from git/local
+    cog install <source>          Install module from git/local/registry
     cog uninstall <module>        Remove an installed module
+    cog init <name>               Create a new module from template
+    cog search <query>            Search the public registry
     cog doctor                    Check environment setup
+    cog info <module>             Show module details
 """
 
 import json
@@ -26,10 +29,14 @@ from .registry import (
     find_module,
     install_module,
     uninstall_module,
+    search_registry,
+    fetch_registry,
     USER_MODULES_DIR,
 )
-from .runner import run_module, load_module
+from .loader import load_module, detect_format
+from .runner import run_module
 from .validator import validate_module
+from .templates import create_module
 from .providers import check_provider_status
 
 app = typer.Typer(
@@ -41,25 +48,31 @@ console = Console()
 
 
 @app.command("list")
-def list_cmd():
+def list_cmd(
+    format: str = typer.Option("table", "--format", "-f", help="Output format: table, json"),
+):
     """List all installed cognitive modules."""
     modules = list_modules()
     
     if not modules:
         rprint("[yellow]No modules found.[/yellow]")
-        rprint(f"\nInstall modules with: [cyan]cog install <source>[/cyan]")
-        rprint(f"Modules are searched in:")
-        rprint(f"  1. ./cognitive/modules (project-local)")
-        rprint(f"  2. ~/.cognitive/modules (user-global)")
+        rprint(f"\nInstall modules with:")
+        rprint(f"  [cyan]cog install <source>[/cyan]")
+        rprint(f"  [cyan]cog init <name>[/cyan]")
+        return
+    
+    if format == "json":
+        print(json.dumps([{"name": m["name"], "location": m["location"], "format": m["format"]} for m in modules], indent=2))
         return
     
     table = Table(title="Installed Modules")
     table.add_column("Name", style="cyan")
     table.add_column("Location", style="green")
+    table.add_column("Format", style="dim")
     table.add_column("Path")
     
     for m in modules:
-        table.add_row(m["name"], m["location"], str(m["path"]))
+        table.add_row(m["name"], m["location"], m["format"], str(m["path"]))
     
     console.print(table)
 
@@ -74,7 +87,6 @@ def run_cmd(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="LLM model override"),
 ):
     """Run a cognitive module with input data."""
-    # Load input
     if not input_file.exists():
         rprint(f"[red]Error: Input file not found: {input_file}[/red]")
         raise typer.Exit(1)
@@ -93,7 +105,6 @@ def run_cmd(
             model=model,
         )
         
-        # Format output
         indent = 2 if pretty else None
         output_json = json.dumps(result, indent=indent, ensure_ascii=False)
         
@@ -104,7 +115,6 @@ def run_cmd(
         else:
             print(output_json)
         
-        # Show confidence if present
         if "confidence" in result:
             conf = result["confidence"]
             color = "green" if conf >= 0.8 else "yellow" if conf >= 0.6 else "red"
@@ -141,23 +151,21 @@ def validate_cmd(
 
 @app.command("install")
 def install_cmd(
-    source: str = typer.Argument(..., help="Source: github:org/repo/path, git+https://..., or local path"),
+    source: str = typer.Argument(..., help="Source: github:org/repo/path, registry:name, or local path"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="Override module name"),
 ):
-    """Install a cognitive module from git or local path."""
+    """Install a cognitive module from git, registry, or local path."""
     rprint(f"[cyan]→[/cyan] Installing from: {source}")
     
     try:
         target = install_module(source, name)
         
-        # Validate after install
         is_valid, errors, warnings = validate_module(str(target))
         
         if not is_valid:
             rprint(f"[red]✗ Installed module failed validation:[/red]")
             for e in errors:
                 rprint(f"  - {e}")
-            # Rollback
             uninstall_module(target.name)
             raise typer.Exit(1)
         
@@ -191,6 +199,103 @@ def uninstall_cmd(
         raise typer.Exit(1)
 
 
+@app.command("init")
+def init_cmd(
+    name: str = typer.Argument(..., help="Module name (lowercase, hyphenated)"),
+    responsibility: str = typer.Option("（描述模块职责）", "--desc", "-d", help="One-line description"),
+    target: Path = typer.Option(Path("./cognitive/modules"), "--target", "-t", help="Target directory"),
+    no_examples: bool = typer.Option(False, "--no-examples", help="Skip creating examples"),
+):
+    """Create a new cognitive module from template."""
+    # Validate name
+    if not name.replace("-", "").replace("_", "").isalnum():
+        rprint(f"[red]Invalid module name: {name}[/red]")
+        rprint("  Use lowercase letters, numbers, and hyphens only")
+        raise typer.Exit(1)
+    
+    name = name.lower()
+    
+    rprint(f"[cyan]→[/cyan] Creating module: [bold]{name}[/bold]")
+    
+    try:
+        module_path = create_module(
+            name=name,
+            target_dir=target,
+            responsibility=responsibility,
+            with_examples=not no_examples,
+        )
+        
+        rprint(f"[green]✓ Created module at: {module_path}[/green]")
+        rprint(f"\nFiles created:")
+        rprint(f"  - MODULE.md (edit this)")
+        rprint(f"  - schema.json")
+        if not no_examples:
+            rprint(f"  - examples/input.json")
+            rprint(f"  - examples/output.json")
+        rprint(f"\nNext steps:")
+        rprint(f"  1. Edit [cyan]MODULE.md[/cyan] to add your instructions")
+        rprint(f"  2. Edit [cyan]schema.json[/cyan] to define input/output")
+        rprint(f"  3. Run [cyan]cog validate {name}[/cyan] to check")
+        
+    except Exception as e:
+        rprint(f"[red]✗ Failed to create module: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("search")
+def search_cmd(
+    query: str = typer.Argument(..., help="Search query"),
+):
+    """Search the public module registry."""
+    rprint(f"[cyan]→[/cyan] Searching registry for: {query}\n")
+    
+    results = search_registry(query)
+    
+    if not results:
+        rprint("[yellow]No modules found.[/yellow]")
+        return
+    
+    table = Table(title=f"Search Results ({len(results)})")
+    table.add_column("Name", style="cyan")
+    table.add_column("Description")
+    table.add_column("Version", style="dim")
+    
+    for r in results:
+        table.add_row(r["name"], r["description"], r["version"])
+    
+    console.print(table)
+    rprint(f"\nInstall with: [cyan]cog install registry:<name>[/cyan]")
+
+
+@app.command("registry")
+def registry_cmd(
+    refresh: bool = typer.Option(False, "--refresh", "-r", help="Force refresh from remote"),
+):
+    """Show public registry status and modules."""
+    rprint("[cyan]→[/cyan] Fetching registry...\n")
+    
+    registry = fetch_registry(use_cache=not refresh)
+    
+    if "error" in registry:
+        rprint(f"[yellow]⚠ Registry fetch warning: {registry['error']}[/yellow]")
+    
+    modules = registry.get("modules", {})
+    
+    if not modules:
+        rprint("[yellow]Registry is empty or unavailable.[/yellow]")
+        return
+    
+    table = Table(title=f"Public Registry ({len(modules)} modules)")
+    table.add_column("Name", style="cyan")
+    table.add_column("Description")
+    table.add_column("Version", style="dim")
+    
+    for name, info in modules.items():
+        table.add_row(name, info.get("description", ""), info.get("version", ""))
+    
+    console.print(table)
+
+
 @app.command("doctor")
 def doctor_cmd():
     """Check environment setup and provider availability."""
@@ -198,7 +303,6 @@ def doctor_cmd():
     
     status = check_provider_status()
     
-    # Provider table
     table = Table(title="LLM Providers")
     table.add_column("Provider", style="cyan")
     table.add_column("Installed")
@@ -215,16 +319,13 @@ def doctor_cmd():
     rprint(f"\nCurrent provider: [cyan]{status['current_provider']}[/cyan]")
     rprint(f"Current model: [cyan]{status['current_model']}[/cyan]")
     
-    # Module locations
     rprint("\n[cyan]Module Search Paths:[/cyan]")
     rprint(f"  1. ./cognitive/modules (project-local)")
     rprint(f"  2. ~/.cognitive/modules (user-global)")
     
-    # Installed modules count
     modules = list_modules()
     rprint(f"\n[cyan]Installed Modules:[/cyan] {len(modules)}")
     
-    # Recommendations
     if status["current_provider"] == "stub":
         rprint("\n[yellow]⚠ Using stub provider (no real LLM)[/yellow]")
         rprint("  Set LLM_PROVIDER and API key to use a real LLM:")
@@ -237,15 +338,27 @@ def info_cmd(
     module: str = typer.Argument(..., help="Module name or path"),
 ):
     """Show detailed information about a module."""
+    # Find module
+    path = Path(module)
+    if path.exists() and path.is_dir():
+        module_path = path
+    else:
+        module_path = find_module(module)
+        if not module_path:
+            rprint(f"[red]Module not found: {module}[/red]")
+            raise typer.Exit(1)
+    
     try:
-        m = load_module(module)
-    except FileNotFoundError:
-        rprint(f"[red]Module not found: {module}[/red]")
+        m = load_module(module_path)
+    except Exception as e:
+        rprint(f"[red]Failed to load module: {e}[/red]")
         raise typer.Exit(1)
     
     meta = m["metadata"]
     
     rprint(f"[bold cyan]{meta.get('name', module)}[/bold cyan] v{meta.get('version', '?')}")
+    rprint(f"[dim]Format: {m['format']}[/dim]")
+    
     rprint(f"\n[bold]Responsibility:[/bold]")
     rprint(f"  {meta.get('responsibility', 'Not specified')}")
     
@@ -253,6 +366,12 @@ def info_cmd(
         rprint(f"\n[bold]Excludes:[/bold]")
         for exc in meta['excludes']:
             rprint(f"  - {exc}")
+    
+    if 'constraints' in meta:
+        rprint(f"\n[bold]Constraints:[/bold]")
+        for k, v in meta['constraints'].items():
+            status = "[green]✓[/green]" if v else "[red]✗[/red]"
+            rprint(f"  {status} {k}")
     
     rprint(f"\n[bold]Path:[/bold] {m['path']}")
     rprint(f"[bold]Prompt size:[/bold] {len(m['prompt'])} chars")

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://cognitive-modules.io/registry/v1",
+  "version": "1.0.0",
+  "updated": "2024-02-01",
+  "modules": {
+    "ui-spec-generator": {
+      "description": "将产品需求转换为前端可实现的 UI 规范",
+      "version": "1.0.0",
+      "source": "github:leizii/cognitive-modules/cognitive/modules/ui-spec-generator",
+      "tags": ["ui", "frontend", "design", "specification"],
+      "author": "leizii"
+    }
+  },
+  "categories": {
+    "design": {
+      "name": "设计规范",
+      "description": "UI/UX 设计相关模块",
+      "modules": ["ui-spec-generator"]
+    }
+  }
+}
