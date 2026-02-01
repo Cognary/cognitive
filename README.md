@@ -16,7 +16,7 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 - **子代理编排** - `@call:module` 支持模块间调用
 - **参数传递** - `$ARGUMENTS` 运行时替换
 - **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
-- **公共注册表** - `cog install registry:module-name`
+- **公共注册表** - `cogn install registry:module-name`
 
 ## 安装
 
@@ -42,13 +42,13 @@ export LLM_PROVIDER=minimax
 export MINIMAX_API_KEY=sk-xxx
 
 # 运行代码审查
-cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # 运行任务排序
-cog run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --pretty
+cogn run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --pretty
 
 # 运行 API 设计
-cog run api-designer --args "用户系统 CRUD API" --pretty
+cogn run api-designer --args "用户系统 CRUD API" --pretty
 ```
 
 ## 与 Skills 对比
@@ -62,58 +62,58 @@ cog run api-designer --args "用户系统 CRUD API" --pretty
 | 推理过程 | ❌ | ✅ 必须 rationale |
 | 参数传递 | ✅ $ARGUMENTS | ✅ $ARGUMENTS |
 | 子代理 | ✅ context: fork | ✅ @call + context |
-| 验证工具 | ❌ | ✅ cog validate |
-| 注册表 | ❌ | ✅ cog install |
+| 验证工具 | ❌ | ✅ cogn validate |
+| 注册表 | ❌ | ✅ cogn install |
 
 ## CLI 命令
 
 ```bash
 # 模块管理
-cog list                    # 列出已安装模块
-cog info <module>           # 查看模块详情
-cog validate <module>       # 验证模块结构
+cogn list                    # 列出已安装模块
+cogn info <module>           # 查看模块详情
+cogn validate <module>       # 验证模块结构
 
 # 运行模块
-cog run <module> input.json -o output.json --pretty
-cog run <module> --args "需求描述" --pretty
-cog run <module> --args "需求" --subagent  # 启用子代理
+cogn run <module> input.json -o output.json --pretty
+cogn run <module> --args "需求描述" --pretty
+cogn run <module> --args "需求" --subagent  # 启用子代理
 
 # 创建模块
-cog init <name> -d "描述"
+cogn init <name> -d "描述"
 
 # 从 GitHub 安装（推荐）
-cog add ziel-io/cognitive-modules -m code-simplifier
-cog add org/repo -m module-name --tag v1.0.0   # 安装指定版本
-cog remove <module>                             # 删除模块
+cogn add ziel-io/cognitive-modules -m code-simplifier
+cogn add org/repo -m module-name --tag v1.0.0   # 安装指定版本
+cogn remove <module>                             # 删除模块
 
 # 版本管理
-cog update <module>                 # 更新到最新版本
-cog update <module> --tag v2.0.0    # 更新到指定版本
-cog versions <url>                  # 查看可用版本
+cogn update <module>                 # 更新到最新版本
+cogn update <module> --tag v2.0.0    # 更新到指定版本
+cogn versions <url>                  # 查看可用版本
 
 # 其他安装方式
-cog install github:user/repo/path
-cog install registry:module-name
-cog uninstall <module>
+cogn install github:user/repo/path
+cogn install registry:module-name
+cogn uninstall <module>
 
 # 注册表
-cog registry                # 查看公共模块
-cog search <query>          # 搜索模块
+cogn registry                # 查看公共模块
+cogn search <query>          # 搜索模块
 
 # 环境检查
-cog doctor
+cogn doctor
 ```
 
 ## 内置模块
 
 | 模块 | 功能 | 示例 |
 |------|------|------|
-| `code-reviewer` | 代码审查 | `cog run code-reviewer --args "你的代码"` |
-| `code-simplifier` | 代码简化 | `cog run code-simplifier --args "复杂代码"` |
-| `task-prioritizer` | 任务优先级排序 | `cog run task-prioritizer --args "任务1,任务2"` |
-| `api-designer` | REST API 设计 | `cog run api-designer --args "订单系统"` |
-| `ui-spec-generator` | UI 规范生成 | `cog run ui-spec-generator --args "电商首页"` |
-| `product-analyzer` | 产品分析（子代理示例） | `cog run product-analyzer --args "健康产品" -s` |
+| `code-reviewer` | 代码审查 | `cogn run code-reviewer --args "你的代码"` |
+| `code-simplifier` | 代码简化 | `cogn run code-simplifier --args "复杂代码"` |
+| `task-prioritizer` | 任务优先级排序 | `cogn run task-prioritizer --args "任务1,任务2"` |
+| `api-designer` | REST API 设计 | `cogn run api-designer --args "订单系统"` |
+| `ui-spec-generator` | UI 规范生成 | `cogn run ui-spec-generator --args "电商首页"` |
+| `product-analyzer` | 产品分析（子代理示例） | `cogn run product-analyzer --args "健康产品" -s` |
 
 ## 模块格式
 
@@ -197,7 +197,7 @@ export MINIMAX_API_KEY=sk-xxx
 export LLM_PROVIDER=ollama
 
 # 检查配置
-cog doctor
+cogn doctor
 ```
 
 ## 创建新模块（完整流程）
@@ -298,14 +298,14 @@ EOF
 ### Step 4: 验证模块
 
 ```bash
-cog validate code-simplifier
-cog list  # 确认模块出现在列表中
+cogn validate code-simplifier
+cogn list  # 确认模块出现在列表中
 ```
 
 ### Step 5: 测试运行
 
 ```bash
-cog run code-simplifier --args "def calc(x): if x > 0: if x < 10: return x * 2 else: return x else: return 0" --pretty
+cogn run code-simplifier --args "def calc(x): if x > 0: if x < 10: return x * 2 else: return x else: return 0" --pretty
 ```
 
 ### Step 6: 添加示例（可选）
@@ -342,8 +342,8 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # 创建新模块（使用模板）
-cog init my-module -d "模块描述"
-cog validate my-module
+cogn init my-module -d "模块描述"
+cogn validate my-module
 ```
 
 ## 项目结构
