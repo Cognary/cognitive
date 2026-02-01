@@ -20,10 +20,10 @@ pip install cognitive-modules[all]
 
 ```bash
 # 全局安装
-npm install -g cognitive-modules-cli
+npm install -g cogn
 
-# 或 npx 零安装使用
-npx cognitive-modules-cli --help
+# 或 npx 零安装使用（推荐）
+npx cogn --help
 ```
 
 ## 命令对照
@@ -31,7 +31,7 @@ npx cognitive-modules-cli --help
 | 平台 | 包名 | 命令 |
 |------|------|------|
 | pip | `cognitive-modules` | `cogn` |
-| npm | `cognitive-modules-cli` | `cog` |
+| npm | `cogn` | `cog` |
 
 ## 验证安装
 
@@ -105,7 +105,7 @@ Installed Modules: 5
 
     ```bash
     # 无需安装，直接使用
-    npx cognitive-modules-cli add ziel-io/cognitive-modules -m code-simplifier
+    npx cogn add ziel-io/cognitive-modules -m code-simplifier
     ```
 
 ### 版本管理
