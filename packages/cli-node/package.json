@@ -1,0 +1,48 @@
+{
+  "name": "cognitive-modules-cli",
+  "version": "1.1.0",
+  "description": "Cognitive Modules - Structured AI Task Execution with version management",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "cognitive-modules-cli": "dist/cli.js",
+    "cog": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cognitive",
+    "ai",
+    "llm",
+    "structured",
+    "modules",
+    "cli",
+    "npx"
+  ],
+  "license": "MIT",
+  "author": "ziel-io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ziel-io/cognitive-modules.git"
+  },
+  "homepage": "https://ziel-io.github.io/cognitive-modules/",
+  "bugs": {
+    "url": "https://github.com/ziel-io/cognitive-modules/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

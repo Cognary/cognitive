@@ -344,7 +344,7 @@ cogn validate my-module --v22
 
 ```
 cognitive-modules/
-├── src/cognitive/          # CLI 源码
+├── src/cognitive/          # Python CLI 源码
 │   ├── cli.py              # 命令入口
 │   ├── loader.py           # 模块加载（支持 v0/v1/v2.2）
 │   ├── runner.py           # 模块执行（v2.2 envelope）
@@ -354,13 +354,27 @@ cognitive-modules/
 │   ├── registry.py         # 模块安装
 │   ├── templates.py        # 模块模板
 │   └── providers/          # LLM 后端
+├── packages/
+│   └── cli-node/           # Node.js CLI (npm: cognitive-modules-cli)
+│       ├── src/            # TypeScript 源码
+│       └── package.json
 ├── cognitive/modules/      # 内置模块（全部 v2.2）
+├── coze-plugin/            # Coze 集成插件
 ├── tests/                  # 单元测试
 ├── SPEC.md                 # v0.1 规范（历史）
 ├── SPEC-v2.2.md            # v2.2 规范（最新）
 ├── INTEGRATION.md          # 集成指南
 └── cognitive-registry.json # 公共注册表
 ```
+
+## 多平台支持
+
+| 平台 | 包名 | 命令 | 安装 |
+|------|------|------|------|
+| Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
+| Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
+
+两个版本共享相同的模块格式和 v2.2 规范。
 
 ## 文档
 
