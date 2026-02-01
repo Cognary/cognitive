@@ -130,8 +130,9 @@ nav:
       - 模块测试: guide/testing.md
   - CLI 参考:
       - 命令概览: cli/overview.md
-      - cog run: cli/run.md
-      - cog validate: cli/validate.md
+      - cogn run: cli/run.md
+      - cogn validate: cli/validate.md
+      - cogn migrate: cli/migrate.md
   - 模块库:
       - 概览: modules/index.md
       - code-reviewer: modules/code-reviewer.md
