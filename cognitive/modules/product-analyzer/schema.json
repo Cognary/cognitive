@@ -1,5 +1,32 @@
 {
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
+  "$schema": "https://cognitive-modules.dev/schema/v2.2.json",
+  
+  "meta": {
+    "type": "object",
+    "required": ["confidence", "risk", "explain"],
+    "properties": {
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "分析置信度"
+      },
+      "risk": {
+        "type": "string",
+        "enum": ["none", "low", "medium", "high"],
+        "description": "基于假设的风险等级"
+      },
+      "explain": {
+        "type": "string",
+        "maxLength": 280,
+        "description": "简短摘要"
+      },
+      "trace_id": { "type": "string" },
+      "model": { "type": "string" },
+      "latency_ms": { "type": "number", "minimum": 0 }
+    }
+  },
+
   "input": {
     "type": "object",
     "properties": {
@@ -13,17 +40,25 @@
       }
     }
   },
-  "output": {
+
+  "data": {
     "type": "object",
-    "required": ["analysis", "recommendations", "rationale", "confidence"],
+    "required": ["analysis", "recommendations", "rationale"],
     "properties": {
       "analysis": {
         "type": "object",
         "description": "产品分析结果",
+        "required": ["product_type", "target_users", "core_features"],
         "properties": {
           "product_type": { "type": "string" },
-          "target_users": { "type": "array", "items": { "type": "string" } },
-          "core_features": { "type": "array", "items": { "type": "string" } },
+          "target_users": { 
+            "type": "array", 
+            "items": { "type": "string" } 
+          },
+          "core_features": { 
+            "type": "array", 
+            "items": { "type": "string" } 
+          },
           "design_preferences": { "type": "object" }
         }
       },
@@ -36,38 +71,82 @@
         "description": "额外建议",
         "items": {
           "type": "object",
+          "required": ["suggestion", "priority", "risk"],
           "properties": {
-            "category": { "type": "string" },
+            "category": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": ["ux", "marketing", "technical", "content", "design"]
+                },
+                {
+                  "type": "object",
+                  "required": ["custom", "reason"],
+                  "properties": {
+                    "custom": { "type": "string", "minLength": 1, "maxLength": 32 },
+                    "reason": { "type": "string" }
+                  }
+                }
+              ]
+            },
             "suggestion": { "type": "string" },
-            "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+            "priority": { 
+              "type": "string", 
+              "enum": ["high", "medium", "low"] 
+            },
+            "risk": {
+              "type": "string",
+              "enum": ["none", "low", "medium", "high"]
+            }
           }
         }
       },
       "rationale": {
-        "type": "object",
-        "required": ["decisions"],
-        "properties": {
-          "decisions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "aspect": { "type": "string" },
-                "decision": { "type": "string" },
-                "reasoning": { "type": "string" }
-              }
-            }
-          },
-          "assumptions": { "type": "array", "items": { "type": "string" } }
-        }
+        "type": "string",
+        "description": "详细的分析思路说明"
       },
-      "confidence": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 1,
-        "description": "置信度"
+      "extensions": {
+        "$ref": "#/$defs/extensions"
       }
-    },
-    "additionalProperties": false
+    }
+  },
+
+  "error": {
+    "type": "object",
+    "required": ["code", "message"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "INVALID_INPUT",
+          "EMPTY_DESCRIPTION",
+          "SUBAGENT_FAILED",
+          "SCHEMA_VALIDATION_FAILED",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "message": { "type": "string" }
+    }
+  },
+
+  "$defs": {
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "insights": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "text": { "type": "string" },
+              "suggested_mapping": { "type": "string" },
+              "evidence": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
   }
 }

@@ -1,0 +1,413 @@
+openapi: 3.0.1
+info:
+  title: Cognitive Modules
+  version: 2.2.0
+  description: |
+    结构化 AI 任务规范与执行框架 - Coze 插件
+    
+    Cognitive Modules 是一个可验证的结构化 AI 任务执行系统，提供：
+    - 强类型契约（JSON Schema 验证）
+    - 可解释输出（confidence + rationale）
+    - Control/Data 分离（meta + data）
+    - 模块分级（exec / decision / exploration）
+    - 多 LLM 支持
+    
+    ## v2.2 新特性
+    
+    - **Control/Data 分离**：`meta` 控制面 + `data` 数据面
+    - **风险聚合**：`meta.risk = max(changes[*].risk)`
+    - **可回收溢出**：`extensions.insights` 保留额外洞察
+    - **Repair Pass**：自动修复格式问题
+
+servers:
+  - url: https://your-domain.com
+    description: 生产环境（请替换为您的实际域名）
+  - url: http://localhost:8000
+    description: 本地开发环境
+
+# 认证配置
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API Key 认证，格式：Bearer <your-api-key>
+
+  schemas:
+    # v2.2 Meta (Control Plane)
+    EnvelopeMeta:
+      type: object
+      required:
+        - confidence
+        - risk
+        - explain
+      properties:
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: 置信度分数，统一用于路由决策
+        risk:
+          type: string
+          enum: [none, low, medium, high]
+          description: 聚合风险等级
+        explain:
+          type: string
+          maxLength: 280
+          description: 简短解释，用于快速决策和 UI 显示
+        trace_id:
+          type: string
+          description: 链路追踪 ID
+        model:
+          type: string
+          description: 使用的模型
+        latency_ms:
+          type: number
+          description: 执行延迟（毫秒）
+
+    # v2.2 Insight (Overflow)
+    Insight:
+      type: object
+      required:
+        - text
+        - suggested_mapping
+      properties:
+        text:
+          type: string
+          description: 洞察内容
+        suggested_mapping:
+          type: string
+          description: 建议添加到 schema 的字段
+        evidence:
+          type: string
+          description: 支持证据
+
+    # v2.2 Extensions
+    Extensions:
+      type: object
+      properties:
+        insights:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/Insight'
+
+    # 运行模块请求
+    RunRequest:
+      type: object
+      required:
+        - module
+        - args
+      properties:
+        module:
+          type: string
+          description: 模块名称（如 code-reviewer, code-simplifier）
+          example: code-reviewer
+        args:
+          type: string
+          description: 要处理的输入内容
+          example: "def foo(x): return x+1"
+        provider:
+          type: string
+          description: LLM 提供商（可选，默认使用服务器配置）
+          enum: [openai, anthropic, deepseek, minimax]
+        model:
+          type: string
+          description: 模型名称（可选）
+          example: gpt-4o
+
+    # v2.2 运行模块响应
+    RunResponseV22:
+      type: object
+      required:
+        - ok
+        - meta
+        - module
+      properties:
+        ok:
+          type: boolean
+          description: 是否执行成功
+        meta:
+          $ref: '#/components/schemas/EnvelopeMeta'
+        data:
+          type: object
+          description: 执行成功时的结果数据（业务 payload）
+          properties:
+            rationale:
+              type: string
+              description: 详细推理过程，用于审计
+            extensions:
+              $ref: '#/components/schemas/Extensions'
+          additionalProperties: true
+        error:
+          type: object
+          description: 执行失败时的错误信息
+          properties:
+            code:
+              type: string
+              description: 错误代码
+            message:
+              type: string
+              description: 错误描述
+        partial_data:
+          type: object
+          description: 部分成功的数据
+        module:
+          type: string
+          description: 执行的模块名称
+        provider:
+          type: string
+          description: 使用的 LLM 提供商
+
+    # 模块信息
+    ModuleInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 模块名称
+        version:
+          type: string
+          description: 模块版本
+        description:
+          type: string
+          description: 模块描述
+        responsibility:
+          type: string
+          description: 模块职责
+        format:
+          type: string
+          description: 模块格式（v0, v1, v2）
+        tier:
+          type: string
+          enum: [exec, decision, exploration]
+          description: 模块分级（v2.2）
+
+    # 模块列表响应
+    ModuleListResponse:
+      type: object
+      properties:
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleInfo'
+        count:
+          type: integer
+          description: 模块数量
+
+    # 健康检查响应
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        version:
+          type: string
+        spec_version:
+          type: string
+          example: "2.2"
+        providers:
+          type: object
+          additionalProperties:
+            type: boolean
+
+paths:
+  /run:
+    post:
+      operationId: runModule
+      summary: 执行 Cognitive 模块
+      description: |
+        运行指定的 Cognitive 模块处理用户输入。
+        
+        **v2.2 响应格式特性**：
+        - `meta` 控制面：包含 confidence、risk、explain
+        - `data` 数据面：包含业务结果和详细 rationale
+        - 中间件可仅通过 `meta` 做路由决策，无需解析业务数据
+        
+        常用模块：
+        - code-reviewer: 代码审查，发现潜在问题
+        - code-simplifier: 代码简化，提高可读性
+        - task-prioritizer: 任务优先级排序
+        - api-designer: REST API 设计
+      tags:
+        - Execution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunRequest'
+            examples:
+              code-review:
+                summary: 代码审查示例
+                value:
+                  module: code-reviewer
+                  args: "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')"
+              code-simplify:
+                summary: 代码简化示例
+                value:
+                  module: code-simplifier
+                  args: |
+                    def process(data):
+                        result = []
+                        for item in data:
+                            if item is not None:
+                                if item > 0:
+                                    result.append(item * 2)
+                        return result
+      responses:
+        '200':
+          description: 模块执行完成（v2.2 envelope 格式）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponseV22'
+              examples:
+                success:
+                  summary: 成功响应 (v2.2)
+                  value:
+                    ok: true
+                    meta:
+                      confidence: 0.95
+                      risk: high
+                      explain: "检测到 1 个严重安全问题：SQL 注入风险"
+                      latency_ms: 1234
+                    data:
+                      issues:
+                        - severity: critical
+                          category: security
+                          description: SQL 注入风险
+                          suggestion: 使用参数化查询
+                          risk: high
+                      summary: 发现 1 个严重安全问题
+                      rationale: "代码使用字符串格式化构建 SQL 查询，这是典型的 SQL 注入漏洞。攻击者可以通过构造恶意输入绕过认证或提取数据。"
+                      extensions:
+                        insights:
+                          - text: 建议添加输入验证层
+                            suggested_mapping: "recommendations.type.input_validation"
+                    module: code-reviewer
+                    provider: openai
+                error:
+                  summary: 错误响应 (v2.2)
+                  value:
+                    ok: false
+                    meta:
+                      confidence: 1.0
+                      risk: none
+                      explain: "模块 'unknown-module' 不存在"
+                    error:
+                      code: MODULE_NOT_FOUND
+                      message: "Module 'unknown-module' not found"
+                    module: unknown-module
+        '404':
+          description: 模块不存在
+
+  /modules:
+    get:
+      operationId: listModules
+      summary: 列出所有可用模块
+      description: |
+        获取服务器上已安装的所有 Cognitive 模块列表。
+        
+        v2.2 新增 `tier` 字段，表示模块分级：
+        - `exec`: 自动执行模块，严格约束
+        - `decision`: 判断评估模块，中等约束
+        - `exploration`: 探索创意模块，宽松约束
+      tags:
+        - Modules
+      responses:
+        '200':
+          description: 模块列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModuleListResponse'
+              example:
+                modules:
+                  - name: code-reviewer
+                    version: "2.2.0"
+                    description: 代码审查工具
+                    responsibility: Reviews code and provides structured improvement suggestions
+                    format: v2
+                    tier: decision
+                  - name: code-simplifier
+                    version: "2.2.0"
+                    description: 代码简化工具
+                    responsibility: Simplify code while preserving behavior
+                    format: v2
+                    tier: decision
+                  - name: ui-spec-generator
+                    version: "2.2.0"
+                    description: UI 规范生成器
+                    responsibility: 将产品需求转换为 UI 规范
+                    format: v2
+                    tier: exploration
+                count: 3
+
+  /modules/{name}:
+    get:
+      operationId: getModule
+      summary: 获取模块详情
+      description: 获取指定模块的详细信息
+      tags:
+        - Modules
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 模块名称
+          example: code-reviewer
+      responses:
+        '200':
+          description: 模块信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModuleInfo'
+        '404':
+          description: 模块不存在
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: 健康检查
+      description: 检查服务状态和 LLM 提供商配置
+      tags:
+        - Info
+      security: []  # 健康检查不需要认证
+      responses:
+        '200':
+          description: 服务状态
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                version: "0.5.0"
+                spec_version: "2.2"
+                providers:
+                  openai: true
+                  anthropic: false
+                  deepseek: true
+                  minimax: false
+
+tags:
+  - name: Execution
+    description: |
+      模块执行接口
+      
+      所有响应使用 v2.2 envelope 格式，包含：
+      - `meta`: 控制面（confidence, risk, explain）
+      - `data`: 数据面（业务结果 + rationale）
+  - name: Modules
+    description: 模块管理接口
+  - name: Info
+    description: 服务信息接口

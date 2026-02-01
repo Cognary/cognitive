@@ -1,7 +1,13 @@
 """
 Module Loader - Load cognitive modules in all formats.
 
-Format v2 (recommended):
+Format v2.2 (latest):
+  - module.yaml (machine-readable manifest with tier, overflow, enums, compat)
+  - prompt.md (human-readable prompt)
+  - schema.json (meta + input + data + error)
+  - tests/ (golden tests)
+
+Format v2/v2.1 (supported):
   - module.yaml (machine-readable manifest)
   - prompt.md (human-readable prompt)
   - schema.json (input + output + error)
@@ -21,10 +27,23 @@ Format v0 (old, deprecated):
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
 import yaml
 
+
+# =============================================================================
+# Type Definitions (v2.2)
+# =============================================================================
+
+ModuleTier = Literal["exec", "decision", "exploration"]
+SchemaStrictness = Literal["high", "medium", "low"]
+EnumStrategy = Literal["strict", "extensible"]
+
+
+# =============================================================================
+# Format Detection
+# =============================================================================
 
 def detect_format(module_path: Path) -> str:
     """Detect module format: 'v2', 'v1', or 'v0'."""
@@ -37,6 +56,22 @@ def detect_format(module_path: Path) -> str:
     else:
         raise FileNotFoundError(f"No module.yaml, MODULE.md, or module.md found in {module_path}")
 
+
+def detect_v2_version(manifest: dict) -> str:
+    """Detect v2.x version from manifest content."""
+    # v2.2 indicators
+    if manifest.get("tier") or manifest.get("overflow") or manifest.get("enums"):
+        return "v2.2"
+    # v2.1 indicators
+    if manifest.get("policies") or manifest.get("failure"):
+        return "v2.1"
+    # Default v2.0
+    return "v2.0"
+
+
+# =============================================================================
+# Frontmatter Parsing
+# =============================================================================
 
 def parse_frontmatter(content: str) -> tuple[dict, str]:
     """Parse YAML frontmatter from markdown content."""
@@ -52,11 +87,18 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
     return frontmatter, body
 
 
+# =============================================================================
+# v2.2 Loader
+# =============================================================================
+
 def load_v2_format(module_path: Path) -> dict:
-    """Load module in v2 format (module.yaml + prompt.md + schema.json)."""
+    """Load module in v2.x format (module.yaml + prompt.md + schema.json)."""
     # Load module.yaml
     with open(module_path / "module.yaml", 'r', encoding='utf-8') as f:
         manifest = yaml.safe_load(f)
+    
+    # Detect version
+    version_str = detect_v2_version(manifest)
     
     # Load prompt.md
     prompt_path = module_path / "prompt.md"
@@ -71,13 +113,28 @@ def load_v2_format(module_path: Path) -> dict:
     if schema_path.exists():
         with open(schema_path, 'r', encoding='utf-8') as f:
             schema = json.load(f)
+        
         input_schema = schema.get("input", {})
-        output_schema = schema.get("output", {})
+        
+        # Support both "data" (v2.2) and "output" (v2.1) aliases
+        compat = manifest.get("compat", {})
+        if compat.get("schema_output_alias") == "data" or "data" in schema:
+            data_schema = schema.get("data", schema.get("output", {}))
+            output_schema = data_schema  # Keep for backward compat
+        else:
+            output_schema = schema.get("output", {})
+            data_schema = output_schema
+        
         error_schema = schema.get("error", {})
+        meta_schema = schema.get("meta", {})
+        defs = schema.get("$defs", {})
     else:
         input_schema = {}
         output_schema = {}
+        data_schema = {}
         error_schema = {}
+        meta_schema = {}
+        defs = {}
     
     # Extract constraints (supports both old and new format)
     constraints_raw = manifest.get("constraints", {})
@@ -98,41 +155,90 @@ def load_v2_format(module_path: Path) -> dict:
         "behavior_equivalence_false_max_confidence": constraints_raw.get("behavior_equivalence_false_max_confidence", 0.7),
     }
     
-    # Extract policies (v2.1)
+    # Extract v2.1 fields
     policies = manifest.get("policies", {})
-    
-    # Extract tools policy
     tools = manifest.get("tools", {})
-    
-    # Extract output contract
     output_contract = manifest.get("output", {})
-    
-    # Extract failure contract
     failure_contract = manifest.get("failure", {})
-    
-    # Extract runtime requirements
     runtime_requirements = manifest.get("runtime_requirements", {})
     
+    # Extract v2.2 fields
+    tier: Optional[ModuleTier] = manifest.get("tier")
+    schema_strictness: SchemaStrictness = manifest.get("schema_strictness", "medium")
+    
+    overflow = manifest.get("overflow", {
+        "enabled": False,
+        "recoverable": True,
+        "max_items": 5,
+        "require_suggested_mapping": True
+    })
+    
+    enums = manifest.get("enums", {
+        "strategy": "extensible" if tier in ("decision", "exploration") else "strict",
+        "unknown_tag": "custom"
+    })
+    
+    compat = manifest.get("compat", {
+        "accepts_v21_payload": True,
+        "runtime_auto_wrap": True,
+        "schema_output_alias": "data"
+    })
+    
+    io_config = manifest.get("io", {})
+    tests = manifest.get("tests", [])
+    
     return {
+        # Core identity
         "name": manifest.get("name", module_path.name),
         "version": manifest.get("version", "1.0.0"),
         "responsibility": manifest.get("responsibility", ""),
         "excludes": manifest.get("excludes", []),
+        
+        # Path and format info
         "path": module_path,
         "format": "v2",
+        "format_version": version_str,
+        
+        # Raw manifest
         "metadata": manifest,
+        
+        # Schemas
         "input_schema": input_schema,
-        "output_schema": output_schema,
+        "output_schema": output_schema,  # v2.1 compat
+        "data_schema": data_schema,       # v2.2
         "error_schema": error_schema,
+        "meta_schema": meta_schema,       # v2.2
+        "schema_defs": defs,
+        
+        # Constraints and policies
         "constraints": constraints,
         "policies": policies,
         "tools": tools,
+        
+        # Contracts
         "output_contract": output_contract,
         "failure_contract": failure_contract,
+        
+        # Runtime
         "runtime_requirements": runtime_requirements,
+        
+        # v2.2 specific
+        "tier": tier,
+        "schema_strictness": schema_strictness,
+        "overflow": overflow,
+        "enums": enums,
+        "compat": compat,
+        "io": io_config,
+        "tests": tests,
+        
+        # Prompt
         "prompt": prompt,
     }
 
+
+# =============================================================================
+# v1 Loader (Legacy)
+# =============================================================================
 
 def load_v1_format(module_path: Path) -> dict:
     """Load module in v1 format (MODULE.md + schema.json)."""
@@ -173,13 +279,25 @@ def load_v1_format(module_path: Path) -> dict:
         "excludes": metadata.get("excludes", []),
         "path": module_path,
         "format": "v1",
+        "format_version": "v1.0",
         "metadata": metadata,
         "input_schema": input_schema,
         "output_schema": output_schema,
+        "data_schema": output_schema,  # Alias for v2.2 compat
         "constraints": constraints,
         "prompt": prompt,
+        # v2.2 defaults for v1 modules
+        "tier": None,
+        "schema_strictness": "medium",
+        "overflow": {"enabled": False},
+        "enums": {"strategy": "strict"},
+        "compat": {"accepts_v21_payload": True, "runtime_auto_wrap": True},
     }
 
+
+# =============================================================================
+# v0 Loader (Deprecated)
+# =============================================================================
 
 def load_v0_format(module_path: Path) -> dict:
     """Load module in v0 format (old 6-file format)."""
@@ -211,13 +329,25 @@ def load_v0_format(module_path: Path) -> dict:
         "excludes": [],
         "path": module_path,
         "format": "v0",
+        "format_version": "v0.0",
         "metadata": metadata,
         "input_schema": input_schema,
         "output_schema": output_schema,
+        "data_schema": output_schema,  # Alias
         "constraints": constraints,
         "prompt": prompt,
+        # v2.2 defaults
+        "tier": None,
+        "schema_strictness": "medium",
+        "overflow": {"enabled": False},
+        "enums": {"strategy": "strict"},
+        "compat": {"accepts_v21_payload": True, "runtime_auto_wrap": True},
     }
 
+
+# =============================================================================
+# Main Loader
+# =============================================================================
 
 def load_module(module_path: Path) -> dict:
     """Load a module, auto-detecting format."""
@@ -229,6 +359,10 @@ def load_module(module_path: Path) -> dict:
     else:
         return load_v0_format(module_path)
 
+
+# =============================================================================
+# Module Discovery
+# =============================================================================
 
 def find_module(name: str, search_paths: list[Path]) -> Optional[dict]:
     """Find and load a module by name from search paths."""
@@ -256,3 +390,35 @@ def list_modules(search_paths: list[Path]) -> list[dict]:
                 except FileNotFoundError:
                     continue
     return modules
+
+
+# =============================================================================
+# Utility Functions
+# =============================================================================
+
+def get_module_tier(module: dict) -> Optional[ModuleTier]:
+    """Get module tier (exec, decision, exploration)."""
+    return module.get("tier")
+
+
+def get_schema_strictness(module: dict) -> SchemaStrictness:
+    """Get schema strictness level."""
+    return module.get("schema_strictness", "medium")
+
+
+def is_overflow_enabled(module: dict) -> bool:
+    """Check if overflow (extensions.insights) is enabled."""
+    overflow = module.get("overflow", {})
+    return overflow.get("enabled", False)
+
+
+def get_enum_strategy(module: dict) -> EnumStrategy:
+    """Get enum extension strategy."""
+    enums = module.get("enums", {})
+    return enums.get("strategy", "strict")
+
+
+def should_auto_wrap(module: dict) -> bool:
+    """Check if runtime should auto-wrap v2.1 to v2.2."""
+    compat = module.get("compat", {})
+    return compat.get("runtime_auto_wrap", True)

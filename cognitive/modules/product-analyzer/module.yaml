@@ -1,26 +1,22 @@
 # Cognitive Module Manifest v2.2
-name: code-simplifier
+name: product-analyzer
 version: 2.2.0
-responsibility: Simplify code while preserving behavior
+responsibility: 分析产品需求并调用 UI 规范生成器
 
-# 模块分级
-tier: decision
-schema_strictness: medium
+# 模块分级 - exploration 因为涉及需求分析和创意
+tier: exploration
+schema_strictness: low
 
 # 明确排除项
 excludes:
-  - changing observable behavior
-  - adding new features
-  - removing functionality
-  - executing code
-  - writing files
+  - 直接生成代码
+  - 选择技术栈
 
 # 运行时策略
 policies:
   network: deny
   filesystem_write: deny
   side_effects: deny
-  code_execution: deny
 
 # 工具策略
 tools:
@@ -30,14 +26,16 @@ tools:
     - write_file
     - shell
     - network
-    - code_interpreter
+
+# 子代理配置
+context: fork  # 隔离执行，子模块有独立上下文
 
 # 溢出策略
 overflow:
   enabled: true
   recoverable: true
-  max_items: 5
-  require_suggested_mapping: true
+  max_items: 10
+  require_suggested_mapping: false
 
 # Enum 策略
 enums:
@@ -52,7 +50,7 @@ failure:
 # 运行时要求
 runtime_requirements:
   structured_output: true
-  max_input_tokens: 8000
+  max_input_tokens: 16000
   preferred_capabilities:
     - json_mode
     - long_context
@@ -70,12 +68,7 @@ compat:
   runtime_auto_wrap: true
   schema_output_alias: data
 
-# 约束（v2.1 兼容）
+# 约束（向后兼容）
 constraints:
-  behavior_equivalence_false_max_confidence: 0.7
-
-# 测试用例
-tests:
-  - tests/case1.input.json -> tests/case1.expected.json
-  - tests/case2.input.json -> tests/case2.expected.json
-  - tests/case_parse_error.input.json -> tests/case_parse_error.expected.json
+  no_network: true
+  no_side_effects: true

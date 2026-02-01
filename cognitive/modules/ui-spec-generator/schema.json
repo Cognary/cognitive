@@ -1,15 +1,39 @@
 {
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
+  "$schema": "https://cognitive-modules.dev/schema/v2.2.json",
   "$id": "ui-spec-generator",
-  "title": "UI Spec Generator Schema",
+  "title": "UI Spec Generator Schema v2.2",
   
+  "meta": {
+    "type": "object",
+    "required": ["confidence", "risk", "explain"],
+    "properties": {
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "规范置信度，基于输入完整性"
+      },
+      "risk": {
+        "type": "string",
+        "enum": ["none", "low", "medium", "high"],
+        "description": "基于假设数量的风险等级"
+      },
+      "explain": {
+        "type": "string",
+        "maxLength": 280,
+        "description": "简短摘要"
+      },
+      "trace_id": { "type": "string" },
+      "model": { "type": "string" },
+      "latency_ms": { "type": "number", "minimum": 0 }
+    }
+  },
+
   "input": {
     "type": "object",
-    "required": ["page_context", "features"],
     "properties": {
       "page_context": {
         "type": "object",
-        "required": ["page_type", "purpose", "target_audience"],
         "properties": {
           "page_type": { "type": "string" },
           "purpose": { "type": "string" },
@@ -19,10 +43,8 @@
       },
       "features": {
         "type": "array",
-        "minItems": 1,
         "items": {
           "type": "object",
-          "required": ["name", "description", "priority"],
           "properties": {
             "name": { "type": "string" },
             "description": { "type": "string" },
@@ -40,13 +62,15 @@
       },
       "design_tokens": { "type": "object" },
       "constraints": { "type": "object" },
-      "existing_patterns": { "type": "array" }
+      "existing_patterns": { "type": "array" },
+      "$ARGUMENTS": { "type": "string" },
+      "query": { "type": "string" }
     }
   },
 
-  "output": {
+  "data": {
     "type": "object",
-    "required": ["specification", "rationale", "confidence"],
+    "required": ["specification", "rationale"],
     "properties": {
       "specification": {
         "type": "object",
@@ -62,52 +86,144 @@
         "properties": {
           "information_architecture": {
             "type": "object",
-            "required": ["sections", "hierarchy"]
+            "required": ["sections", "hierarchy"],
+            "properties": {
+              "sections": { "type": "array" },
+              "hierarchy": { "type": "object" }
+            }
           },
           "components": {
             "type": "array",
-            "minItems": 1
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["name", "type", "section"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": {
+                  "oneOf": [
+                    { "type": "string" },
+                    {
+                      "type": "object",
+                      "required": ["custom", "reason"],
+                      "properties": {
+                        "custom": { "type": "string" },
+                        "reason": { "type": "string" }
+                      }
+                    }
+                  ]
+                },
+                "section": { "type": "string" },
+                "props": { "type": "object" },
+                "states": { "type": "array" },
+                "risk": {
+                  "type": "string",
+                  "enum": ["none", "low", "medium", "high"]
+                }
+              }
+            }
           },
           "interactions": {
-            "type": "array"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "trigger": { "type": "string" },
+                "action": { "type": "string" },
+                "target": { "type": "string" },
+                "transition": { "type": "string" }
+              }
+            }
           },
           "responsive": {
             "type": "object",
-            "required": ["breakpoints", "layout_rules"]
+            "required": ["breakpoints", "layout_rules"],
+            "properties": {
+              "breakpoints": { "type": "array" },
+              "layout_rules": { "type": "array" }
+            }
           },
           "accessibility": {
             "type": "object",
-            "required": ["level", "requirements"]
+            "required": ["level", "requirements"],
+            "properties": {
+              "level": { "type": "string" },
+              "requirements": { "type": "array" }
+            }
           },
           "design_tokens": {
             "type": "object",
-            "required": ["status"]
+            "required": ["status"],
+            "properties": {
+              "status": { 
+                "type": "string",
+                "enum": ["provided", "partial", "unknown"]
+              },
+              "tokens": { "type": "object" }
+            }
           },
           "acceptance_criteria": {
             "type": "array",
-            "minItems": 1
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "feature": { "type": "string" },
+                "criteria": { "type": "array", "items": { "type": "string" } }
+              }
+            }
           }
         }
       },
       "rationale": {
-        "type": "object",
-        "required": ["decisions"],
-        "properties": {
-          "decisions": {
-            "type": "array",
-            "minItems": 1
-          },
-          "assumptions": { "type": "array" },
-          "open_questions": { "type": "array" }
-        }
-      },
-      "confidence": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 1
+        "type": "string",
+        "description": "详细的设计决策说明"
       },
       "confidence_breakdown": {
-        "type": "object"
+        "type": "object",
+        "description": "各方面的置信度细分"
+      },
+      "extensions": {
+        "$ref": "#/$defs/extensions"
+      }
+    }
+  },
+
+  "error": {
+    "type": "object",
+    "required": ["code", "message"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "INSUFFICIENT_INPUT",
+          "CONFLICTING_REQUIREMENTS",
+          "UNSUPPORTED_PLATFORM",
+          "SCHEMA_VALIDATION_FAILED",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "message": { "type": "string" }
+    }
+  },
+
+  "$defs": {
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "insights": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "text": { "type": "string" },
+              "suggested_mapping": { "type": "string" },
+              "evidence": { "type": "string" }
+            }
+          }
+        }
       }
     }
   }

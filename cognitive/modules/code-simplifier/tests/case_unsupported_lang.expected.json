@@ -1,8 +1,28 @@
 {
-  "$comment": "Contract validation for unsupported language - must return error envelope",
+  "$comment": "Contract validation for unsupported language - must return error envelope v2.2",
   "$validate": {
     "ok": {
       "const": false
+    },
+    "meta": {
+      "type": "object",
+      "required": ["confidence", "risk", "explain"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "explain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        }
+      }
     },
     "error": {
       "type": "object",
@@ -20,9 +40,14 @@
   },
   "$example": {
     "ok": false,
+    "meta": {
+      "confidence": 1.0,
+      "risk": "none",
+      "explain": "Language 'brainfuck' is not supported. Cannot proceed with simplification."
+    },
     "error": {
       "code": "UNSUPPORTED_LANGUAGE",
-      "message": "Language 'brainfuck' is not supported for code simplification"
+      "message": "Language 'brainfuck' is not supported for code simplification. Supported languages include: Python, JavaScript, TypeScript, Java, Go, Rust, C, C++."
     },
     "partial_data": null
   }

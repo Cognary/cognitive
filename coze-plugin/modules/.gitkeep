@@ -1,0 +1,13 @@
+# 自定义模块目录
+# 在此目录下添加的模块会自动被 Cognitive API 服务识别
+# 无需重启服务，添加后立即可用
+
+# 模块结构示例：
+# modules/
+# ├── my-module/
+# │   ├── MODULE.md      # v1 格式（frontmatter + prompt）
+# │   └── schema.json    # 输入/输出 schema
+# └── another-module/
+#     ├── module.yaml    # v2 格式（机器可读配置）
+#     ├── prompt.md      # 提示词
+#     └── schema.json    # schema

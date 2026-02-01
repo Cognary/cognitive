@@ -1,8 +1,28 @@
 {
-  "$comment": "Contract validation for parse error - must return error envelope",
+  "$comment": "Contract validation for parse error - must return error envelope v2.2",
   "$validate": {
     "ok": {
       "const": false
+    },
+    "meta": {
+      "type": "object",
+      "required": ["confidence", "risk", "explain"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "explain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        }
+      }
     },
     "error": {
       "type": "object",
@@ -20,6 +40,11 @@
   },
   "$example": {
     "ok": false,
+    "meta": {
+      "confidence": 0.0,
+      "risk": "high",
+      "explain": "Unable to parse the provided code due to syntax errors."
+    },
     "error": {
       "code": "PARSE_ERROR",
       "message": "Unable to parse Python code: unexpected EOF while parsing"

@@ -9,10 +9,22 @@
 
 Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、可验证、可审计**的生成任务设计。
 
+## v2.2 新特性
+
+| 特性 | 说明 |
+|------|------|
+| **Control/Data 分离** | `meta` 控制面 + `data` 数据面，中间件无需解析业务 |
+| **模块分级 (Tier)** | `exec` / `decision` / `exploration` 不同严格度 |
+| **可回收溢出** | `extensions.insights` 保留 LLM 的额外洞察 |
+| **可扩展 Enum** | 允许自定义类型，不牺牲类型安全 |
+| **Repair Pass** | 自动修复格式问题，降低验证失败率 |
+
 ## 特性
 
 - **强类型契约** - JSON Schema 双向验证输入输出
 - **可解释输出** - 强制输出 `confidence` + `rationale`
+- **Control/Data 分离** - `meta.explain` 快速路由 + `data.rationale` 详细审计
+- **模块分级** - exec / decision / exploration 不同约束等级
 - **子代理编排** - `@call:module` 支持模块间调用
 - **参数传递** - `$ARGUMENTS` 运行时替换
 - **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
@@ -53,10 +65,6 @@ npx cognitive-modules-cli --help
 export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
 
-# 或使用 MiniMax
-export LLM_PROVIDER=minimax
-export MINIMAX_API_KEY=sk-xxx
-
 # 运行代码审查
 cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
@@ -67,17 +75,55 @@ cogn run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --
 cogn run api-designer --args "用户系统 CRUD API" --pretty
 ```
 
+## v2.2 响应格式
+
+所有模块现在返回统一的 v2.2 envelope 格式：
+
+```json
+{
+  "ok": true,
+  "meta": {
+    "confidence": 0.92,
+    "risk": "low",
+    "explain": "简短摘要，用于快速路由决策（≤280字符）"
+  },
+  "data": {
+    "...业务字段...",
+    "rationale": "详细推理过程，用于审计和人工审核",
+    "extensions": {
+      "insights": [
+        {
+          "text": "额外洞察",
+          "suggested_mapping": "建议添加到 schema 的字段"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Control vs Data Plane
+
+| 层 | 字段 | 用途 |
+|---|------|------|
+| **Control Plane** | `meta.confidence` | 路由/降级决策 |
+| **Control Plane** | `meta.risk` | 人工审核触发 |
+| **Control Plane** | `meta.explain` | 日志/卡片 UI |
+| **Data Plane** | `data.rationale` | 详细审计 |
+| **Data Plane** | `data.extensions` | 可回收洞察 |
+
 ## 核心特性
 
 | 特性 | 说明 |
 |------|------|
 | **JSON Schema 验证** | 输入输出双向校验 |
 | **置信度** | 每个输出必须包含 0-1 的 confidence |
-| **推理过程** | 强制输出 rationale，可审计 |
+| **推理过程** | `meta.explain` (简短) + `data.rationale` (详细) |
+| **模块分级** | `tier: exec \| decision \| exploration` |
+| **风险聚合** | `meta.risk = max(changes[*].risk)` |
 | **参数传递** | `$ARGUMENTS` 运行时替换 |
 | **子代理** | `@call:module` 支持模块间调用 |
-| **验证工具** | `cogn validate` 检查模块结构 |
-| **版本管理** | `cogn add/update/remove` 管理模块 |
+| **验证工具** | `cogn validate` / `cogn validate --v22` |
 
 ## 集成方式
 
@@ -94,6 +140,7 @@ cogn run api-designer --args "用户系统 CRUD API" --pretty
 cogn list                    # 列出已安装模块
 cogn info <module>           # 查看模块详情
 cogn validate <module>       # 验证模块结构
+cogn validate <module> --v22 # 验证 v2.2 格式
 
 # 运行模块
 cogn run <module> input.json -o output.json --pretty
@@ -102,6 +149,10 @@ cogn run <module> --args "需求" --subagent  # 启用子代理
 
 # 创建模块
 cogn init <name> -d "描述"
+cogn init <name> --format v22  # 创建 v2.2 格式模块
+
+# 迁移模块
+cogn migrate <module>        # 将 v1/v2.1 模块迁移到 v2.2
 
 # 从 GitHub 安装（推荐）
 cogn add ziel-io/cognitive-modules -m code-simplifier
@@ -128,18 +179,66 @@ cogn doctor
 
 ## 内置模块
 
-| 模块 | 功能 | 示例 |
-|------|------|------|
-| `code-reviewer` | 代码审查 | `cogn run code-reviewer --args "你的代码"` |
-| `code-simplifier` | 代码简化 | `cogn run code-simplifier --args "复杂代码"` |
-| `task-prioritizer` | 任务优先级排序 | `cogn run task-prioritizer --args "任务1,任务2"` |
-| `api-designer` | REST API 设计 | `cogn run api-designer --args "订单系统"` |
-| `ui-spec-generator` | UI 规范生成 | `cogn run ui-spec-generator --args "电商首页"` |
-| `product-analyzer` | 产品分析（子代理示例） | `cogn run product-analyzer --args "健康产品" -s` |
+| 模块 | Tier | 功能 | 示例 |
+|------|------|------|------|
+| `code-reviewer` | decision | 代码审查 | `cogn run code-reviewer --args "你的代码"` |
+| `code-simplifier` | decision | 代码简化 | `cogn run code-simplifier --args "复杂代码"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `cogn run task-prioritizer --args "任务1,任务2"` |
+| `api-designer` | decision | REST API 设计 | `cogn run api-designer --args "订单系统"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `cogn run ui-spec-generator --args "电商首页"` |
+| `product-analyzer` | exploration | 产品分析（子代理） | `cogn run product-analyzer --args "健康产品" -s` |
 
 ## 模块格式
 
-### 新格式（推荐）
+### v2.2 格式（推荐）
+
+```
+my-module/
+├── module.yaml     # 机器可读 manifest（含 tier/overflow/enums）
+├── prompt.md       # 人类可读 prompt
+├── schema.json     # meta + input + data + error schemas
+└── tests/          # 黄金测试用例
+    ├── case1.input.json
+    └── case1.expected.json
+```
+
+### module.yaml (v2.2)
+
+```yaml
+name: my-module
+version: 2.2.0
+responsibility: 一句话描述
+
+tier: decision           # exec | decision | exploration
+schema_strictness: medium # high | medium | low
+
+excludes:
+  - 不做的事情
+
+policies:
+  network: deny
+  filesystem_write: deny
+  side_effects: deny
+
+overflow:
+  enabled: true
+  recoverable: true
+  max_items: 5
+  require_suggested_mapping: true
+
+enums:
+  strategy: extensible   # strict | extensible
+
+failure:
+  contract: error_union
+  partial_allowed: true
+
+compat:
+  accepts_v21_payload: true
+  runtime_auto_wrap: true
+```
+
+### v1 格式（仍支持）
 
 ```
 my-module/
@@ -150,33 +249,13 @@ my-module/
     └── output.json
 ```
 
-### MODULE.md
+## Tier 说明
 
-```yaml
----
-name: my-module
-version: 1.0.0
-responsibility: 一句话描述
-
-excludes:
-  - 不做的事情
-
-constraints:
-  no_network: true
-  no_inventing_data: true
-  require_confidence: true
-  require_rationale: true
-
-context: fork  # 可选：隔离执行
----
-
-# 指令
-
-根据用户需求 $ARGUMENTS 执行任务。
-
-可以调用其他模块：
-@call:other-module($ARGUMENTS)
-```
+| Tier | 用途 | Schema 严格度 | Overflow |
+|------|------|---------------|----------|
+| `exec` | 自动执行（patch、指令生成） | high | 关闭 |
+| `decision` | 判断/评估/分类 | medium | 开启 |
+| `exploration` | 探索/调研/灵感 | low | 开启 |
 
 ## 在 AI 工具中使用
 
@@ -190,7 +269,7 @@ context: fork  # 可选：隔离执行
 当需要审查代码时：
 1. 读取 `~/.cognitive/modules/code-reviewer/MODULE.md`
 2. 按 schema.json 格式输出
-3. 包含 issues、summary、rationale、confidence
+3. 包含 meta.explain + data.rationale
 ```
 
 ### 直接对话
@@ -222,133 +301,26 @@ export LLM_PROVIDER=ollama
 cogn doctor
 ```
 
-## 创建新模块（完整流程）
+## 迁移到 v2.2
 
-以 `code-simplifier` 为例：
-
-### Step 1: 创建目录结构
+从 v1 或 v2.1 模块迁移到 v2.2：
 
 ```bash
-mkdir -p cognitive/modules/code-simplifier
+# 自动迁移单个模块
+cogn migrate code-reviewer
+
+# 迁移所有模块
+cogn migrate --all
+
+# 验证迁移结果
+cogn validate code-reviewer --v22
 ```
 
-### Step 2: 编写 MODULE.md
-
-```bash
-cat > cognitive/modules/code-simplifier/MODULE.md << 'EOF'
----
-name: code-simplifier
-version: 1.0.0
-responsibility: Simplify complex code while preserving functionality
-
-excludes:
-  - Changing the code's behavior
-  - Adding new features
-  - Removing functionality
-
-constraints:
-  no_network: true
-  no_side_effects: true
-  require_confidence: true
-  require_rationale: true
----
-
-# Code Simplifier Module
-
-You are an expert at refactoring and simplifying code.
-
-## Input
-
-Code to simplify: $ARGUMENTS
-
-## Simplification Strategies
-
-1. **Remove redundancy** - Eliminate duplicate code
-2. **Improve naming** - Use clear, descriptive names
-3. **Reduce nesting** - Flatten deep conditionals
-4. **Simplify logic** - Use built-in functions
-
-## Output Requirements
-
-Return JSON containing:
-- `simplified_code`: The simplified version
-- `changes`: List of changes made
-- `summary`: Brief description
-- `rationale`: Explanation of decisions
-- `confidence`: Confidence score [0-1]
-EOF
-```
-
-### Step 3: 编写 schema.json
-
-```bash
-cat > cognitive/modules/code-simplifier/schema.json << 'EOF'
-{
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
-  "input": {
-    "type": "object",
-    "properties": {
-      "code": { "type": "string" },
-      "language": { "type": "string" },
-      "$ARGUMENTS": { "type": "string" }
-    }
-  },
-  "output": {
-    "type": "object",
-    "required": ["simplified_code", "changes", "summary", "rationale", "confidence"],
-    "properties": {
-      "simplified_code": { "type": "string" },
-      "changes": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "type": { "type": "string" },
-            "description": { "type": "string" }
-          }
-        }
-      },
-      "summary": { "type": "string" },
-      "rationale": { "type": "string" },
-      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
-    }
-  }
-}
-EOF
-```
-
-### Step 4: 验证模块
-
-```bash
-cogn validate code-simplifier
-cogn list  # 确认模块出现在列表中
-```
-
-### Step 5: 测试运行
-
-```bash
-cogn run code-simplifier --args "def calc(x): if x > 0: if x < 10: return x * 2 else: return x else: return 0" --pretty
-```
-
-### Step 6: 添加示例（可选）
-
-```bash
-mkdir -p cognitive/modules/code-simplifier/examples
-# 添加 input.json 和 output.json 作为测试用例
-```
-
-### 模块设计要点
-
-| 要素 | 必须 | 说明 |
-|------|------|------|
-| `name` | ✅ | 唯一标识符，kebab-case |
-| `version` | ✅ | 语义化版本 |
-| `responsibility` | ✅ | 一句话描述职责 |
-| `excludes` | ✅ | 明确列出不做的事 |
-| `$ARGUMENTS` | ✅ | 支持命令行参数 |
-| `confidence` | ✅ | 输出必须包含 0-1 置信度 |
-| `rationale` | ✅ | 输出必须包含推理过程 |
-| `schema.json` | ✅ | 定义输入输出契约 |
+手动迁移步骤：
+1. 创建 `module.yaml`（添加 tier/overflow/enums）
+2. 更新 `schema.json`（添加 meta schema）
+3. 创建/更新 `prompt.md`（说明 v2.2 envelope 格式）
+4. 保留 `MODULE.md`（向后兼容）
 
 ## 开发
 
@@ -363,9 +335,9 @@ pip install -e ".[dev]"
 # 运行测试
 pytest tests/ -v
 
-# 创建新模块（使用模板）
-cogn init my-module -d "模块描述"
-cogn validate my-module
+# 创建新模块（v2.2 格式）
+cogn init my-module -d "模块描述" --format v22
+cogn validate my-module --v22
 ```
 
 ## 项目结构
@@ -374,23 +346,26 @@ cogn validate my-module
 cognitive-modules/
 ├── src/cognitive/          # CLI 源码
 │   ├── cli.py              # 命令入口
-│   ├── loader.py           # 模块加载
-│   ├── runner.py           # 模块执行
+│   ├── loader.py           # 模块加载（支持 v0/v1/v2.2）
+│   ├── runner.py           # 模块执行（v2.2 envelope）
+│   ├── validator.py        # 模块验证（含 v2.2 验证）
+│   ├── migrate.py          # v2.2 迁移工具
 │   ├── subagent.py         # 子代理编排
-│   ├── validator.py        # 模块验证
 │   ├── registry.py         # 模块安装
 │   ├── templates.py        # 模块模板
 │   └── providers/          # LLM 后端
-├── cognitive/modules/      # 内置模块
+├── cognitive/modules/      # 内置模块（全部 v2.2）
 ├── tests/                  # 单元测试
-├── SPEC.md                 # 规范文档
+├── SPEC.md                 # v0.1 规范（历史）
+├── SPEC-v2.2.md            # v2.2 规范（最新）
 ├── INTEGRATION.md          # 集成指南
 └── cognitive-registry.json # 公共注册表
 ```
 
 ## 文档
 
-- [SPEC.md](SPEC.md) - 完整规范（含上下文哲学）
+- [SPEC-v2.2.md](SPEC-v2.2.md) - v2.2 完整规范（Control/Data 分离、Tier、Overflow）
+- [SPEC.md](SPEC.md) - v0.1 规范（含上下文哲学）
 - [INTEGRATION.md](INTEGRATION.md) - Agent 工具集成指南
 
 ## License

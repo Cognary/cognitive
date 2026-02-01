@@ -1,0 +1,69 @@
+# Coze 插件配置文件
+# 用于在 Coze Studio 中配置 Cognitive Modules 插件
+
+plugin_id: cognitive-modules
+product_id: 1  # 自定义插件
+
+# 基础信息
+manifest:
+  schema_version: v1
+  name_for_model: Cognitive Modules
+  name_for_human: Cognitive 结构化任务
+  description_for_model: |
+    Cognitive Modules 是一个结构化 AI 任务执行框架。
+    使用此插件可以调用预定义的 AI 任务模块，获得可验证、可解释的输出。
+    
+    可用模块：
+    - code-reviewer: 代码审查，发现潜在问题和安全漏洞
+    - code-simplifier: 代码简化，提高可读性和可维护性
+    - task-prioritizer: 任务优先级排序
+    - api-designer: REST API 设计
+    
+    每个模块的输出都包含 confidence（置信度）和 rationale（推理过程）。
+  description_for_human: 结构化 AI 任务执行框架，提供代码审查、代码简化等功能
+  
+  # 认证配置
+  auth:
+    type: service_http
+    sub_type: token
+    payload: '{"location": "header", "key": "Authorization", "service_token": "Bearer YOUR_API_KEY_HERE"}'
+  
+  # 插件图标
+  logo_url: https://raw.githubusercontent.com/ziel-io/cognitive-modules/main/assets/logo.png
+
+# API 配置
+api:
+  type: openapi
+  common_params:
+    header:
+      - name: Content-Type
+        value: application/json
+
+# 工具列表
+tools:
+  - tool_id: 1
+    name: run_module
+    description: 执行 Cognitive 模块
+    method: post
+    sub_url: /run
+    
+  - tool_id: 2
+    name: list_modules
+    description: 列出所有可用模块
+    method: get
+    sub_url: /modules
+    
+  - tool_id: 3
+    name: get_module
+    description: 获取模块详情
+    method: get
+    sub_url: /modules/{name}
+    
+  - tool_id: 4
+    name: health_check
+    description: 健康检查
+    method: get
+    sub_url: /health
+
+# OpenAPI 文档位置
+openapi_doc_file: openapi.yaml

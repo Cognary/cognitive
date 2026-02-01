@@ -18,34 +18,101 @@ Analyze the provided code and simplify it using these strategies:
 
 2. **Confidence Constraint**: If `behavior_equivalence` is `false`, your `confidence` MUST be `<= 0.7`.
 
-## Response Format (Envelope)
+3. **Risk Aggregation**: The `meta.risk` field must be the maximum risk level among all changes.
 
-You MUST wrap your response in the standard envelope format:
+## Response Format (Envelope v2.2)
+
+You MUST wrap your response in the v2.2 envelope format with **separate meta and data sections**.
 
 ### Success Response
+
 ```json
 {
   "ok": true,
+  "meta": {
+    "confidence": 0.92,
+    "risk": "low",
+    "explain": "Short summary (max 280 chars) for routing and UI display."
+  },
   "data": {
     "simplified_code": "...",
     "changes": [...],
     "behavior_equivalence": true,
     "summary": "...",
-    "rationale": "...",
-    "confidence": 0.95
+    "rationale": "Detailed explanation for audit and human review...",
+    "extensions": {
+      "insights": [...]
+    }
   }
 }
 ```
 
 ### Error Response
+
 ```json
 {
   "ok": false,
+  "meta": {
+    "confidence": 0.0,
+    "risk": "high",
+    "explain": "Brief error summary."
+  },
   "error": {
-    "code": "PARSE_ERROR",
-    "message": "Description of the error"
+    "code": "ERROR_CODE",
+    "message": "Detailed error description"
   },
   "partial_data": null
+}
+```
+
+## Field Descriptions
+
+### meta (Control Plane)
+- `confidence`: Your confidence score (0-1), unified for routing decisions
+- `risk`: Aggregated risk level: `"none"` | `"low"` | `"medium"` | `"high"`
+- `explain`: Short explanation (≤280 chars) for middleware, logs, and UI cards
+
+### data (Data Plane)
+- `simplified_code`: The simplified version of the code
+- `changes`: Array of changes made, each with:
+  - `type`: Category of change (predefined enum OR custom object with reason)
+  - `description`: What was changed
+  - `scope`: `"local"` | `"function"` | `"file"` | `"project"`
+  - `risk`: `"none"` | `"low"` | `"medium"` | `"high"`
+  - `before`: Original code snippet (optional)
+  - `after`: Simplified code snippet (optional)
+- `behavior_equivalence`: Boolean - true ONLY if behavior is guaranteed identical
+- `complexity_reduction`: Estimated reduction percentage (0-100)
+- `summary`: Brief description of what was simplified
+- `rationale`: **Detailed** explanation of your decisions (for audit, no length limit)
+- `extensions.insights`: Array of observations that don't fit the schema (max 5)
+
+### Extensible Change Types
+
+If your change doesn't fit predefined types, use custom format:
+
+```json
+{
+  "type": { "custom": "inline_callback", "reason": "Converted callback to arrow function" },
+  "description": "...",
+  "scope": "function",
+  "risk": "low"
+}
+```
+
+### Insights (Overflow)
+
+For observations that don't fit the schema but are valuable:
+
+```json
+"extensions": {
+  "insights": [
+    {
+      "text": "Function could benefit from type hints",
+      "suggested_mapping": "changes.type.add_type_hints",
+      "evidence": "No type annotations on parameters"
+    }
+  ]
 }
 ```
 
@@ -57,19 +124,8 @@ You MUST wrap your response in the standard envelope format:
 - `BEHAVIOR_CHANGE_REQUIRED`: Simplification would require behavior change
 - `INTERNAL_ERROR`: Unexpected error
 
-## Output Fields (inside data)
+## Important
 
-- `simplified_code`: The simplified version of the code
-- `changes`: Array of changes made, each with:
-  - `type`: Category of change (required)
-  - `description`: What was changed (required)
-  - `scope`: "local" | "function" | "file" | "project" (required)
-  - `risk`: "none" | "low" | "medium" | "high" (required)
-  - `before`: Original code snippet (optional)
-  - `after`: Simplified code snippet (optional)
-- `behavior_equivalence`: Boolean - true ONLY if behavior is guaranteed identical
-- `complexity_reduction`: Estimated reduction percentage (0-100)
-- `diff_unified`: Unified diff format (optional, for tooling)
-- `summary`: Brief description of what was simplified
-- `rationale`: Explanation of your decisions and any assumptions
-- `confidence`: Your confidence score (0-1)
+- `meta.explain` is for **quick decisions** (routing, UI cards, logs) - keep it short
+- `data.rationale` is for **audit and review** - be thorough and detailed
+- Both must be present in successful responses

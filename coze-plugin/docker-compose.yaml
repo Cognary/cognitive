@@ -1,0 +1,67 @@
+# Cognitive Modules - Docker Compose 配置
+# 用于快速部署 Cognitive API 服务
+
+version: '3.8'
+
+services:
+  cognitive-api:
+    build:
+      context: ..
+      dockerfile: coze-plugin/Dockerfile
+    container_name: cognitive-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      # API 认证（可选，留空则无需认证）
+      - COGNITIVE_API_KEY=${COGNITIVE_API_KEY:-}
+      
+      # LLM 提供商配置
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o}
+      
+      # LLM API Keys（至少配置一个）
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      # ============================================================
+      # 模块目录挂载（热更新支持）
+      # ============================================================
+      # 方式1: 挂载本地 modules 目录（添加/修改模块后立即生效，无需重启）
+      - ./modules:/app/cognitive/modules:ro
+      
+      # 方式2: 挂载用户全局模块目录（可选，取消注释启用）
+      # - ~/.cognitive/modules:/root/.cognitive/modules:ro
+      
+      # 方式3: 挂载项目原有模块目录（可选，取消注释启用）
+      # - ../cognitive/modules:/app/cognitive/modules:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# ============================================================
+# 使用方法
+# ============================================================
+# 1. 复制 .env.example 为 .env 并填写配置
+# 2. docker-compose up -d
+# 3. 访问 http://localhost:8000/docs 查看 API 文档
+#
+# ============================================================
+# 模块更新方法
+# ============================================================
+# 方法1: 本地目录热更新（推荐）
+#   mkdir -p modules/my-module
+#   # 添加 MODULE.md 和 schema.json
+#   # 无需重启，立即可用
+#
+# 方法2: 容器内安装
+#   docker exec -it cognitive-api cogn add github-url -m module-name
+#
+# 方法3: 重新构建
+#   docker-compose up -d --build

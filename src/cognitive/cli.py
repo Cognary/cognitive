@@ -49,6 +49,7 @@ from .runner import run_module
 from .subagent import run_with_subagents
 from .validator import validate_module
 from .templates import create_module
+from .migrate import migrate_module, migrate_all_modules
 from .providers import check_provider_status
 
 app = typer.Typer(
@@ -162,11 +163,19 @@ def run_cmd(
 @app.command("validate")
 def validate_cmd(
     module: str = typer.Argument(..., help="Module name or path"),
+    v22: bool = typer.Option(False, "--v22", help="Validate v2.2 format requirements"),
 ):
-    """Validate a cognitive module's structure and examples."""
-    rprint(f"[cyan]→[/cyan] Validating module: [bold]{module}[/bold]\n")
+    """
+    Validate a cognitive module's structure and examples.
     
-    is_valid, errors, warnings = validate_module(module)
+    Examples:
+        cogn validate code-reviewer
+        cogn validate code-reviewer --v22   # Check v2.2 requirements
+    """
+    mode_str = " [dim](v2.2 strict)[/dim]" if v22 else ""
+    rprint(f"[cyan]→[/cyan] Validating module: [bold]{module}[/bold]{mode_str}\n")
+    
+    is_valid, errors, warnings = validate_module(module, v22=v22)
     
     if warnings:
         rprint(f"[yellow]⚠ Warnings ({len(warnings)}):[/yellow]")
@@ -175,12 +184,92 @@ def validate_cmd(
         print()
     
     if is_valid:
-        rprint(f"[green]✓ Module '{module}' is valid[/green]")
+        if v22:
+            rprint(f"[green]✓ Module '{module}' is valid v2.2 format[/green]")
+        else:
+            rprint(f"[green]✓ Module '{module}' is valid[/green]")
     else:
         rprint(f"[red]✗ Validation failed ({len(errors)} errors):[/red]")
         for e in errors:
             rprint(f"  - {e}")
         raise typer.Exit(1)
+
+
+@app.command("migrate")
+def migrate_cmd(
+    module: Optional[str] = typer.Argument(None, help="Module name or path (omit for --all)"),
+    all_modules: bool = typer.Option(False, "--all", "-a", help="Migrate all installed modules"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show what would be done without making changes"),
+    no_backup: bool = typer.Option(False, "--no-backup", help="Skip creating backup before migration"),
+):
+    """
+    Migrate modules from v1/v2.1 to v2.2 format.
+    
+    Examples:
+        cogn migrate code-reviewer          # Migrate single module
+        cogn migrate code-reviewer --dry-run # Preview changes
+        cogn migrate --all                  # Migrate all modules
+    """
+    if not module and not all_modules:
+        rprint("[red]Error: Provide module name or use --all[/red]")
+        raise typer.Exit(1)
+    
+    if all_modules:
+        rprint(f"[cyan]→[/cyan] Migrating all modules to v2.2...")
+        if dry_run:
+            rprint("[dim](dry run - no changes will be made)[/dim]")
+        print()
+        
+        results = migrate_all_modules(dry_run=dry_run, backup=not no_backup)
+        
+        success_count = 0
+        for name, success, changes, warnings in results:
+            if success:
+                success_count += 1
+                rprint(f"[green]✓[/green] {name}")
+                for c in changes:
+                    rprint(f"    {c}")
+            else:
+                rprint(f"[red]✗[/red] {name}")
+                for w in warnings:
+                    rprint(f"    [yellow]{w}[/yellow]")
+        
+        print()
+        rprint(f"[green]Migrated: {success_count}/{len(results)}[/green]")
+        
+    else:
+        mode_str = " [dim](dry run)[/dim]" if dry_run else ""
+        rprint(f"[cyan]→[/cyan] Migrating module: [bold]{module}[/bold]{mode_str}\n")
+        
+        success, changes, warnings = migrate_module(
+            module,
+            dry_run=dry_run,
+            backup=not no_backup
+        )
+        
+        if changes:
+            rprint(f"[cyan]Changes:[/cyan]")
+            for c in changes:
+                rprint(f"  - {c}")
+            print()
+        
+        if warnings:
+            rprint(f"[yellow]⚠ Warnings:[/yellow]")
+            for w in warnings:
+                rprint(f"  - {w}")
+            print()
+        
+        if success:
+            if dry_run:
+                rprint(f"[green]✓ Migration preview complete[/green]")
+                rprint(f"  Run without --dry-run to apply changes")
+            else:
+                rprint(f"[green]✓ Module '{module}' migrated to v2.2[/green]")
+                rprint(f"\nValidate with:")
+                rprint(f"  [cyan]cogn validate {module} --v22[/cyan]")
+        else:
+            rprint(f"[red]✗ Migration failed[/red]")
+            raise typer.Exit(1)
 
 
 @app.command("install")

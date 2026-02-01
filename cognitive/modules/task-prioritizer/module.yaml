@@ -1,7 +1,7 @@
 # Cognitive Module Manifest v2.2
-name: code-simplifier
+name: task-prioritizer
 version: 2.2.0
-responsibility: Simplify code while preserving behavior
+responsibility: 根据紧急度、重要性和依赖关系对任务进行优先级排序
 
 # 模块分级
 tier: decision
@@ -9,11 +9,10 @@ schema_strictness: medium
 
 # 明确排除项
 excludes:
-  - changing observable behavior
-  - adding new features
-  - removing functionality
-  - executing code
-  - writing files
+  - 执行任务
+  - 分配任务给具体人员
+  - 估算工时
+  - 创建项目计划
 
 # 运行时策略
 policies:
@@ -30,7 +29,6 @@ tools:
     - write_file
     - shell
     - network
-    - code_interpreter
 
 # 溢出策略
 overflow:
@@ -55,7 +53,6 @@ runtime_requirements:
   max_input_tokens: 8000
   preferred_capabilities:
     - json_mode
-    - long_context
 
 # IO Schemas
 io:
@@ -70,12 +67,10 @@ compat:
   runtime_auto_wrap: true
   schema_output_alias: data
 
-# 约束（v2.1 兼容）
+# 约束（向后兼容）
 constraints:
-  behavior_equivalence_false_max_confidence: 0.7
-
-# 测试用例
-tests:
-  - tests/case1.input.json -> tests/case1.expected.json
-  - tests/case2.input.json -> tests/case2.expected.json
-  - tests/case_parse_error.input.json -> tests/case_parse_error.expected.json
+  no_network: true
+  no_side_effects: true
+  no_inventing_data: true
+  require_confidence: true
+  require_rationale: true

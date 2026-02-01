@@ -1,41 +1,73 @@
 {
+  "$comment": "Contract validation for JavaScript simplification with envelope v2.2 format",
   "$validate": {
-    "simplified_code": {
-      "type": "string",
-      "minLength": 1
+    "ok": {
+      "const": true
     },
-    "changes": {
-      "type": "array"
+    "meta": {
+      "type": "object",
+      "required": ["confidence", "risk", "explain"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "explain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 280
+        }
+      }
     },
-    "behavior_equivalence": {
-      "type": "boolean"
-    },
-    "confidence": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 1
+    "data": {
+      "type": "object",
+      "required": ["simplified_code", "changes", "behavior_equivalence", "rationale", "summary"],
+      "properties": {
+        "simplified_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changes": {
+          "type": "array"
+        },
+        "behavior_equivalence": {
+          "type": "boolean"
+        }
+      }
     }
   },
   "$example": {
-    "simplified_code": "function processData(data) {\n  return data.filter(item => item != null).map(item => item * 2);\n}",
-    "changes": [
-      {
-        "type": "simplify_logic",
-        "description": "Replaced for loop with filter and map",
-        "scope": "function",
-        "risk": "low"
-      },
-      {
-        "type": "remove_redundancy",
-        "description": "Used != null to check both null and undefined",
-        "scope": "local",
-        "risk": "none"
-      }
-    ],
-    "behavior_equivalence": true,
-    "complexity_reduction": 50,
-    "summary": "Replaced imperative loop with functional filter/map chain",
-    "rationale": "The for loop with push can be replaced with filter().map() which is more idiomatic JavaScript. Using != null is equivalent to checking both null and undefined.",
-    "confidence": 0.9
+    "ok": true,
+    "meta": {
+      "confidence": 0.9,
+      "risk": "low",
+      "explain": "Replaced imperative loop with functional filter/map chain. Behavior equivalence guaranteed."
+    },
+    "data": {
+      "simplified_code": "function processData(data) {\n  return data.filter(item => item != null).map(item => item * 2);\n}",
+      "changes": [
+        {
+          "type": "simplify_logic",
+          "description": "Replaced for loop with filter and map",
+          "scope": "function",
+          "risk": "low"
+        },
+        {
+          "type": "remove_redundancy",
+          "description": "Used != null to check both null and undefined",
+          "scope": "local",
+          "risk": "none"
+        }
+      ],
+      "behavior_equivalence": true,
+      "complexity_reduction": 50,
+      "summary": "Replaced imperative loop with functional filter/map chain",
+      "rationale": "The for loop with push can be replaced with filter().map() which is more idiomatic JavaScript. Using != null is equivalent to checking both null and undefined. This transformation is safe because: 1) filter preserves order, 2) map applies the same operation, 3) the null check is semantically identical."
+    }
   }
 }

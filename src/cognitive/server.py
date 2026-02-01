@@ -1,17 +1,25 @@
 """
 Cognitive Modules HTTP API Server
 
-提供 RESTful API 接口，支持工作流平台集成。
+提供 RESTful API 接口，支持工作流平台集成（包括 Coze 插件）。
 
 启动方式:
     cogn serve --port 8000
     
 或直接运行:
     uvicorn cognitive.server:app --host 0.0.0.0 --port 8000
+    
+环境变量:
+    COGNITIVE_API_KEY - API Key 认证（可选，不设置则无需认证）
+    LLM_PROVIDER - LLM 提供商 (openai, anthropic, deepseek, minimax)
+    OPENAI_API_KEY - OpenAI API Key
+    ANTHROPIC_API_KEY - Anthropic API Key
+    DEEPSEEK_API_KEY - DeepSeek API Key
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict, List
 import os
@@ -19,6 +27,42 @@ import os
 from .registry import list_modules, find_module
 from .loader import load_module
 from .runner import run_module as execute_module
+
+# ============================================================
+# API Key 认证
+# ============================================================
+
+API_KEY_NAME = "Authorization"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+
+async def verify_api_key(api_key: Optional[str] = Security(api_key_header)) -> Optional[str]:
+    """
+    验证 API Key
+    
+    如果 COGNITIVE_API_KEY 未设置，则跳过验证。
+    如果设置了，则要求请求头携带 Bearer <key> 格式的认证。
+    """
+    expected_key = os.environ.get("COGNITIVE_API_KEY")
+    
+    # 如果未设置 API Key，则不需要认证
+    if not expected_key:
+        return None
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing API Key. Use header: Authorization: Bearer <your-api-key>"
+        )
+    
+    # 支持 Bearer token 格式
+    if api_key.startswith("Bearer "):
+        api_key = api_key[7:]
+    
+    if api_key != expected_key:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    
+    return api_key
 
 # ============================================================
 # App Setup
@@ -173,7 +217,10 @@ async def get_module(name: str):
 
 
 @app.post("/run", response_model=RunResponse, tags=["Execution"])
-async def run_module(request: RunRequest):
+async def run_module(
+    request: RunRequest,
+    api_key: Optional[str] = Depends(verify_api_key)
+):
     """
     运行 Cognitive Module
     
@@ -184,6 +231,10 @@ async def run_module(request: RunRequest):
         "args": "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')"
     }
     ```
+    
+    认证:
+        如果服务器设置了 COGNITIVE_API_KEY，需要在请求头中携带:
+        Authorization: Bearer <your-api-key>
     """
     # 检查模块是否存在
     module_path = find_module(request.module)

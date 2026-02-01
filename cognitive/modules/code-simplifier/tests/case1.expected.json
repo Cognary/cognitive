@@ -1,12 +1,32 @@
 {
-  "$comment": "Contract validation for successful simplification with envelope format",
+  "$comment": "Contract validation for successful simplification with envelope v2.2 format",
   "$validate": {
     "ok": {
       "const": true
     },
+    "meta": {
+      "type": "object",
+      "required": ["confidence", "risk", "explain"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "explain": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 280
+        }
+      }
+    },
     "data": {
       "type": "object",
-      "required": ["simplified_code", "changes", "behavior_equivalence", "rationale", "confidence"],
+      "required": ["simplified_code", "changes", "behavior_equivalence", "rationale", "summary"],
       "properties": {
         "simplified_code": {
           "type": "string",
@@ -22,11 +42,6 @@
         "behavior_equivalence": {
           "const": true
         },
-        "confidence": {
-          "type": "number",
-          "minimum": 0.5,
-          "maximum": 1
-        },
         "rationale": {
           "type": "string",
           "minLength": 10
@@ -40,6 +55,11 @@
   },
   "$example": {
     "ok": true,
+    "meta": {
+      "confidence": 0.95,
+      "risk": "none",
+      "explain": "Simplified nested conditionals using Python's chained comparison. Behavior equivalence guaranteed."
+    },
     "data": {
       "simplified_code": "def calc(x):\n    if 0 < x < 10:\n        return x * 2\n    elif x > 0:\n        return x\n    return 0",
       "changes": [
@@ -53,8 +73,7 @@
       "behavior_equivalence": true,
       "complexity_reduction": 30,
       "summary": "Simplified nested conditionals using Python's chained comparison",
-      "rationale": "The nested if statements can be flattened using Python's chained comparison operator (0 < x < 10), making the code more readable while preserving the exact same behavior.",
-      "confidence": 0.95
+      "rationale": "The nested if statements can be flattened using Python's chained comparison operator (0 < x < 10), making the code more readable while preserving the exact same behavior. The original structure had three levels of nesting which is now reduced to a flat if-elif-return structure."
     }
   }
 }

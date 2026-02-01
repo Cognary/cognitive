@@ -1,0 +1,41 @@
+{
+  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
+  "input": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "用户的请求内容"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["analysis", "response", "confidence", "rationale"],
+    "properties": {
+      "analysis": {
+        "type": "string",
+        "description": "对用户请求的分析"
+      },
+      "response": {
+        "type": "string",
+        "description": "回复内容"
+      },
+      "suggestions": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "建议列表"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "置信度分数"
+      },
+      "rationale": {
+        "type": "string",
+        "description": "推理过程"
+      }
+    }
+  }
+}

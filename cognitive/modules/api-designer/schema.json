@@ -1,5 +1,32 @@
 {
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
+  "$schema": "https://cognitive-modules.dev/schema/v2.2.json",
+  
+  "meta": {
+    "type": "object",
+    "required": ["confidence", "risk", "explain"],
+    "properties": {
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "设计置信度"
+      },
+      "risk": {
+        "type": "string",
+        "enum": ["none", "low", "medium", "high"],
+        "description": "设计复杂性风险"
+      },
+      "explain": {
+        "type": "string",
+        "maxLength": 280,
+        "description": "简短摘要"
+      },
+      "trace_id": { "type": "string" },
+      "model": { "type": "string" },
+      "latency_ms": { "type": "number", "minimum": 0 }
+    }
+  },
+
   "input": {
     "type": "object",
     "properties": {
@@ -10,8 +37,20 @@
       "operations": {
         "type": "array",
         "items": {
-          "type": "string",
-          "enum": ["create", "read", "update", "delete", "list", "search", "batch"]
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["create", "read", "update", "delete", "list", "search", "batch"]
+            },
+            {
+              "type": "object",
+              "required": ["custom", "reason"],
+              "properties": {
+                "custom": { "type": "string" },
+                "reason": { "type": "string" }
+              }
+            }
+          ]
         }
       },
       "relationships": {
@@ -20,7 +59,10 @@
           "type": "object",
           "properties": {
             "resource": { "type": "string" },
-            "type": { "type": "string", "enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"] }
+            "type": { 
+              "type": "string", 
+              "enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"] 
+            }
           }
         }
       },
@@ -30,19 +72,32 @@
       "query": { "type": "string" }
     }
   },
-  "output": {
+
+  "data": {
     "type": "object",
-    "required": ["endpoints", "rationale", "confidence"],
+    "required": ["endpoints", "rationale"],
     "properties": {
       "endpoints": {
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["method", "path", "description"],
+          "required": ["method", "path", "description", "risk"],
           "properties": {
             "method": {
-              "type": "string",
-              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+                },
+                {
+                  "type": "object",
+                  "required": ["custom", "reason"],
+                  "properties": {
+                    "custom": { "type": "string", "minLength": 1, "maxLength": 32 },
+                    "reason": { "type": "string" }
+                  }
+                }
+              ]
             },
             "path": { "type": "string" },
             "description": { "type": "string" },
@@ -72,6 +127,11 @@
                   "description": { "type": "string" }
                 }
               }
+            },
+            "risk": {
+              "type": "string",
+              "enum": ["none", "low", "medium", "high"],
+              "description": "该端点的风险等级"
             }
           }
         }
@@ -96,32 +156,51 @@
         }
       },
       "rationale": {
-        "type": "object",
-        "required": ["decisions"],
-        "properties": {
-          "decisions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "aspect": { "type": "string" },
-                "decision": { "type": "string" },
-                "reasoning": { "type": "string" }
-              }
+        "type": "string",
+        "description": "详细的设计思路说明"
+      },
+      "extensions": {
+        "$ref": "#/$defs/extensions"
+      }
+    }
+  },
+
+  "error": {
+    "type": "object",
+    "required": ["code", "message"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "INVALID_INPUT",
+          "NO_RESOURCE",
+          "CONFLICTING_REQUIREMENTS",
+          "SCHEMA_VALIDATION_FAILED",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "message": { "type": "string" }
+    }
+  },
+
+  "$defs": {
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "insights": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["text", "suggested_mapping"],
+            "properties": {
+              "text": { "type": "string" },
+              "suggested_mapping": { "type": "string" },
+              "evidence": { "type": "string" }
             }
-          },
-          "assumptions": {
-            "type": "array",
-            "items": { "type": "string" }
           }
         }
-      },
-      "confidence": {
-        "type": "number",
-        "minimum": 0,
-        "maximum": 1
       }
-    },
-    "additionalProperties": false
+    }
   }
 }
