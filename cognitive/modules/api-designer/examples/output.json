@@ -1,0 +1,180 @@
+{
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "description": "创建新订单",
+      "auth_required": true,
+      "request": {
+        "headers": {
+          "Authorization": "Bearer <token>",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "user_id": "string (required)",
+          "items": "array of {product_id, quantity}",
+          "shipping_address": "object"
+        }
+      },
+      "response": {
+        "body": {
+          "id": "string",
+          "status": "pending",
+          "created_at": "ISO8601 datetime"
+        }
+      },
+      "status_codes": [
+        { "code": 201, "description": "订单创建成功" },
+        { "code": 400, "description": "请求参数错误" },
+        { "code": 401, "description": "未授权" }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/{id}",
+      "description": "获取单个订单详情",
+      "auth_required": true,
+      "request": {
+        "params": {
+          "id": "string (required)"
+        }
+      },
+      "response": {
+        "body": {
+          "id": "string",
+          "user_id": "string",
+          "items": "array",
+          "status": "string",
+          "total": "number",
+          "created_at": "datetime",
+          "updated_at": "datetime"
+        }
+      },
+      "status_codes": [
+        { "code": 200, "description": "成功" },
+        { "code": 404, "description": "订单不存在" }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "description": "获取订单列表",
+      "auth_required": true,
+      "request": {
+        "query": {
+          "page": "integer (default: 1)",
+          "limit": "integer (default: 20, max: 100)",
+          "status": "string (optional, filter)",
+          "user_id": "string (optional, filter)"
+        }
+      },
+      "response": {
+        "body": {
+          "data": "array of orders",
+          "pagination": {
+            "page": "integer",
+            "limit": "integer",
+            "total": "integer",
+            "total_pages": "integer"
+          }
+        }
+      },
+      "status_codes": [
+        { "code": 200, "description": "成功" }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/orders/{id}",
+      "description": "更新订单状态",
+      "auth_required": true,
+      "request": {
+        "params": {
+          "id": "string (required)"
+        },
+        "body": {
+          "status": "string (optional)",
+          "shipping_address": "object (optional)"
+        }
+      },
+      "response": {
+        "body": {
+          "id": "string",
+          "status": "string",
+          "updated_at": "datetime"
+        }
+      },
+      "status_codes": [
+        { "code": 200, "description": "更新成功" },
+        { "code": 400, "description": "无效的状态转换" },
+        { "code": 404, "description": "订单不存在" }
+      ]
+    }
+  ],
+  "common": {
+    "authentication": {
+      "type": "Bearer Token",
+      "header": "Authorization",
+      "format": "Bearer <jwt_token>"
+    },
+    "pagination": {
+      "default_limit": 20,
+      "max_limit": 100,
+      "style": "offset-based"
+    },
+    "error_format": {
+      "error": {
+        "code": "string",
+        "message": "string",
+        "details": "object (optional)"
+      }
+    }
+  },
+  "examples": [
+    {
+      "endpoint": "POST /api/v1/orders",
+      "request": {
+        "headers": { "Authorization": "Bearer eyJ..." },
+        "body": {
+          "user_id": "u123",
+          "items": [
+            { "product_id": "p456", "quantity": 2 }
+          ],
+          "shipping_address": {
+            "street": "123 Main St",
+            "city": "Shanghai"
+          }
+        }
+      },
+      "response": {
+        "id": "ord_789",
+        "status": "pending",
+        "created_at": "2024-01-15T10:30:00Z"
+      }
+    }
+  ],
+  "rationale": {
+    "decisions": [
+      {
+        "aspect": "HTTP 方法选择",
+        "decision": "更新用 PATCH 而非 PUT",
+        "reasoning": "PATCH 支持部分更新，更灵活；PUT 需要提供完整资源"
+      },
+      {
+        "aspect": "路径设计",
+        "decision": "使用 /api/v1/ 前缀",
+        "reasoning": "版本化 API 便于后续迭代，不破坏现有客户端"
+      },
+      {
+        "aspect": "分页方式",
+        "decision": "使用 offset-based 分页",
+        "reasoning": "简单直观，适合订单这种按时间排序的场景"
+      }
+    ],
+    "assumptions": [
+      "使用 JWT 进行认证",
+      "订单状态有固定的状态机"
+    ]
+  },
+  "confidence": 0.91
+}

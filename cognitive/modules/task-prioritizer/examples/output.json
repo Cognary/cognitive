@@ -1,0 +1,81 @@
+{
+  "prioritized_tasks": [
+    {
+      "rank": 1,
+      "task_id": "t1",
+      "priority_score": 95,
+      "quadrant": "urgent-important",
+      "reasoning": "登录崩溃影响所有用户，是生产事故，必须立即修复"
+    },
+    {
+      "rank": 2,
+      "task_id": "t4",
+      "priority_score": 75,
+      "quadrant": "important",
+      "reasoning": "数据库升级是基础设施工作，阻塞其他优化任务"
+    },
+    {
+      "rank": 3,
+      "task_id": "t2",
+      "priority_score": 65,
+      "quadrant": "important",
+      "reasoning": "性能优化重要但不紧急，且依赖 t4 完成"
+    },
+    {
+      "rank": 4,
+      "task_id": "t3",
+      "priority_score": 50,
+      "quadrant": "important",
+      "reasoning": "新功能是业务需求，但没有紧迫截止日期"
+    },
+    {
+      "rank": 5,
+      "task_id": "t5",
+      "priority_score": 25,
+      "quadrant": "neither",
+      "reasoning": "文档更新优先级较低，可在其他任务间隙处理"
+    }
+  ],
+  "dependencies": [
+    {
+      "task_id": "t2",
+      "blocked_by": ["t4"],
+      "blocks": []
+    },
+    {
+      "task_id": "t4",
+      "blocked_by": [],
+      "blocks": ["t2"]
+    }
+  ],
+  "recommendations": [
+    "立即处理登录崩溃（t1），这是 P0 事故",
+    "t4 完成后再开始 t2，避免无效工作",
+    "t3 可以并行开发，不受其他任务阻塞",
+    "建议将 t5 分配给新成员或在会议间隙完成"
+  ],
+  "rationale": {
+    "decisions": [
+      {
+        "aspect": "紧急判定",
+        "decision": "t1 最紧急",
+        "reasoning": "生产事故 + 今天截止 + 影响所有用户"
+      },
+      {
+        "aspect": "依赖处理",
+        "decision": "t4 排在 t2 前面",
+        "reasoning": "t2 依赖 t4，必须先完成基础设施升级"
+      },
+      {
+        "aspect": "象限划分",
+        "decision": "t5 归入 neither",
+        "reasoning": "文档更新不紧急也不直接影响用户"
+      }
+    ],
+    "assumptions": [
+      "团队可以并行处理多个任务",
+      "没有隐藏的依赖关系"
+    ]
+  },
+  "confidence": 0.88
+}

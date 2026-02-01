@@ -1,0 +1,6 @@
+{
+  "code": "def get_user(id):\n    user = db.query(f\"SELECT * FROM users WHERE id = {id}\")\n    return user\n\ndef delete_all_users():\n    db.execute(\"DELETE FROM users\")\n    return \"done\"",
+  "language": "python",
+  "context": "用户管理 API 的数据访问层",
+  "focus": ["security", "correctness"]
+}

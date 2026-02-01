@@ -1,0 +1,63 @@
+{
+  "issues": [
+    {
+      "severity": "critical",
+      "category": "security",
+      "location": "get_user 函数，第2行",
+      "description": "SQL 注入漏洞：直接使用 f-string 拼接用户输入到 SQL 查询中",
+      "suggestion": "使用参数化查询：db.query(\"SELECT * FROM users WHERE id = ?\", [id])"
+    },
+    {
+      "severity": "major",
+      "category": "correctness",
+      "location": "get_user 函数",
+      "description": "缺少输入验证：id 参数没有类型检查",
+      "suggestion": "添加类型注解和验证：def get_user(id: int) -> Optional[User]"
+    },
+    {
+      "severity": "major",
+      "category": "security",
+      "location": "delete_all_users 函数",
+      "description": "危险操作无保护：批量删除没有确认机制或权限检查",
+      "suggestion": "添加权限验证装饰器，要求管理员权限"
+    },
+    {
+      "severity": "minor",
+      "category": "correctness",
+      "location": "get_user 函数",
+      "description": "缺少错误处理：查询失败或用户不存在时没有处理",
+      "suggestion": "添加 try-except 和 None 检查"
+    },
+    {
+      "severity": "info",
+      "category": "readability",
+      "location": "delete_all_users 函数",
+      "description": "返回值不规范：返回字符串 \"done\" 不够结构化",
+      "suggestion": "返回 {\"deleted_count\": n} 或抛出异常"
+    }
+  ],
+  "highlights": [
+    "函数命名清晰，符合 Python 命名规范",
+    "代码结构简洁"
+  ],
+  "summary": "代码存在严重安全问题，最紧迫的是 SQL 注入漏洞。建议立即修复安全问题，并添加输入验证和错误处理。",
+  "rationale": {
+    "decisions": [
+      {
+        "aspect": "审查顺序",
+        "decision": "优先检查安全问题",
+        "reasoning": "用户指定了 security 作为审查重点，且 SQL 注入是常见高危漏洞"
+      },
+      {
+        "aspect": "严重性判定",
+        "decision": "SQL 注入标记为 critical",
+        "reasoning": "可被远程利用，可能导致数据泄露或系统被入侵"
+      }
+    ],
+    "assumptions": [
+      "db 对象是某种 ORM 或数据库连接",
+      "这是生产代码而非学习示例"
+    ]
+  },
+  "confidence": 0.92
+}

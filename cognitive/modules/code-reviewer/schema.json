@@ -1,0 +1,92 @@
+{
+  "$schema": "https://cognitive-modules.io/schema/v1",
+  "input": {
+    "type": "object",
+    "properties": {
+      "code": {
+        "type": "string",
+        "description": "要审查的代码"
+      },
+      "language": {
+        "type": "string",
+        "description": "编程语言"
+      },
+      "context": {
+        "type": "string",
+        "description": "代码用途说明"
+      },
+      "focus": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "审查重点"
+      },
+      "$ARGUMENTS": { "type": "string" },
+      "query": { "type": "string" }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["issues", "summary", "rationale", "confidence"],
+    "properties": {
+      "issues": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["severity", "category", "description", "suggestion"],
+          "properties": {
+            "severity": {
+              "type": "string",
+              "enum": ["critical", "major", "minor", "info"]
+            },
+            "category": {
+              "type": "string",
+              "enum": ["correctness", "security", "performance", "readability", "maintainability"]
+            },
+            "location": {
+              "type": "string",
+              "description": "问题位置（行号或函数名）"
+            },
+            "description": { "type": "string" },
+            "suggestion": { "type": "string" }
+          }
+        }
+      },
+      "highlights": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "代码优点"
+      },
+      "summary": {
+        "type": "string",
+        "description": "整体评价"
+      },
+      "rationale": {
+        "type": "object",
+        "required": ["decisions"],
+        "properties": {
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "aspect": { "type": "string" },
+                "decision": { "type": "string" },
+                "reasoning": { "type": "string" }
+              }
+            }
+          },
+          "assumptions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "additionalProperties": false
+  }
+}

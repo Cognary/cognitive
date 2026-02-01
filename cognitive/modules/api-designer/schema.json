@@ -1,0 +1,127 @@
+{
+  "$schema": "https://cognitive-modules.io/schema/v1",
+  "input": {
+    "type": "object",
+    "properties": {
+      "resource": {
+        "type": "string",
+        "description": "资源名称"
+      },
+      "operations": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["create", "read", "update", "delete", "list", "search", "batch"]
+        }
+      },
+      "relationships": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "resource": { "type": "string" },
+            "type": { "type": "string", "enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"] }
+          }
+        }
+      },
+      "auth_required": { "type": "boolean" },
+      "version": { "type": "string" },
+      "$ARGUMENTS": { "type": "string" },
+      "query": { "type": "string" }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["endpoints", "rationale", "confidence"],
+    "properties": {
+      "endpoints": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["method", "path", "description"],
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+            },
+            "path": { "type": "string" },
+            "description": { "type": "string" },
+            "auth_required": { "type": "boolean" },
+            "request": {
+              "type": "object",
+              "properties": {
+                "headers": { "type": "object" },
+                "params": { "type": "object" },
+                "query": { "type": "object" },
+                "body": { "type": "object" }
+              }
+            },
+            "response": {
+              "type": "object",
+              "properties": {
+                "body": { "type": "object" },
+                "headers": { "type": "object" }
+              }
+            },
+            "status_codes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "code": { "type": "integer" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "common": {
+        "type": "object",
+        "properties": {
+          "authentication": { "type": "object" },
+          "pagination": { "type": "object" },
+          "error_format": { "type": "object" }
+        }
+      },
+      "examples": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "endpoint": { "type": "string" },
+            "request": { "type": "object" },
+            "response": { "type": "object" }
+          }
+        }
+      },
+      "rationale": {
+        "type": "object",
+        "required": ["decisions"],
+        "properties": {
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "aspect": { "type": "string" },
+                "decision": { "type": "string" },
+                "reasoning": { "type": "string" }
+              }
+            }
+          },
+          "assumptions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "additionalProperties": false
+  }
+}
