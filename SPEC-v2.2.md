@@ -16,6 +16,67 @@
 
 ---
 
+## 0.1 核心概念
+
+### Module（模块）
+
+一个 Cognitive Module 由三个部分组成：
+
+```
+Module = Manifest + Prompt + Contract
+```
+
+| 组成部分 | 文件 | 职责 | 读取者 |
+|----------|------|------|--------|
+| **Manifest** | `module.yaml` | 机器可读配置、策略、分级 | Runtime |
+| **Prompt** | `prompt.md` | 人类可读指令、规则 | LLM |
+| **Contract** | `schema.json` | 可验证的输入/输出/错误契约 | Validator |
+
+### Contract（契约）
+
+**Contract** 是模块与调用者之间的可验证承诺，由 JSON Schema 定义，存放在 `schema.json` 中。
+
+Contract 包含三个部分：
+
+| Contract | 说明 | 对应字段 |
+|----------|------|----------|
+| **Input Contract** | 调用者必须提供什么 | `schema.json#/input` |
+| **Output Contract** | 模块成功时返回什么 | `schema.json#/meta` + `schema.json#/data` |
+| **Error Contract** | 模块失败时返回什么 | `schema.json#/error` |
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Contract (schema.json)                │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────┐                                   │
+│  │ Input Contract  │  调用者 → 模块                    │
+│  └────────┬────────┘                                   │
+│           │                                             │
+│           ▼                                             │
+│  ┌─────────────────┐                                   │
+│  │ Output Contract │  模块 → 调用者 (成功)             │
+│  │  • meta (控制面)│                                   │
+│  │  • data (数据面)│                                   │
+│  └─────────────────┘                                   │
+│           │                                             │
+│           ▼                                             │
+│  ┌─────────────────┐                                   │
+│  │ Error Contract  │  模块 → 调用者 (失败)             │
+│  │  • error.code   │                                   │
+│  │  • error.message│                                   │
+│  └─────────────────┘                                   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+Contract 是 Cognitive Modules 的核心：
+- **可验证**：输入输出都通过 JSON Schema 验证
+- **可预测**：调用者知道会得到什么
+- **可组合**：模块间可以安全编排
+
+---
+
 ## 1. Module Manifest（module.yaml）
 
 ### 1.1 模块分级（Tier）
