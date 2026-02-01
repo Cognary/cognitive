@@ -1,33 +1,69 @@
 # Cognitive Modules
 
+[![CI](https://github.com/leizii/cognitive-modules/actions/workflows/ci.yml/badge.svg)](https://github.com/leizii/cognitive-modules/actions/workflows/ci.yml)
+[![PyPI version](https://badge.fury.io/py/cognitive-modules.svg)](https://pypi.org/project/cognitive-modules/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 > 可验证的结构化 AI 任务规范
 
 Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、可验证、可审计**的生成任务设计。
 
-## 与 Skills 的区别
+## 特性
 
-| | Skills | Cognitive Modules |
-|---|--------|------------------|
-| 定位 | 轻量指令扩展 | 可验证的结构化任务 |
-| 输入校验 | 无 | JSON Schema |
-| 输出校验 | 无 | JSON Schema |
-| 置信度 | 无 | 必须 0-1 |
-| 推理过程 | 无 | 必须 rationale |
-| 适用场景 | 快捷命令 | 规范生成、设计文档 |
+- **强类型契约** - JSON Schema 双向验证输入输出
+- **可解释输出** - 强制输出 `confidence` + `rationale`
+- **子代理编排** - `@call:module` 支持模块间调用
+- **参数传递** - `$ARGUMENTS` 运行时替换
+- **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
+- **公共注册表** - `cog install registry:module-name`
+
+## 安装
+
+```bash
+# 基础安装
+pip install cognitive-modules
+
+# 带 LLM 支持
+pip install cognitive-modules[openai]      # OpenAI
+pip install cognitive-modules[anthropic]   # Claude
+pip install cognitive-modules[all]         # 全部
+```
 
 ## 快速开始
 
 ```bash
-# 克隆
-git clone https://github.com/leizii/cognitive-modules.git
-cd cognitive-modules
+# 配置 LLM
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=sk-xxx
 
-# 安装依赖
-pip install typer rich jsonschema pyyaml
+# 或使用 MiniMax
+export LLM_PROVIDER=minimax
+export MINIMAX_API_KEY=sk-xxx
 
-# 运行
-./cog --help
+# 运行代码审查
+cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+
+# 运行任务排序
+cog run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --pretty
+
+# 运行 API 设计
+cog run api-designer --args "用户系统 CRUD API" --pretty
 ```
+
+## 与 Skills 对比
+
+| | Skills | Cognitive Modules |
+|---|--------|------------------|
+| 定位 | 轻量指令扩展 | 可验证的结构化任务 |
+| 输入校验 | ❌ | ✅ JSON Schema |
+| 输出校验 | ❌ | ✅ JSON Schema |
+| 置信度 | ❌ | ✅ 必须 0-1 |
+| 推理过程 | ❌ | ✅ 必须 rationale |
+| 参数传递 | ✅ $ARGUMENTS | ✅ $ARGUMENTS |
+| 子代理 | ✅ context: fork | ✅ @call + context |
+| 验证工具 | ❌ | ✅ cog validate |
+| 注册表 | ❌ | ✅ cog install |
 
 ## CLI 命令
 
@@ -37,69 +73,51 @@ cog list                    # 列出已安装模块
 cog info <module>           # 查看模块详情
 cog validate <module>       # 验证模块结构
 
-# 创建模块
-cog init <name> -d "描述"    # 从模板创建新模块
-
 # 运行模块
 cog run <module> input.json -o output.json --pretty
+cog run <module> --args "需求描述" --pretty
+cog run <module> --args "需求" --subagent  # 启用子代理
 
-# 直接传参数（无需 JSON 文件）
-cog run <module> --args "你的需求描述" -o output.json
-
-# 启用子代理模式（支持 @call 调用其他模块）
-cog run <module> --args "需求" --subagent
+# 创建模块
+cog init <name> -d "描述"
 
 # 安装/卸载
-cog install <source>        # 从 git/本地/注册表安装
-cog uninstall <module>      # 卸载模块
+cog install github:user/repo/path
+cog install registry:module-name
+cog uninstall <module>
 
 # 注册表
 cog registry                # 查看公共模块
 cog search <query>          # 搜索模块
 
 # 环境检查
-cog doctor                  # 检查 LLM 配置
+cog doctor
 ```
 
-## 安装来源
+## 内置模块
 
-```bash
-# 从本地安装
-cog install ./path/to/module
-
-# 从 GitHub 安装
-cog install github:leizii/cognitive-modules/cognitive/modules/ui-spec-generator
-
-# 从注册表安装
-cog install registry:ui-spec-generator
-```
+| 模块 | 功能 | 示例 |
+|------|------|------|
+| `code-reviewer` | 代码审查 | `cog run code-reviewer --args "你的代码"` |
+| `task-prioritizer` | 任务优先级排序 | `cog run task-prioritizer --args "任务1,任务2"` |
+| `api-designer` | REST API 设计 | `cog run api-designer --args "订单系统"` |
+| `ui-spec-generator` | UI 规范生成 | `cog run ui-spec-generator --args "电商首页"` |
+| `product-analyzer` | 产品分析（子代理示例） | `cog run product-analyzer --args "健康产品" -s` |
 
 ## 模块格式
 
-### 新格式（推荐，2 文件）
+### 新格式（推荐）
 
 ```
 my-module/
 ├── MODULE.md       # 元数据 + 指令
 ├── schema.json     # 输入输出 Schema
-└── examples/       # 可选
+└── examples/
     ├── input.json
     └── output.json
 ```
 
-### 旧格式（兼容，6 文件）
-
-```
-my-module/
-├── module.md
-├── input.schema.json
-├── output.schema.json
-├── constraints.yaml
-├── prompt.txt
-└── examples/
-```
-
-## MODULE.md 格式
+### MODULE.md
 
 ```yaml
 ---
@@ -115,47 +133,41 @@ constraints:
   no_inventing_data: true
   require_confidence: true
   require_rationale: true
+
+context: fork  # 可选：隔离执行
 ---
 
-# 指令内容
+# 指令
 
-（这里写 prompt）
+根据用户需求 $ARGUMENTS 执行任务。
+
+可以调用其他模块：
+@call:other-module($ARGUMENTS)
 ```
 
-## 在 Codex / Cursor 中使用
+## 在 AI 工具中使用
 
-### 方式 1：直接对话（零配置）
-
-```
-读取 ~/.cognitive/modules/ui-spec-generator/MODULE.md，
-为电商首页生成 UI 规范，保存到 ui-spec.json
-```
-
-### 方式 2：AGENTS.md（项目约定）
+### Cursor / Codex CLI
 
 在项目根目录创建 `AGENTS.md`：
 
 ```markdown
-## UI 规范生成
+## 代码审查
 
-当需要生成 UI 规范时：
-1. 读取 `~/.cognitive/modules/ui-spec-generator/MODULE.md`
+当需要审查代码时：
+1. 读取 `~/.cognitive/modules/code-reviewer/MODULE.md`
 2. 按 schema.json 格式输出
-3. 保存到 ui-spec.json
+3. 包含 issues、summary、rationale、confidence
 ```
 
-### 方式 3：包装成 Skill
+### 直接对话
 
-```yaml
-# ~/.claude/skills/ui-spec/SKILL.md
----
-name: ui-spec
-description: 生成 UI 规范
----
-执行 ~/.cognitive/modules/ui-spec-generator/MODULE.md
+```
+读取 ~/.cognitive/modules/code-reviewer/MODULE.md，
+审查这段代码：def login(u,p): ...
 ```
 
-## 配置 LLM（仅 CLI 需要）
+## 配置 LLM
 
 ```bash
 # OpenAI
@@ -166,81 +178,59 @@ export OPENAI_API_KEY=sk-xxx
 export LLM_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-xxx
 
-# Ollama（本地免费）
+# MiniMax
+export LLM_PROVIDER=minimax
+export MINIMAX_API_KEY=sk-xxx
+
+# Ollama（本地）
 export LLM_PROVIDER=ollama
 
-# 不配置则使用 stub（返回示例输出）
+# 检查配置
+cog doctor
 ```
 
-## 模块搜索路径
-
-模块按以下顺序查找：
-
-1. `./cognitive/modules/` - 项目本地
-2. `~/.cognitive/modules/` - 用户全局
-3. `$COGNITIVE_MODULES_PATH` - 自定义路径
-
-## 创建新模块
+## 开发
 
 ```bash
-# 1. 创建骨架
-cog init my-module -d "模块职责描述"
+# 克隆
+git clone https://github.com/leizii/cognitive-modules.git
+cd cognitive-modules
 
-# 2. 编辑 MODULE.md 添加指令
-# 3. 编辑 schema.json 定义输入输出
-# 4. 验证
+# 安装开发依赖
+pip install -e ".[dev]"
+
+# 运行测试
+pytest tests/ -v
+
+# 创建新模块
+cog init my-module -d "模块描述"
 cog validate my-module
-
-# 5. 全局安装（可选）
-cog install ./cognitive/modules/my-module
-```
-
-## 内置模块
-
-### ui-spec-generator
-
-将产品需求转换为前端可实现的 UI 规范。
-
-**输出包含**：
-- 信息架构（sections + hierarchy）
-- 组件定义（type, props, states）
-- 交互设计（events, transitions）
-- 响应式规则（breakpoints, layout）
-- 可访问性（WCAG 要求）
-- 验收标准（可测试条件）
-- 置信度 + 推理过程
-
-```bash
-cog run ui-spec-generator examples/input.json -o ui-spec.json --pretty
 ```
 
 ## 项目结构
 
 ```
 cognitive-modules/
-├── README.md               # 本文件
-├── SPEC.md                 # 规范文档
-├── INTEGRATION.md          # Agent 集成指南
-├── AGENTS.md               # Agent 约定示例
-├── cognitive-registry.json # 公共模块注册表
 ├── src/cognitive/          # CLI 源码
 │   ├── cli.py              # 命令入口
-│   ├── loader.py           # 模块加载（支持新旧格式）
+│   ├── loader.py           # 模块加载
 │   ├── runner.py           # 模块执行
+│   ├── subagent.py         # 子代理编排
 │   ├── validator.py        # 模块验证
-│   ├── registry.py         # 模块发现与安装
+│   ├── registry.py         # 模块安装
 │   ├── templates.py        # 模块模板
 │   └── providers/          # LLM 后端
 ├── cognitive/modules/      # 内置模块
-│   └── ui-spec-generator/
-└── pyproject.toml
+├── tests/                  # 单元测试
+├── SPEC.md                 # 规范文档
+├── INTEGRATION.md          # 集成指南
+└── cognitive-registry.json # 公共注册表
 ```
 
 ## 文档
 
-- [SPEC.md](SPEC.md) - 完整规范文档
+- [SPEC.md](SPEC.md) - 完整规范（含上下文哲学）
 - [INTEGRATION.md](INTEGRATION.md) - Agent 工具集成指南
-- [AGENTS.md](AGENTS.md) - Agent 约定示例
 
 ## License
 
