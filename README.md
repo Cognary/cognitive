@@ -67,19 +67,25 @@ cogn run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --
 cogn run api-designer --args "用户系统 CRUD API" --pretty
 ```
 
-## 与 Skills 对比
+## 核心特性
 
-| | Skills | Cognitive Modules |
-|---|--------|------------------|
-| 定位 | 轻量指令扩展 | 可验证的结构化任务 |
-| 输入校验 | ❌ | ✅ JSON Schema |
-| 输出校验 | ❌ | ✅ JSON Schema |
-| 置信度 | ❌ | ✅ 必须 0-1 |
-| 推理过程 | ❌ | ✅ 必须 rationale |
-| 参数传递 | ✅ $ARGUMENTS | ✅ $ARGUMENTS |
-| 子代理 | ✅ context: fork | ✅ @call + context |
-| 验证工具 | ❌ | ✅ cogn validate |
-| 注册表 | ❌ | ✅ cogn install |
+| 特性 | 说明 |
+|------|------|
+| **JSON Schema 验证** | 输入输出双向校验 |
+| **置信度** | 每个输出必须包含 0-1 的 confidence |
+| **推理过程** | 强制输出 rationale，可审计 |
+| **参数传递** | `$ARGUMENTS` 运行时替换 |
+| **子代理** | `@call:module` 支持模块间调用 |
+| **验证工具** | `cogn validate` 检查模块结构 |
+| **版本管理** | `cogn add/update/remove` 管理模块 |
+
+## 集成方式
+
+| 方式 | 命令 | 适用场景 |
+|------|------|----------|
+| CLI | `cogn run` | 命令行 |
+| HTTP API | `cogn serve` | n8n、Coze、Dify |
+| MCP Server | `cogn mcp` | Claude、Cursor |
 
 ## CLI 命令
 

@@ -2,9 +2,46 @@
 
 Cognitive Modules 可以与各种 AI 工具无缝集成。
 
+## 推荐方式：MCP Server
+
+MCP (Model Context Protocol) 是最佳集成方式，Claude Desktop、Cursor 等工具原生支持。
+
+```bash
+pip install cognitive-modules[mcp]
+cogn mcp
+```
+
+配置 Claude Desktop：
+
+```json
+{
+  "mcpServers": {
+    "cognitive": {
+      "command": "cogn",
+      "args": ["mcp"],
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
+详见 [MCP Server 文档](mcp.md)。
+
 ## Cursor / VS Code
 
-### 方式 1：直接对话
+### 方式 1：MCP 集成（推荐）
+
+配置 Cursor 的 MCP Server 后，直接在对话中使用：
+
+```
+帮我审查这段代码的安全问题
+```
+
+Cursor 会自动调用 `cognitive_run("code-reviewer", ...)`.
+
+### 方式 2：直接对话
 
 在 Cursor 中直接输入：
 
@@ -16,7 +53,7 @@ def login(u, p):
     return db.query(f"SELECT * FROM users WHERE name={u}")
 ```
 
-### 方式 2：AGENTS.md 约定
+### 方式 3：AGENTS.md 约定
 
 在项目根目录创建 `AGENTS.md`：
 
@@ -29,25 +66,15 @@ def login(u, p):
 1. 读取 `~/.cognitive/modules/code-reviewer/MODULE.md`
 2. 按 `schema.json` 格式输出
 3. 必须包含 issues、summary、rationale、confidence
-
-## UI 规范
-
-当需要设计 UI 时：
-1. 读取 `~/.cognitive/modules/ui-spec-generator/MODULE.md`
-2. 生成完整的 UI 规范
-3. 保存到 `ui-spec.json`
-```
-
-## Codex CLI
-
-```bash
-# 在 Codex 对话中
-> 使用 code-reviewer 模块审查 src/auth.py
 ```
 
 ## Claude Desktop
 
-### 方式 1：System Prompt
+### 方式 1：MCP Server（推荐）
+
+配置 MCP Server 后，Claude 可以直接调用 Cognitive Modules。
+
+### 方式 2：System Prompt
 
 ```
 你可以使用以下 Cognitive Module：
@@ -59,18 +86,6 @@ def login(u, p):
    读取 ~/.cognitive/modules/task-prioritizer/MODULE.md
 
 使用时遵循模块中的指令和 schema。
-```
-
-### 方式 2：包装成 Skill
-
-```yaml
-# ~/.claude/skills/code-review/SKILL.md
----
-name: code-review
-description: 使用 Cognitive Module 审查代码
----
-
-执行 ~/.cognitive/modules/code-reviewer/MODULE.md
 ```
 
 ## GitHub Copilot
@@ -92,7 +107,7 @@ description: 使用 Cognitive Module 审查代码
 ```
 用户请求
     ↓
-AI 工具读取 MODULE.md
+AI 工具通过 MCP 调用 Cognitive Module
     ↓
 按 schema.json 生成输出
     ↓
@@ -101,6 +116,6 @@ AI 工具读取 MODULE.md
 
 关键点：
 
-1. AI 工具用自己的 LLM，不需要调用 cog CLI
+1. **MCP 是首选方式**：原生支持，无需额外代码
 2. MODULE.md 作为"可执行的规范"
 3. schema.json 确保输出格式一致
