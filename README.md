@@ -47,10 +47,10 @@ pip install cognitive-modules[all]         # 全部
 
 ```bash
 # 全局安装
-npm install -g cognitive-modules-cli
+npm install -g cogn
 
-# 或 npx 零安装使用
-npx cognitive-modules-cli --help
+# 或 npx 零安装使用（推荐）
+npx cogn --help
 ```
 
 | 平台 | 包名 | 命令 |
@@ -372,7 +372,7 @@ cognitive-modules/
 | 平台 | 包名 | 命令 | 安装 |
 |------|------|------|------|
 | Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
-| Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
+| Node.js | `cogn` | `cog` | `npm install -g cogn` 或 `npx cogn` |
 
 两个版本共享相同的模块格式和 v2.2 规范。
 

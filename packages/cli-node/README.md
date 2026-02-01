@@ -9,11 +9,11 @@ Node.js/TypeScript 版本的 Cognitive Modules CLI。
 ## 安装
 
 ```bash
-# 全局安装
-npm install -g cognitive-modules-cli
+# 全局安装（推荐）
+npm install -g cogn
 
 # 或使用 npx 零安装
-npx cognitive-modules-cli --help
+npx cogn --help
 ```
 
 ## 快速开始
