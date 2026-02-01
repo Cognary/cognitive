@@ -19,11 +19,25 @@
 
 ### 核心概念
 
+#### Module = Manifest + Prompt + Contract
+
+| 组成部分 | 文件 | 职责 | 读取者 |
+|----------|------|------|--------|
+| **Manifest** | `module.yaml` | 机器可读配置、策略、分级 | Runtime |
+| **Prompt** | `prompt.md` | 人类可读指令、规则 | LLM |
+| **Contract** | `schema.json` | 可验证的输入/输出/错误契约 | Validator |
+
+#### Contract = Schema Contract + Envelope Contract
+
+| 层 | 说明 | 定义位置 |
+|----|------|----------|
+| **Schema Contract** | 数据结构定义（input, meta, data, error） | `schema.json` |
+| **Envelope Contract** | 固定响应格式 `{ok, meta, data\|error}` | SPEC 规定，所有模块统一 |
+
+#### 其他概念
+
 | 概念 | 说明 |
 |------|------|
-| `module.yaml` | 机器可读模块清单（v2.2） |
-| `prompt.md` | 人类可读提示词 |
-| `schema.json` | meta + input + data + error Schema |
 | `tier` | 模块分级：exec / decision / exploration |
 | `meta.explain` | 控制面简短解释（≤280字符） |
 | `data.rationale` | 数据面详细推理（无限制） |
@@ -33,11 +47,13 @@
 
 ## 模块分级 (Tier)
 
-| Tier | 用途 | Schema 严格度 | Overflow |
-|------|------|:-------------:|:--------:|
-| `exec` | 自动执行（patch、指令生成） | high | 关闭 |
-| `decision` | 判断/评估/分类 | medium | 开启 |
-| `exploration` | 探索/调研/灵感 | low | 开启 |
+| Tier | 用途 | Schema 严格度 | overflow.max_items |
+|------|------|:-------------:|:------------------:|
+| `exec` | 自动执行（patch、指令生成） | high | 0（关闭） |
+| `decision` | 判断/评估/分类 | medium | 5（默认） |
+| `exploration` | 探索/调研/灵感 | low | 20（宽松） |
+
+> **注意**：`overflow.max_items` 永远有值，不存在"无上限"。
 
 ---
 
@@ -134,11 +150,25 @@ v2.2 支持 extensible enum pattern：
 
 ## 风险聚合
 
-`meta.risk` 是聚合值，取所有子项的最大风险：
+`meta.risk` 是聚合值，默认取 `changes[*].risk` 的最大值：
 
 ```
-meta.risk = max(changes[*].risk, issues[*].risk, ...)
+meta.risk = max(data.changes[*].risk)
 ```
+
+可在 `module.yaml` 中配置聚合规则：
+
+```yaml
+meta:
+  risk_rule: max_changes_risk   # 默认
+  # 或：max_issues_risk, explicit
+```
+
+| risk_rule | 说明 |
+|-----------|------|
+| `max_changes_risk` | `max(data.changes[*].risk)`，默认 |
+| `max_issues_risk` | `max(data.issues[*].risk)`，适用于审查类模块 |
+| `explicit` | 模块自行计算，runtime 不聚合 |
 
 ---
 

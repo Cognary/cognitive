@@ -80,19 +80,47 @@ EnvelopeResponse = Union[EnvelopeResponseV22, EnvelopeSuccessV21, EnvelopeFailur
 RISK_LEVELS = {"none": 0, "low": 1, "medium": 2, "high": 3}
 RISK_NAMES = ["none", "low", "medium", "high"]
 
+RiskRule = Literal["max_changes_risk", "max_issues_risk", "explicit"]
 
-def aggregate_risk(changes: list[dict]) -> RiskLevel:
-    """Compute max risk from list of changes."""
-    if not changes:
+
+def aggregate_risk_from_list(items: list[dict]) -> RiskLevel:
+    """Compute max risk from list of items with risk field."""
+    if not items:
         return "medium"  # Default conservative
     
     max_level = 0
-    for change in changes:
-        risk = change.get("risk", "medium")
+    for item in items:
+        risk = item.get("risk", "medium")
         level = RISK_LEVELS.get(risk, 2)
         max_level = max(max_level, level)
     
     return RISK_NAMES[max_level]
+
+
+def aggregate_risk(
+    data: dict,
+    risk_rule: RiskRule = "max_changes_risk"
+) -> RiskLevel:
+    """
+    Compute aggregated risk based on risk_rule.
+    
+    Rules:
+    - max_changes_risk: max(data.changes[*].risk) - default
+    - max_issues_risk: max(data.issues[*].risk) - for review modules
+    - explicit: return "medium", module should set risk explicitly
+    """
+    if risk_rule == "max_changes_risk":
+        changes = data.get("changes", [])
+        return aggregate_risk_from_list(changes)
+    elif risk_rule == "max_issues_risk":
+        issues = data.get("issues", [])
+        return aggregate_risk_from_list(issues)
+    elif risk_rule == "explicit":
+        return "medium"  # Module should override
+    else:
+        # Fallback to changes
+        changes = data.get("changes", [])
+        return aggregate_risk_from_list(changes)
 
 
 # =============================================================================
@@ -120,15 +148,19 @@ def validate_data(data: dict, schema: dict, label: str = "Data") -> list[str]:
 def repair_envelope(
     data: dict,
     meta_schema: Optional[dict] = None,
-    max_explain_length: int = 280
+    max_explain_length: int = 280,
+    risk_rule: RiskRule = "max_changes_risk"
 ) -> dict:
     """
     Attempt to repair envelope format issues without changing semantics.
     
-    Repairs:
+    Repairs (lossless only):
     - Missing meta fields (fill with conservative defaults)
     - Truncate explain if too long
-    - Normalize risk enum values
+    - Trim whitespace from string fields
+    
+    Does NOT repair:
+    - Invalid enum values (treated as validation failure)
     """
     repaired = dict(data)
     
@@ -148,27 +180,27 @@ def repair_envelope(
     if isinstance(meta.get("confidence"), (int, float)):
         meta["confidence"] = max(0.0, min(1.0, float(meta["confidence"])))
     
-    # Repair risk
+    # Repair risk - use configurable aggregation rule
     if "risk" not in meta:
-        # Aggregate from changes if available
-        changes = data_payload.get("changes", [])
-        meta["risk"] = aggregate_risk(changes)
+        meta["risk"] = aggregate_risk(data_payload, risk_rule)
     
-    # Normalize risk value
-    risk = str(meta.get("risk", "medium")).lower()
-    if risk not in RISK_LEVELS:
-        meta["risk"] = "medium"
-    else:
-        meta["risk"] = risk
+    # Trim whitespace from risk (lossless), but do NOT invent new values
+    if isinstance(meta.get("risk"), str):
+        meta["risk"] = meta["risk"].strip().lower()
+        # If invalid after trim, leave as-is (validation will catch it)
     
     # Repair explain
     if "explain" not in meta:
         # Try to extract from rationale
         rationale = data_payload.get("rationale", "")
         if rationale:
-            meta["explain"] = rationale[:max_explain_length]
+            meta["explain"] = str(rationale)[:max_explain_length]
         else:
             meta["explain"] = "No explanation provided"
+    
+    # Trim whitespace from explain (lossless)
+    if isinstance(meta.get("explain"), str):
+        meta["explain"] = meta["explain"].strip()
     
     # Truncate explain if too long
     if len(meta.get("explain", "")) > max_explain_length:
@@ -230,13 +262,12 @@ def wrap_v21_to_v22(v21_response: dict) -> EnvelopeResponseV22:
         # Extract or compute meta fields
         confidence = data.get("confidence", 0.5)
         rationale = data.get("rationale", "")
-        changes = data.get("changes", [])
         
         return {
             "ok": True,
             "meta": {
                 "confidence": confidence,
-                "risk": aggregate_risk(changes),
+                "risk": aggregate_risk(data),  # Uses default max_changes_risk
                 "explain": rationale[:280] if rationale else "No explanation provided"
             },
             "data": data
@@ -279,13 +310,12 @@ def convert_legacy_to_envelope(data: dict, is_error: bool = False) -> EnvelopeRe
         # Legacy success response - data is the payload itself
         confidence = data.get("confidence", 0.5)
         rationale = data.get("rationale", "")
-        changes = data.get("changes", [])
         
         return {
             "ok": True,
             "meta": {
                 "confidence": confidence,
-                "risk": aggregate_risk(changes),
+                "risk": aggregate_risk(data),  # Uses default max_changes_risk
                 "explain": rationale[:280] if rationale else "No explanation provided"
             },
             "data": data
@@ -513,13 +543,17 @@ def run_module(
         data_schema = module.get("data_schema") or module.get("output_schema")
         meta_schema = module.get("meta_schema")
         
+        # Get risk_rule from module.yaml meta config
+        meta_config = module.get("metadata", {}).get("meta", {})
+        risk_rule = meta_config.get("risk_rule", "max_changes_risk")
+        
         if data_schema:
             data_to_validate = result.get("data", {})
             errors = validate_data(data_to_validate, data_schema, "Data")
             
             if errors and enable_repair:
                 # Attempt repair pass
-                result = repair_envelope(result, meta_schema)
+                result = repair_envelope(result, meta_schema, risk_rule=risk_rule)
                 
                 # Re-validate after repair
                 errors = validate_data(result.get("data", {}), data_schema, "Data")
@@ -540,7 +574,7 @@ def run_module(
         if meta_schema:
             meta_errors = validate_data(result.get("meta", {}), meta_schema, "Meta")
             if meta_errors and enable_repair:
-                result = repair_envelope(result, meta_schema)
+                result = repair_envelope(result, meta_schema, risk_rule=risk_rule)
     
     return result
 

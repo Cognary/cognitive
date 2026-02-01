@@ -166,12 +166,23 @@ def load_v2_format(module_path: Path) -> dict:
     tier: Optional[ModuleTier] = manifest.get("tier")
     schema_strictness: SchemaStrictness = manifest.get("schema_strictness", "medium")
     
-    overflow = manifest.get("overflow", {
-        "enabled": False,
-        "recoverable": True,
-        "max_items": 5,
-        "require_suggested_mapping": True
-    })
+    # Determine default max_items based on strictness (SPEC-v2.2)
+    # high=0 (disabled), medium=5, low=20
+    strictness_max_items = {
+        "high": 0,
+        "medium": 5,
+        "low": 20
+    }
+    default_max_items = strictness_max_items.get(schema_strictness, 5)
+    default_enabled = schema_strictness != "high"
+    
+    overflow_raw = manifest.get("overflow", {})
+    overflow = {
+        "enabled": overflow_raw.get("enabled", default_enabled),
+        "recoverable": overflow_raw.get("recoverable", True),
+        "max_items": overflow_raw.get("max_items", default_max_items),
+        "require_suggested_mapping": overflow_raw.get("require_suggested_mapping", True)
+    }
     
     enums = manifest.get("enums", {
         "strategy": "extensible" if tier in ("decision", "exploration") else "strict",
