@@ -1,0 +1,163 @@
+{
+  "page_context": {
+    "page_type": "product-landing",
+    "purpose": "推广情绪压力管理与复原力保健食品，建立品牌信任，引导用户了解产品并完成购买或咨询",
+    "target_audience": [
+      "25-45岁职场精英",
+      "高压力工作者（金融、互联网、创业者）",
+      "注重身心健康的都市白领",
+      "追求高效生活方式的专业人士"
+    ],
+    "platform": "web"
+  },
+  "features": [
+    {
+      "name": "Hero品牌主张",
+      "description": "首屏展示品牌核心价值主张，传达产品能帮助用户管理压力、恢复精力的承诺，配合高端视觉和主CTA按钮",
+      "priority": "must-have",
+      "user_stories": [
+        "作为访客，我希望第一眼就能理解这个产品是做什么的",
+        "作为精英用户，我希望感受到品牌的专业和高端感"
+      ]
+    },
+    {
+      "name": "痛点场景",
+      "description": "展示目标用户的常见压力场景（工作压力、睡眠问题、焦虑情绪、精力不足），引发共鸣",
+      "priority": "must-have",
+      "user_stories": [
+        "作为高压工作者，我希望看到品牌理解我的处境"
+      ]
+    },
+    {
+      "name": "产品系列展示",
+      "description": "展示产品线（如：压力舒缓系列、深度睡眠系列、精力恢复系列），每个产品包含图片、名称、核心功效、价格",
+      "priority": "must-have",
+      "user_stories": [
+        "作为用户，我希望快速浏览所有产品并找到适合我的"
+      ]
+    },
+    {
+      "name": "科学背书",
+      "description": "展示产品的科学研究支持、核心成分介绍（如GABA、茶氨酸、镁等）、临床数据或研究机构合作",
+      "priority": "must-have",
+      "user_stories": [
+        "作为理性消费者，我需要看到产品有科学依据才会信任"
+      ]
+    },
+    {
+      "name": "用户评价",
+      "description": "展示真实用户使用后的反馈和案例，包含用户头像、职业、使用前后对比",
+      "priority": "should-have",
+      "user_stories": [
+        "作为潜在用户，我想看看其他人用了效果怎么样"
+      ]
+    },
+    {
+      "name": "专家团队",
+      "description": "展示研发团队或顾问专家的背景，增强专业信任感",
+      "priority": "should-have",
+      "user_stories": [
+        "作为消费者，我想知道是什么样的团队在做这个产品"
+      ]
+    },
+    {
+      "name": "使用指南",
+      "description": "简单说明产品如何使用、最佳服用时间、预期效果周期",
+      "priority": "should-have"
+    },
+    {
+      "name": "FAQ常见问题",
+      "description": "回答用户常见疑问：成分安全性、适用人群、多久见效、是否有副作用等",
+      "priority": "should-have"
+    },
+    {
+      "name": "购买CTA",
+      "description": "底部强转化区域，包含限时优惠、购买按钮、或预约咨询表单",
+      "priority": "must-have"
+    },
+    {
+      "name": "品牌故事",
+      "description": "简短介绍品牌理念、创立初衷、愿景使命",
+      "priority": "nice-to-have"
+    }
+  ],
+  "content_requirements": {
+    "sections": [
+      {
+        "name": "导航栏",
+        "content_type": "navigation",
+        "required_elements": ["logo", "nav-links", "购买按钮"],
+        "optional_elements": ["语言切换", "搜索"]
+      },
+      {
+        "name": "Hero首屏",
+        "content_type": "mixed",
+        "required_elements": ["主标题", "副标题", "CTA按钮", "品牌视觉/视频"],
+        "optional_elements": ["信任标识（认证、媒体报道）"]
+      },
+      {
+        "name": "痛点共鸣",
+        "content_type": "data-display",
+        "required_elements": ["场景卡片", "场景图标", "场景描述"]
+      },
+      {
+        "name": "产品展示",
+        "content_type": "data-display",
+        "required_elements": ["产品卡片", "产品图片", "产品名称", "核心功效", "价格", "购买按钮"]
+      },
+      {
+        "name": "科学背书",
+        "content_type": "mixed",
+        "required_elements": ["成分介绍", "研究数据", "认证标识"],
+        "optional_elements": ["合作机构logo", "论文引用"]
+      },
+      {
+        "name": "用户评价",
+        "content_type": "data-display",
+        "required_elements": ["评价卡片", "用户头像", "用户信息", "评价内容", "评分"]
+      },
+      {
+        "name": "专家团队",
+        "content_type": "data-display",
+        "required_elements": ["专家卡片", "头像", "姓名", "头衔", "简介"]
+      },
+      {
+        "name": "使用指南",
+        "content_type": "data-display",
+        "required_elements": ["步骤说明", "图示"]
+      },
+      {
+        "name": "FAQ",
+        "content_type": "interactive",
+        "required_elements": ["问题列表", "展开/收起答案"]
+      },
+      {
+        "name": "转化CTA",
+        "content_type": "form",
+        "required_elements": ["标题", "优惠信息", "购买按钮"],
+        "optional_elements": ["邮箱订阅", "咨询表单"]
+      },
+      {
+        "name": "页脚",
+        "content_type": "navigation",
+        "required_elements": ["链接分组", "联系方式", "社交媒体", "版权信息"],
+        "optional_elements": ["订阅入口", "认证标识"]
+      }
+    ],
+    "copy_guidelines": {
+      "tone": "专业、温暖、赋能感，避免过度营销，强调科学和关怀",
+      "max_heading_length": 50,
+      "max_paragraph_length": 120
+    }
+  },
+  "constraints": {
+    "browser_support": ["Chrome 90+", "Firefox 88+", "Safari 14+", "Edge 90+", "微信内置浏览器"],
+    "performance_budget": {
+      "max_load_time_ms": 3000,
+      "max_bundle_size_kb": 600
+    },
+    "accessibility_level": "WCAG-AA",
+    "internationalization": true
+  },
+  "existing_patterns": []
+}

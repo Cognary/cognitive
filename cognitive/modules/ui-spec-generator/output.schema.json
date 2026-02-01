@@ -1,0 +1,692 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ui-spec-generator/output",
+  "title": "UI Spec Generator Output",
+  "description": "Implementable UI specification for frontend engineers",
+  "type": "object",
+  "required": [
+    "specification",
+    "rationale",
+    "confidence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "specification": {
+      "type": "object",
+      "description": "The complete UI specification",
+      "required": [
+        "information_architecture",
+        "components",
+        "interactions",
+        "responsive",
+        "accessibility",
+        "design_tokens",
+        "acceptance_criteria"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "information_architecture": {
+          "type": "object",
+          "description": "Page structure and content hierarchy",
+          "required": ["sections", "hierarchy"],
+          "additionalProperties": false,
+          "properties": {
+            "sections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "name", "purpose", "order"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]*$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "purpose": {
+                    "type": "string"
+                  },
+                  "order": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "parent_section_id": {
+                    "type": ["string", "null"]
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": ["always", "conditional", "on-demand"],
+                    "default": "always"
+                  },
+                  "visibility_condition": {
+                    "type": ["string", "null"],
+                    "description": "Condition for conditional visibility"
+                  }
+                }
+              },
+              "minItems": 1
+            },
+            "hierarchy": {
+              "type": "object",
+              "description": "Nested structure representing section nesting",
+              "required": ["root"],
+              "additionalProperties": false,
+              "properties": {
+                "root": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/hierarchy_node"
+                  }
+                }
+              }
+            },
+            "navigation_flow": {
+              "type": "array",
+              "description": "Primary navigation/reading flow between sections",
+              "items": {
+                "type": "object",
+                "required": ["from", "to", "trigger"],
+                "additionalProperties": false,
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "trigger": {
+                    "type": "string",
+                    "enum": ["scroll", "click", "auto", "anchor"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "description": "UI components required to build the page",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "section_id", "props", "states"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "type": {
+                "type": "string",
+                "description": "Component type (e.g., button, card, form, hero, nav)"
+              },
+              "section_id": {
+                "type": "string",
+                "description": "Parent section this component belongs to"
+              },
+              "props": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "type", "required"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["string", "number", "boolean", "array", "object", "function", "node"]
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "default_value": {},
+                    "description": {
+                      "type": "string"
+                    },
+                    "constraints": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "description"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "enum": ["default", "hover", "active", "focus", "disabled", "loading", "error", "success", "empty", "expanded", "collapsed"]
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "visual_changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "minItems": 1
+              },
+              "variants": {
+                "type": "array",
+                "description": "Component variants (size, style, etc.)",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "description"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "children": {
+                "type": "array",
+                "description": "Nested child component IDs",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "interactions": {
+          "type": "array",
+          "description": "User interactions and their effects",
+          "items": {
+            "type": "object",
+            "required": ["id", "trigger", "event", "action", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "trigger": {
+                "type": "string",
+                "description": "Component ID that triggers this interaction"
+              },
+              "event": {
+                "type": "string",
+                "enum": ["click", "hover", "focus", "blur", "submit", "change", "scroll", "keypress", "drag", "drop", "swipe"]
+              },
+              "action": {
+                "type": "string",
+                "description": "What happens when triggered"
+              },
+              "target": {
+                "type": "string",
+                "description": "Component ID or section ID affected"
+              },
+              "transition": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["fade", "slide", "scale", "none", "custom"]
+                  },
+                  "duration_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2000
+                  },
+                  "easing": {
+                    "type": "string"
+                  }
+                }
+              },
+              "conditions": {
+                "type": "array",
+                "description": "Conditions that must be met for interaction",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "feedback": {
+                "type": "string",
+                "description": "User feedback provided (visual, auditory, haptic)"
+              }
+            }
+          }
+        },
+        "responsive": {
+          "type": "object",
+          "description": "Responsive design specifications",
+          "required": ["breakpoints", "layout_rules"],
+          "additionalProperties": false,
+          "properties": {
+            "breakpoints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "min_width"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "min_width": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "max_width": {
+                    "type": ["integer", "null"]
+                  }
+                }
+              },
+              "minItems": 1
+            },
+            "layout_rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["breakpoint", "rules"],
+                "additionalProperties": false,
+                "properties": {
+                  "breakpoint": {
+                    "type": "string",
+                    "description": "Breakpoint name this rule applies to"
+                  },
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["target", "property", "value"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "target": {
+                          "type": "string",
+                          "description": "Component or section ID"
+                        },
+                        "property": {
+                          "type": "string",
+                          "description": "CSS property or layout property"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "fluid_typography": {
+              "type": "boolean",
+              "default": false
+            },
+            "container_queries": {
+              "type": "array",
+              "description": "Component-level responsive rules",
+              "items": {
+                "type": "object",
+                "required": ["component_id", "condition", "changes"],
+                "additionalProperties": false,
+                "properties": {
+                  "component_id": {
+                    "type": "string"
+                  },
+                  "condition": {
+                    "type": "string"
+                  },
+                  "changes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "accessibility": {
+          "type": "object",
+          "description": "Accessibility requirements and specifications",
+          "required": ["level", "requirements"],
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": ["WCAG-A", "WCAG-AA", "WCAG-AAA"]
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "category", "requirement", "implementation"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": ["perceivable", "operable", "understandable", "robust"]
+                  },
+                  "requirement": {
+                    "type": "string"
+                  },
+                  "implementation": {
+                    "type": "string",
+                    "description": "How to implement this requirement"
+                  },
+                  "affected_components": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "wcag_criterion": {
+                    "type": "string",
+                    "description": "WCAG success criterion reference"
+                  }
+                }
+              },
+              "minItems": 1
+            },
+            "keyboard_navigation": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "tab_order": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "focus_trap_regions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "skip_links": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["label", "target"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "target": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "aria_landmarks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["role", "section_id"],
+                "additionalProperties": false,
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": ["banner", "navigation", "main", "complementary", "contentinfo", "search", "form", "region"]
+                  },
+                  "section_id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "design_tokens": {
+          "type": "object",
+          "description": "Design tokens for implementation. Mark as unknown if not provided.",
+          "required": ["status"],
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["provided", "partial", "unknown"],
+              "description": "Whether design tokens were provided in input"
+            },
+            "tokens": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "colors": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "typography": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "spacing": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "shadows": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "borders": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "radii": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "unknown_tokens": {
+              "type": "array",
+              "description": "List of token categories that need to be defined",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "description": "Testable acceptance criteria",
+          "items": {
+            "type": "object",
+            "required": ["id", "description", "type", "testable_condition"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^AC-[0-9]+$"
+              },
+              "description": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["functional", "visual", "accessibility", "performance", "responsive"]
+              },
+              "testable_condition": {
+                "type": "string",
+                "description": "Specific, measurable condition to verify"
+              },
+              "related_components": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "related_feature": {
+                "type": "string",
+                "description": "Feature name this criterion validates"
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "rationale": {
+      "type": "object",
+      "description": "Explanation of key design decisions",
+      "required": ["decisions"],
+      "additionalProperties": false,
+      "properties": {
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["aspect", "decision", "reasoning"],
+            "additionalProperties": false,
+            "properties": {
+              "aspect": {
+                "type": "string",
+                "description": "What aspect this decision covers"
+              },
+              "decision": {
+                "type": "string",
+                "description": "The decision made"
+              },
+              "reasoning": {
+                "type": "string",
+                "description": "Why this decision was made"
+              },
+              "alternatives_considered": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "tradeoffs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "assumptions": {
+          "type": "array",
+          "description": "Assumptions made due to missing information",
+          "items": {
+            "type": "object",
+            "required": ["assumption", "impact"],
+            "additionalProperties": false,
+            "properties": {
+              "assumption": {
+                "type": "string"
+              },
+              "impact": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "recommendation": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "open_questions": {
+          "type": "array",
+          "description": "Questions that need stakeholder input",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "description": "Overall confidence in the specification (0-1)",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "confidence_breakdown": {
+      "type": "object",
+      "description": "Confidence scores for each specification area",
+      "additionalProperties": false,
+      "properties": {
+        "information_architecture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "components": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "interactions": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "responsive": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "accessibility": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "design_tokens": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hierarchy_node": {
+      "type": "object",
+      "required": ["section_id"],
+      "additionalProperties": false,
+      "properties": {
+        "section_id": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hierarchy_node"
+          }
+        }
+      }
+    }
+  }
+}

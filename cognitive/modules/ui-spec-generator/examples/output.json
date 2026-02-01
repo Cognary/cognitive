@@ -1,0 +1,736 @@
+{
+  "specification": {
+    "information_architecture": {
+      "sections": [
+        {
+          "id": "nav",
+          "name": "Navigation",
+          "purpose": "Primary site navigation and branding",
+          "order": 0,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "hero",
+          "name": "Hero Section",
+          "purpose": "Capture attention and communicate core value proposition",
+          "order": 1,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "features",
+          "name": "Feature Highlights",
+          "purpose": "Showcase key product capabilities",
+          "order": 2,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "testimonials",
+          "name": "Social Proof",
+          "purpose": "Build trust through customer testimonials",
+          "order": 3,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "pricing-preview",
+          "name": "Pricing Preview",
+          "purpose": "Provide pricing transparency and link to details",
+          "order": 4,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "cta-section",
+          "name": "Final Call to Action",
+          "purpose": "Convert engaged visitors with signup form",
+          "order": 5,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "footer",
+          "name": "Footer",
+          "purpose": "Secondary navigation and legal information",
+          "order": 6,
+          "parent_section_id": null,
+          "visibility": "always"
+        }
+      ],
+      "hierarchy": {
+        "root": [
+          { "section_id": "nav" },
+          { "section_id": "hero" },
+          { "section_id": "features" },
+          { "section_id": "testimonials" },
+          { "section_id": "pricing-preview" },
+          { "section_id": "cta-section" },
+          { "section_id": "footer" }
+        ]
+      },
+      "navigation_flow": [
+        { "from": "hero", "to": "features", "trigger": "scroll" },
+        { "from": "hero", "to": "cta-section", "trigger": "click" },
+        { "from": "features", "to": "testimonials", "trigger": "scroll" },
+        { "from": "pricing-preview", "to": "cta-section", "trigger": "click" }
+      ]
+    },
+    "components": [
+      {
+        "id": "nav-bar",
+        "type": "navigation",
+        "section_id": "nav",
+        "props": [
+          { "name": "logo", "type": "node", "required": true, "description": "Brand logo element" },
+          { "name": "links", "type": "array", "required": true, "description": "Navigation link items" },
+          { "name": "isSticky", "type": "boolean", "required": false, "default_value": true, "description": "Whether nav sticks on scroll" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal navigation state" },
+          { "name": "expanded", "description": "Mobile menu expanded", "visual_changes": ["menu drawer visible", "hamburger becomes X"] },
+          { "name": "collapsed", "description": "Mobile menu collapsed" }
+        ],
+        "children": ["nav-logo", "nav-links", "nav-cta"]
+      },
+      {
+        "id": "nav-logo",
+        "type": "image",
+        "section_id": "nav",
+        "props": [
+          { "name": "src", "type": "string", "required": true, "description": "Logo image source" },
+          { "name": "alt", "type": "string", "required": true, "description": "Logo alt text for accessibility" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal logo display" }
+        ]
+      },
+      {
+        "id": "nav-links",
+        "type": "nav-list",
+        "section_id": "nav",
+        "props": [
+          { "name": "items", "type": "array", "required": true, "description": "Array of {label, href} objects" }
+        ],
+        "states": [
+          { "name": "default", "description": "Links visible" },
+          { "name": "hover", "description": "Individual link hover state", "visual_changes": ["underline or color change"] }
+        ]
+      },
+      {
+        "id": "nav-cta",
+        "type": "button",
+        "section_id": "nav",
+        "props": [
+          { "name": "label", "type": "string", "required": true, "description": "Button text" },
+          { "name": "variant", "type": "string", "required": false, "default_value": "primary", "description": "Button style variant" },
+          { "name": "onClick", "type": "function", "required": true, "description": "Click handler" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal button state" },
+          { "name": "hover", "description": "Mouse over", "visual_changes": ["background darkens", "slight scale up"] },
+          { "name": "focus", "description": "Keyboard focus", "visual_changes": ["focus ring visible"] },
+          { "name": "active", "description": "Being clicked", "visual_changes": ["slight scale down"] }
+        ],
+        "variants": [
+          { "name": "primary", "description": "High emphasis CTA" },
+          { "name": "secondary", "description": "Lower emphasis" }
+        ]
+      },
+      {
+        "id": "hero-container",
+        "type": "hero",
+        "section_id": "hero",
+        "props": [
+          { "name": "headline", "type": "string", "required": true, "description": "Main value proposition" },
+          { "name": "subheadline", "type": "string", "required": true, "description": "Supporting description" },
+          { "name": "backgroundType", "type": "string", "required": false, "default_value": "gradient", "description": "Background style" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal hero display" }
+        ],
+        "children": ["hero-headline", "hero-subheadline", "hero-cta"]
+      },
+      {
+        "id": "hero-headline",
+        "type": "heading",
+        "section_id": "hero",
+        "props": [
+          { "name": "text", "type": "string", "required": true, "description": "Headline text" },
+          { "name": "level", "type": "number", "required": true, "default_value": 1, "description": "Heading level (h1)" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal heading display" }
+        ]
+      },
+      {
+        "id": "hero-subheadline",
+        "type": "text",
+        "section_id": "hero",
+        "props": [
+          { "name": "text", "type": "string", "required": true, "description": "Subheadline text" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal text display" }
+        ]
+      },
+      {
+        "id": "hero-cta",
+        "type": "button",
+        "section_id": "hero",
+        "props": [
+          { "name": "label", "type": "string", "required": true, "description": "CTA button text (e.g., 'Start Free Trial')" },
+          { "name": "variant", "type": "string", "required": false, "default_value": "primary" },
+          { "name": "size", "type": "string", "required": false, "default_value": "large" },
+          { "name": "onClick", "type": "function", "required": true }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal button state" },
+          { "name": "hover", "description": "Mouse over", "visual_changes": ["background lightens", "shadow increases"] },
+          { "name": "focus", "description": "Keyboard focus", "visual_changes": ["focus ring visible"] },
+          { "name": "active", "description": "Being clicked" }
+        ]
+      },
+      {
+        "id": "features-grid",
+        "type": "grid",
+        "section_id": "features",
+        "props": [
+          { "name": "columns", "type": "number", "required": false, "default_value": 3, "description": "Number of columns at desktop" },
+          { "name": "gap", "type": "string", "required": false, "default_value": "2rem" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal grid layout" }
+        ],
+        "children": ["feature-card"]
+      },
+      {
+        "id": "feature-card",
+        "type": "card",
+        "section_id": "features",
+        "props": [
+          { "name": "icon", "type": "node", "required": true, "description": "Feature icon" },
+          { "name": "title", "type": "string", "required": true, "description": "Feature title" },
+          { "name": "description", "type": "string", "required": true, "description": "Feature description" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal card display" },
+          { "name": "hover", "description": "Mouse over card", "visual_changes": ["subtle elevation increase", "shadow deepens"] }
+        ]
+      },
+      {
+        "id": "testimonials-carousel",
+        "type": "carousel",
+        "section_id": "testimonials",
+        "props": [
+          { "name": "items", "type": "array", "required": true, "description": "Array of testimonial data" },
+          { "name": "autoPlay", "type": "boolean", "required": false, "default_value": false },
+          { "name": "showDots", "type": "boolean", "required": false, "default_value": true }
+        ],
+        "states": [
+          { "name": "default", "description": "Carousel idle" },
+          { "name": "active", "description": "Carousel transitioning", "visual_changes": ["slide animation"] }
+        ],
+        "children": ["testimonial-card"]
+      },
+      {
+        "id": "testimonial-card",
+        "type": "card",
+        "section_id": "testimonials",
+        "props": [
+          { "name": "quote", "type": "string", "required": true, "description": "Testimonial quote text" },
+          { "name": "authorName", "type": "string", "required": true },
+          { "name": "authorTitle", "type": "string", "required": true },
+          { "name": "authorPhoto", "type": "string", "required": false, "description": "URL to author photo" },
+          { "name": "companyLogo", "type": "string", "required": false }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal testimonial display" }
+        ]
+      },
+      {
+        "id": "pricing-teaser",
+        "type": "pricing-card",
+        "section_id": "pricing-preview",
+        "props": [
+          { "name": "startingPrice", "type": "string", "required": true, "description": "Starting price text" },
+          { "name": "pricePeriod", "type": "string", "required": false, "default_value": "/month" },
+          { "name": "ctaLabel", "type": "string", "required": true },
+          { "name": "ctaHref", "type": "string", "required": true, "description": "Link to pricing page" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal pricing display" },
+          { "name": "hover", "description": "Hover on CTA link", "visual_changes": ["link underline", "color change"] }
+        ]
+      },
+      {
+        "id": "signup-form",
+        "type": "form",
+        "section_id": "cta-section",
+        "props": [
+          { "name": "headline", "type": "string", "required": true },
+          { "name": "onSubmit", "type": "function", "required": true }
+        ],
+        "states": [
+          { "name": "default", "description": "Empty form ready for input" },
+          { "name": "loading", "description": "Form submitting", "visual_changes": ["button shows spinner", "inputs disabled"] },
+          { "name": "success", "description": "Submission successful", "visual_changes": ["success message shown", "form hidden"] },
+          { "name": "error", "description": "Submission failed", "visual_changes": ["error message shown", "form remains"] }
+        ],
+        "children": ["email-input", "submit-button"]
+      },
+      {
+        "id": "email-input",
+        "type": "input",
+        "section_id": "cta-section",
+        "props": [
+          { "name": "type", "type": "string", "required": true, "default_value": "email" },
+          { "name": "placeholder", "type": "string", "required": false },
+          { "name": "label", "type": "string", "required": true, "description": "Accessible label" },
+          { "name": "required", "type": "boolean", "required": false, "default_value": true }
+        ],
+        "states": [
+          { "name": "default", "description": "Empty input" },
+          { "name": "focus", "description": "Input focused", "visual_changes": ["border highlight", "label floats"] },
+          { "name": "error", "description": "Validation error", "visual_changes": ["red border", "error message below"] },
+          { "name": "disabled", "description": "Input disabled", "visual_changes": ["grayed out", "not interactive"] }
+        ]
+      },
+      {
+        "id": "submit-button",
+        "type": "button",
+        "section_id": "cta-section",
+        "props": [
+          { "name": "label", "type": "string", "required": true },
+          { "name": "type", "type": "string", "required": true, "default_value": "submit" },
+          { "name": "variant", "type": "string", "required": false, "default_value": "primary" }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal submit button" },
+          { "name": "hover", "description": "Mouse over" },
+          { "name": "focus", "description": "Keyboard focus", "visual_changes": ["focus ring"] },
+          { "name": "loading", "description": "Form submitting", "visual_changes": ["spinner replaces text", "disabled"] },
+          { "name": "disabled", "description": "Cannot submit", "visual_changes": ["reduced opacity", "cursor not-allowed"] }
+        ]
+      },
+      {
+        "id": "footer-container",
+        "type": "footer",
+        "section_id": "footer",
+        "props": [
+          { "name": "links", "type": "array", "required": true },
+          { "name": "copyright", "type": "string", "required": true },
+          { "name": "socialLinks", "type": "array", "required": false }
+        ],
+        "states": [
+          { "name": "default", "description": "Normal footer display" }
+        ]
+      }
+    ],
+    "interactions": [
+      {
+        "id": "hero-cta-scroll",
+        "trigger": "hero-cta",
+        "event": "click",
+        "action": "Smooth scroll to signup form section",
+        "target": "cta-section",
+        "transition": {
+          "type": "custom",
+          "duration_ms": 800,
+          "easing": "ease-out"
+        },
+        "feedback": "Visual scroll animation"
+      },
+      {
+        "id": "nav-cta-scroll",
+        "trigger": "nav-cta",
+        "event": "click",
+        "action": "Smooth scroll to signup form section",
+        "target": "cta-section",
+        "transition": {
+          "type": "custom",
+          "duration_ms": 800,
+          "easing": "ease-out"
+        }
+      },
+      {
+        "id": "feature-card-hover",
+        "trigger": "feature-card",
+        "event": "hover",
+        "action": "Elevate card with shadow",
+        "target": "feature-card",
+        "transition": {
+          "type": "scale",
+          "duration_ms": 200,
+          "easing": "ease-in-out"
+        }
+      },
+      {
+        "id": "testimonial-nav",
+        "trigger": "testimonials-carousel",
+        "event": "swipe",
+        "action": "Navigate to next/previous testimonial",
+        "target": "testimonials-carousel",
+        "transition": {
+          "type": "slide",
+          "duration_ms": 300,
+          "easing": "ease-in-out"
+        }
+      },
+      {
+        "id": "form-submit",
+        "trigger": "signup-form",
+        "event": "submit",
+        "action": "Validate email and submit to signup endpoint",
+        "target": "signup-form",
+        "transition": {
+          "type": "fade",
+          "duration_ms": 200
+        },
+        "conditions": ["email field passes validation"],
+        "feedback": "Loading spinner during submission, success/error message after"
+      },
+      {
+        "id": "email-validation",
+        "trigger": "email-input",
+        "event": "blur",
+        "action": "Validate email format",
+        "target": "email-input",
+        "feedback": "Error message if invalid email format"
+      },
+      {
+        "id": "mobile-menu-toggle",
+        "trigger": "nav-bar",
+        "event": "click",
+        "action": "Toggle mobile navigation menu",
+        "target": "nav-bar",
+        "transition": {
+          "type": "slide",
+          "duration_ms": 250,
+          "easing": "ease-out"
+        },
+        "conditions": ["viewport width < 768px"]
+      }
+    ],
+    "responsive": {
+      "breakpoints": [
+        { "name": "mobile", "min_width": 320, "max_width": 767 },
+        { "name": "tablet", "min_width": 768, "max_width": 1023 },
+        { "name": "desktop", "min_width": 1024, "max_width": 1439 },
+        { "name": "wide", "min_width": 1440, "max_width": null }
+      ],
+      "layout_rules": [
+        {
+          "breakpoint": "mobile",
+          "rules": [
+            { "target": "nav-links", "property": "display", "value": "none (visible in drawer)" },
+            { "target": "features-grid", "property": "grid-template-columns", "value": "1fr" },
+            { "target": "hero-headline", "property": "font-size", "value": "2rem" },
+            { "target": "testimonials-carousel", "property": "display", "value": "single slide with swipe" },
+            { "target": "signup-form", "property": "flex-direction", "value": "column" }
+          ]
+        },
+        {
+          "breakpoint": "tablet",
+          "rules": [
+            { "target": "features-grid", "property": "grid-template-columns", "value": "repeat(2, 1fr)" },
+            { "target": "hero-headline", "property": "font-size", "value": "2.5rem" },
+            { "target": "signup-form", "property": "flex-direction", "value": "row" }
+          ]
+        },
+        {
+          "breakpoint": "desktop",
+          "rules": [
+            { "target": "nav-links", "property": "display", "value": "flex" },
+            { "target": "features-grid", "property": "grid-template-columns", "value": "repeat(3, 1fr)" },
+            { "target": "hero-headline", "property": "font-size", "value": "3rem" }
+          ]
+        },
+        {
+          "breakpoint": "wide",
+          "rules": [
+            { "target": "hero-container", "property": "max-width", "value": "1400px" },
+            { "target": "features-grid", "property": "grid-template-columns", "value": "repeat(4, 1fr)" }
+          ]
+        }
+      ],
+      "fluid_typography": true,
+      "container_queries": [
+        {
+          "component_id": "feature-card",
+          "condition": "container width < 300px",
+          "changes": ["stack icon above text", "reduce padding"]
+        }
+      ]
+    },
+    "accessibility": {
+      "level": "WCAG-AA",
+      "requirements": [
+        {
+          "id": "a11y-1",
+          "category": "perceivable",
+          "requirement": "All images must have descriptive alt text",
+          "implementation": "Add alt attribute to all img elements; use empty alt for decorative images",
+          "affected_components": ["nav-logo", "testimonial-card", "feature-card"],
+          "wcag_criterion": "1.1.1 Non-text Content"
+        },
+        {
+          "id": "a11y-2",
+          "category": "perceivable",
+          "requirement": "Color contrast ratio minimum 4.5:1 for normal text, 3:1 for large text",
+          "implementation": "Verify all text/background color combinations meet contrast requirements",
+          "affected_components": ["hero-headline", "hero-subheadline", "feature-card", "testimonial-card"],
+          "wcag_criterion": "1.4.3 Contrast (Minimum)"
+        },
+        {
+          "id": "a11y-3",
+          "category": "operable",
+          "requirement": "All interactive elements must be keyboard accessible",
+          "implementation": "Ensure all buttons, links, and form controls are focusable and operable via keyboard",
+          "affected_components": ["nav-cta", "hero-cta", "email-input", "submit-button", "nav-links"],
+          "wcag_criterion": "2.1.1 Keyboard"
+        },
+        {
+          "id": "a11y-4",
+          "category": "operable",
+          "requirement": "Focus indicators must be visible",
+          "implementation": "Apply visible focus ring styles (min 2px outline) on all focusable elements",
+          "affected_components": ["nav-cta", "hero-cta", "email-input", "submit-button"],
+          "wcag_criterion": "2.4.7 Focus Visible"
+        },
+        {
+          "id": "a11y-5",
+          "category": "operable",
+          "requirement": "Skip link to main content",
+          "implementation": "Add skip link as first focusable element that jumps to main content area",
+          "affected_components": ["nav-bar"],
+          "wcag_criterion": "2.4.1 Bypass Blocks"
+        },
+        {
+          "id": "a11y-6",
+          "category": "understandable",
+          "requirement": "Form inputs must have associated labels",
+          "implementation": "Use label element with for attribute or aria-label on all form inputs",
+          "affected_components": ["email-input"],
+          "wcag_criterion": "3.3.2 Labels or Instructions"
+        },
+        {
+          "id": "a11y-7",
+          "category": "understandable",
+          "requirement": "Error messages must be descriptive and associated with inputs",
+          "implementation": "Use aria-describedby to associate error messages with inputs; describe how to fix",
+          "affected_components": ["email-input", "signup-form"],
+          "wcag_criterion": "3.3.1 Error Identification"
+        },
+        {
+          "id": "a11y-8",
+          "category": "robust",
+          "requirement": "Use semantic HTML elements",
+          "implementation": "Use nav, main, section, article, header, footer appropriately",
+          "affected_components": ["nav-bar", "hero-container", "features-grid", "footer-container"],
+          "wcag_criterion": "4.1.1 Parsing"
+        }
+      ],
+      "keyboard_navigation": {
+        "tab_order": [
+          "skip-link",
+          "nav-logo",
+          "nav-links",
+          "nav-cta",
+          "hero-cta",
+          "feature-card",
+          "testimonials-carousel",
+          "pricing-teaser",
+          "email-input",
+          "submit-button",
+          "footer-links"
+        ],
+        "focus_trap_regions": ["mobile-nav-drawer"],
+        "skip_links": [
+          { "label": "Skip to main content", "target": "hero" },
+          { "label": "Skip to signup form", "target": "cta-section" }
+        ]
+      },
+      "aria_landmarks": [
+        { "role": "banner", "section_id": "nav", "label": "Site header" },
+        { "role": "main", "section_id": "hero", "label": "Main content" },
+        { "role": "region", "section_id": "features", "label": "Product features" },
+        { "role": "region", "section_id": "testimonials", "label": "Customer testimonials" },
+        { "role": "form", "section_id": "cta-section", "label": "Newsletter signup" },
+        { "role": "contentinfo", "section_id": "footer", "label": "Site footer" }
+      ]
+    },
+    "design_tokens": {
+      "status": "unknown",
+      "tokens": {},
+      "unknown_tokens": [
+        "colors (primary, secondary, text, background, error, success)",
+        "typography (font families, sizes, weights, line heights)",
+        "spacing (base unit, scale)",
+        "shadows (elevation levels)",
+        "borders (widths, radii)",
+        "transitions (durations, easings)"
+      ]
+    },
+    "acceptance_criteria": [
+      {
+        "id": "AC-1",
+        "description": "Hero CTA scrolls to signup form",
+        "type": "functional",
+        "testable_condition": "When user clicks hero CTA button, page smoothly scrolls to cta-section and email input receives focus",
+        "related_components": ["hero-cta", "signup-form"],
+        "related_feature": "Hero Section"
+      },
+      {
+        "id": "AC-2",
+        "description": "Feature cards display correctly",
+        "type": "visual",
+        "testable_condition": "3-4 feature cards are visible with icon, title, and description; cards have equal height in each row",
+        "related_components": ["feature-card", "features-grid"],
+        "related_feature": "Feature Highlights"
+      },
+      {
+        "id": "AC-3",
+        "description": "Email validation works",
+        "type": "functional",
+        "testable_condition": "When user enters invalid email and blurs, error message appears; when valid email entered, error clears",
+        "related_components": ["email-input"],
+        "related_feature": "Final CTA"
+      },
+      {
+        "id": "AC-4",
+        "description": "Form submission shows feedback",
+        "type": "functional",
+        "testable_condition": "On submit: button shows loading state, inputs disabled; on success: success message shown; on error: error message shown with form still editable",
+        "related_components": ["signup-form", "submit-button"],
+        "related_feature": "Final CTA"
+      },
+      {
+        "id": "AC-5",
+        "description": "Mobile navigation works",
+        "type": "responsive",
+        "testable_condition": "At viewport < 768px: hamburger menu visible, clicking opens drawer with nav links, clicking X or outside closes drawer",
+        "related_components": ["nav-bar", "nav-links"],
+        "related_feature": "Navigation"
+      },
+      {
+        "id": "AC-6",
+        "description": "Feature grid responds to viewport",
+        "type": "responsive",
+        "testable_condition": "Mobile: 1 column; Tablet: 2 columns; Desktop: 3 columns; Wide: 4 columns",
+        "related_components": ["features-grid"],
+        "related_feature": "Feature Highlights"
+      },
+      {
+        "id": "AC-7",
+        "description": "Keyboard navigation complete",
+        "type": "accessibility",
+        "testable_condition": "User can tab through all interactive elements in logical order; all elements have visible focus indicators",
+        "related_components": ["nav-cta", "hero-cta", "email-input", "submit-button"],
+        "related_feature": "Accessibility"
+      },
+      {
+        "id": "AC-8",
+        "description": "Screen reader announces form errors",
+        "type": "accessibility",
+        "testable_condition": "When email validation fails, screen reader announces error message associated with the input field",
+        "related_components": ["email-input"],
+        "related_feature": "Final CTA"
+      },
+      {
+        "id": "AC-9",
+        "description": "Testimonial carousel is navigable",
+        "type": "functional",
+        "testable_condition": "Users can navigate testimonials via dots, arrows (if present), or swipe on touch devices; current position is indicated",
+        "related_components": ["testimonials-carousel"],
+        "related_feature": "Social Proof"
+      },
+      {
+        "id": "AC-10",
+        "description": "Page loads within performance budget",
+        "type": "performance",
+        "testable_condition": "Page reaches LCP within 3000ms on 4G connection; total JS bundle < 500KB",
+        "related_components": [],
+        "related_feature": "Performance"
+      }
+    ]
+  },
+  "rationale": {
+    "decisions": [
+      {
+        "aspect": "Information Architecture",
+        "decision": "Linear single-page layout with 7 distinct sections",
+        "reasoning": "Product landing pages benefit from a narrative flow that guides visitors from awareness (hero) through consideration (features, testimonials) to action (CTA). This matches user mental model for evaluating SaaS products.",
+        "alternatives_considered": ["Multi-page layout", "Tab-based sections"],
+        "tradeoffs": ["Single page may have longer initial load", "All content visible without navigation may overwhelm some users"]
+      },
+      {
+        "aspect": "Hero CTA Behavior",
+        "decision": "Smooth scroll to signup form rather than modal or new page",
+        "reasoning": "Scrolling maintains context and feels less intrusive than modals. Users who click CTA have shown intent and benefit from seeing the form in page context.",
+        "alternatives_considered": ["Modal popup", "Redirect to signup page"],
+        "tradeoffs": ["Less aggressive conversion path", "Form at bottom means scrolling past content"]
+      },
+      {
+        "aspect": "Testimonials Component",
+        "decision": "Carousel format with swipe and dot navigation",
+        "reasoning": "Carousel conserves vertical space while allowing multiple testimonials. Touch-friendly for mobile users. Dots provide position awareness.",
+        "alternatives_considered": ["Grid of all testimonials", "Single featured testimonial", "Infinite scroll"],
+        "tradeoffs": ["Users may not view all testimonials", "Carousel accessibility requires careful implementation"]
+      },
+      {
+        "aspect": "Responsive Grid Strategy",
+        "decision": "CSS Grid with column count changing by breakpoint",
+        "reasoning": "Grid provides reliable equal-height cards and predictable layout. Column count adapts naturally to available space.",
+        "alternatives_considered": ["Flexbox with wrapping", "Masonry layout"],
+        "tradeoffs": ["Requires grid support (good in specified browsers)", "Less dynamic than masonry"]
+      },
+      {
+        "aspect": "Form Design",
+        "decision": "Inline email input with submit button, minimal fields",
+        "reasoning": "Single-field forms have higher conversion rates. Email-only reduces friction for trial signups. Additional info can be collected post-signup.",
+        "alternatives_considered": ["Email + name fields", "Full registration form"],
+        "tradeoffs": ["Less data collected upfront", "May need progressive profiling later"]
+      }
+    ],
+    "assumptions": [
+      {
+        "assumption": "Design tokens will be provided before implementation",
+        "impact": "high",
+        "recommendation": "Provide brand colors, typography, and spacing before development starts"
+      },
+      {
+        "assumption": "Product screenshots or hero imagery will be available",
+        "impact": "medium",
+        "recommendation": "Prepare visual assets for hero section"
+      },
+      {
+        "assumption": "3-4 features are sufficient for initial launch",
+        "impact": "low",
+        "recommendation": "Confirm feature count with product team"
+      },
+      {
+        "assumption": "Testimonials will have customer photos and company logos",
+        "impact": "medium",
+        "recommendation": "Collect customer permission and assets for testimonials"
+      }
+    ],
+    "open_questions": [
+      "Should navigation be sticky on scroll or fixed at top?",
+      "Is autoplay desired for testimonial carousel?",
+      "What happens after successful signup - redirect or inline confirmation?",
+      "Are there specific brand guidelines for button styles and colors?",
+      "Should pricing preview show multiple tiers or just starting price?"
+    ]
+  },
+  "confidence": 0.78,
+  "confidence_breakdown": {
+    "information_architecture": 0.9,
+    "components": 0.85,
+    "interactions": 0.8,
+    "responsive": 0.85,
+    "accessibility": 0.9,
+    "design_tokens": 0.3
+  }
+}

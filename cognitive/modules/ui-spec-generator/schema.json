@@ -1,0 +1,152 @@
+{
+  "$schema": "https://cognitive-modules.io/schema/v1",
+  "$id": "ui-spec-generator",
+  "title": "UI Spec Generator Schema",
+  
+  "input": {
+    "type": "object",
+    "required": ["page_context", "features"],
+    "additionalProperties": false,
+    "properties": {
+      "page_context": {
+        "type": "object",
+        "required": ["page_type", "purpose", "target_audience"],
+        "properties": {
+          "page_type": { "type": "string" },
+          "purpose": { "type": "string", "minLength": 10 },
+          "target_audience": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "platform": { "type": "string", "enum": ["web", "mobile-web", "hybrid"], "default": "web" }
+        }
+      },
+      "features": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["name", "description", "priority"],
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "priority": { "type": "string", "enum": ["must-have", "should-have", "nice-to-have"] }
+          }
+        }
+      },
+      "content_requirements": {
+        "type": "object",
+        "properties": {
+          "sections": { "type": "array" },
+          "copy_guidelines": { "type": "object" }
+        }
+      },
+      "design_tokens": { "type": "object" },
+      "constraints": { "type": "object" }
+    }
+  },
+
+  "output": {
+    "type": "object",
+    "required": ["specification", "rationale", "confidence"],
+    "additionalProperties": false,
+    "properties": {
+      "specification": {
+        "type": "object",
+        "required": [
+          "information_architecture",
+          "components", 
+          "interactions",
+          "responsive",
+          "accessibility",
+          "design_tokens",
+          "acceptance_criteria"
+        ],
+        "properties": {
+          "information_architecture": {
+            "type": "object",
+            "required": ["sections", "hierarchy"],
+            "properties": {
+              "sections": { "type": "array", "minItems": 1 },
+              "hierarchy": { "type": "object" },
+              "navigation_flow": { "type": "array" }
+            }
+          },
+          "components": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "type", "section_id", "props", "states"]
+            }
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "trigger", "event", "action", "target"]
+            }
+          },
+          "responsive": {
+            "type": "object",
+            "required": ["breakpoints", "layout_rules"],
+            "properties": {
+              "breakpoints": { "type": "array", "minItems": 1 },
+              "layout_rules": { "type": "array" },
+              "fluid_typography": { "type": "boolean" }
+            }
+          },
+          "accessibility": {
+            "type": "object",
+            "required": ["level", "requirements"],
+            "properties": {
+              "level": { "type": "string", "enum": ["WCAG-A", "WCAG-AA", "WCAG-AAA"] },
+              "requirements": { "type": "array", "minItems": 1 },
+              "keyboard_navigation": { "type": "object" },
+              "aria_landmarks": { "type": "array" }
+            }
+          },
+          "design_tokens": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+              "status": { "type": "string", "enum": ["provided", "partial", "unknown"] },
+              "tokens": { "type": "object" },
+              "unknown_tokens": { "type": "array" }
+            }
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "description", "type", "testable_condition"]
+            }
+          }
+        }
+      },
+      "rationale": {
+        "type": "object",
+        "required": ["decisions"],
+        "properties": {
+          "decisions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["aspect", "decision", "reasoning"]
+            }
+          },
+          "assumptions": { "type": "array" },
+          "open_questions": { "type": "array" }
+        }
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "confidence_breakdown": {
+        "type": "object",
+        "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

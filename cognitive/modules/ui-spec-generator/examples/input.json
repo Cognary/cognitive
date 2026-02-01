@@ -1,0 +1,113 @@
+{
+  "page_context": {
+    "page_type": "product-landing",
+    "purpose": "Convert visitors into trial signups for a project management SaaS tool by showcasing key features and building trust through social proof",
+    "target_audience": ["startup founders", "product managers", "team leads"],
+    "platform": "web"
+  },
+  "features": [
+    {
+      "name": "Hero Section",
+      "description": "Eye-catching hero with value proposition headline, subheadline explaining the product, and primary CTA button for starting a free trial",
+      "priority": "must-have",
+      "user_stories": [
+        "As a visitor, I want to immediately understand what the product does so I can decide if it's relevant to me",
+        "As a visitor, I want an easy way to start a trial without friction"
+      ]
+    },
+    {
+      "name": "Feature Highlights",
+      "description": "Display 3-4 key product features with icons, titles, and brief descriptions to communicate core value",
+      "priority": "must-have",
+      "user_stories": [
+        "As a visitor, I want to see the main features so I understand what problems the product solves"
+      ]
+    },
+    {
+      "name": "Social Proof",
+      "description": "Show customer testimonials with photos, names, titles, and quotes to build trust and credibility",
+      "priority": "should-have",
+      "user_stories": [
+        "As a visitor, I want to see that other companies use this product successfully"
+      ]
+    },
+    {
+      "name": "Pricing Preview",
+      "description": "Brief pricing section showing starting price and link to full pricing page",
+      "priority": "should-have"
+    },
+    {
+      "name": "Final CTA",
+      "description": "Bottom section with compelling copy and signup form to capture leads who scrolled through the page",
+      "priority": "must-have"
+    }
+  ],
+  "content_requirements": {
+    "sections": [
+      {
+        "name": "Navigation",
+        "content_type": "navigation",
+        "required_elements": ["logo", "nav-links", "cta-button"],
+        "optional_elements": ["search", "user-menu"]
+      },
+      {
+        "name": "Hero",
+        "content_type": "mixed",
+        "required_elements": ["headline", "subheadline", "cta-button"],
+        "optional_elements": ["hero-image", "product-screenshot"]
+      },
+      {
+        "name": "Features",
+        "content_type": "data-display",
+        "required_elements": ["feature-cards"],
+        "optional_elements": ["section-heading"]
+      },
+      {
+        "name": "Testimonials",
+        "content_type": "data-display",
+        "required_elements": ["testimonial-cards"],
+        "optional_elements": ["company-logos"]
+      },
+      {
+        "name": "Pricing",
+        "content_type": "data-display",
+        "required_elements": ["price-display", "pricing-link"]
+      },
+      {
+        "name": "CTA Section",
+        "content_type": "form",
+        "required_elements": ["headline", "email-input", "submit-button"]
+      },
+      {
+        "name": "Footer",
+        "content_type": "navigation",
+        "required_elements": ["footer-links", "copyright"],
+        "optional_elements": ["social-links", "newsletter-signup"]
+      }
+    ],
+    "copy_guidelines": {
+      "tone": "professional yet approachable, benefit-focused, concise",
+      "max_heading_length": 60,
+      "max_paragraph_length": 150
+    }
+  },
+  "constraints": {
+    "browser_support": ["Chrome 90+", "Firefox 88+", "Safari 14+", "Edge 90+"],
+    "performance_budget": {
+      "max_load_time_ms": 3000,
+      "max_bundle_size_kb": 500
+    },
+    "accessibility_level": "WCAG-AA",
+    "internationalization": false
+  },
+  "existing_patterns": [
+    {
+      "name": "Button",
+      "usage": "Primary and secondary button styles exist in the design system"
+    },
+    {
+      "name": "Card",
+      "usage": "Card component for feature cards and testimonial cards"
+    }
+  ]
+}

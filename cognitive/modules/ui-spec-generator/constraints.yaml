@@ -1,0 +1,93 @@
+# Constraints for ui-spec-generator cognitive module
+# These constraints ensure predictable, safe, and reliable operation
+
+operational:
+  # No external network access allowed
+  no_external_network: true
+  
+  # No side effects - output only, no file writes, no API calls
+  no_side_effects: true
+  
+  # Must not invent missing data - mark as unknown instead
+  no_inventing_data: true
+  
+  # Deterministic output for same input
+  deterministic: true
+
+data_handling:
+  # When design tokens are not provided, mark as unknown
+  missing_design_tokens: "mark_unknown"
+  
+  # When requirements are ambiguous, document assumptions
+  ambiguous_requirements: "document_assumptions"
+  
+  # When features conflict, note the conflict rather than resolve arbitrarily
+  conflicting_requirements: "note_conflict"
+  
+  # Required output fields must always be present
+  required_output_fields:
+    - information_architecture
+    - components
+    - interactions
+    - responsive
+    - accessibility
+    - design_tokens
+    - acceptance_criteria
+    - rationale
+    - confidence
+
+output_quality:
+  # Minimum number of acceptance criteria
+  min_acceptance_criteria: 3
+  
+  # Minimum number of accessibility requirements
+  min_accessibility_requirements: 5
+  
+  # All component IDs must be valid identifiers
+  component_id_pattern: "^[a-z][a-z0-9-]*$"
+  
+  # All section IDs must be valid identifiers
+  section_id_pattern: "^[a-z][a-z0-9-]*$"
+  
+  # Acceptance criteria IDs must follow pattern
+  acceptance_criteria_id_pattern: "^AC-[0-9]+$"
+
+consistency:
+  # All referenced section_ids in components must exist in information_architecture
+  validate_section_references: true
+  
+  # All referenced component_ids in interactions must exist in components
+  validate_component_references: true
+  
+  # All breakpoint names in layout_rules must exist in breakpoints
+  validate_breakpoint_references: true
+
+boundaries:
+  # What this module MUST NOT do
+  excluded_outputs:
+    - implementation_code
+    - brand_identity_creation
+    - external_resource_references
+    - invented_requirements
+    - backend_api_design
+    - database_schema
+    - business_logic
+  
+  # Maximum nesting depth for component hierarchy
+  max_component_depth: 5
+  
+  # Maximum number of components per page
+  max_components: 100
+  
+  # Maximum number of interactions
+  max_interactions: 50
+
+confidence_thresholds:
+  # Minimum confidence to proceed without flagging
+  minimum_viable: 0.6
+  
+  # Confidence below this requires explicit assumptions list
+  requires_assumptions: 0.8
+  
+  # Confidence above this indicates high reliability
+  high_confidence: 0.9

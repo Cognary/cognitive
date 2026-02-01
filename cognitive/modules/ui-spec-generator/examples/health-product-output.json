@@ -1,0 +1,943 @@
+{
+  "specification": {
+    "information_architecture": {
+      "sections": [
+        {
+          "id": "nav",
+          "name": "导航栏",
+          "purpose": "主导航和品牌标识入口",
+          "order": 0,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "hero",
+          "name": "Hero首屏",
+          "purpose": "传达品牌核心价值主张，建立第一印象",
+          "order": 1,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "pain-points",
+          "name": "痛点共鸣",
+          "purpose": "展示目标用户的压力场景，引发情感共鸣",
+          "order": 2,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "products",
+          "name": "产品系列",
+          "purpose": "展示产品线，帮助用户找到适合的产品",
+          "order": 3,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "science",
+          "name": "科学背书",
+          "purpose": "展示成分、研究和认证，建立信任",
+          "order": 4,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "testimonials",
+          "name": "用户评价",
+          "purpose": "通过真实案例增强可信度",
+          "order": 5,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "experts",
+          "name": "专家团队",
+          "purpose": "展示专业背景，强化品牌权威",
+          "order": 6,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "how-to-use",
+          "name": "使用指南",
+          "purpose": "指导用户正确使用产品",
+          "order": 7,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "faq",
+          "name": "常见问题",
+          "purpose": "解答疑虑，消除购买障碍",
+          "order": 8,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "cta-section",
+          "name": "转化CTA",
+          "purpose": "推动用户完成购买或咨询行动",
+          "order": 9,
+          "parent_section_id": null,
+          "visibility": "always"
+        },
+        {
+          "id": "footer",
+          "name": "页脚",
+          "purpose": "次级导航、联系方式和法律信息",
+          "order": 10,
+          "parent_section_id": null,
+          "visibility": "always"
+        }
+      ],
+      "hierarchy": {
+        "root": [
+          { "section_id": "nav" },
+          { "section_id": "hero" },
+          { "section_id": "pain-points" },
+          { "section_id": "products" },
+          { "section_id": "science" },
+          { "section_id": "testimonials" },
+          { "section_id": "experts" },
+          { "section_id": "how-to-use" },
+          { "section_id": "faq" },
+          { "section_id": "cta-section" },
+          { "section_id": "footer" }
+        ]
+      },
+      "navigation_flow": [
+        { "from": "hero", "to": "products", "trigger": "click" },
+        { "from": "hero", "to": "pain-points", "trigger": "scroll" },
+        { "from": "pain-points", "to": "products", "trigger": "scroll" },
+        { "from": "products", "to": "cta-section", "trigger": "click" },
+        { "from": "science", "to": "products", "trigger": "click" },
+        { "from": "faq", "to": "cta-section", "trigger": "click" }
+      ]
+    },
+    "components": [
+      {
+        "id": "nav-bar",
+        "type": "navigation",
+        "section_id": "nav",
+        "props": [
+          { "name": "logo", "type": "node", "required": true, "description": "品牌Logo" },
+          { "name": "links", "type": "array", "required": true, "description": "导航链接（产品、科学、关于我们、FAQ）" },
+          { "name": "ctaButton", "type": "node", "required": true, "description": "购买按钮" },
+          { "name": "isSticky", "type": "boolean", "required": false, "default_value": true }
+        ],
+        "states": [
+          { "name": "default", "description": "正常导航状态" },
+          { "name": "expanded", "description": "移动端菜单展开", "visual_changes": ["抽屉菜单可见", "汉堡图标变X"] },
+          { "name": "collapsed", "description": "移动端菜单收起" }
+        ]
+      },
+      {
+        "id": "hero-section",
+        "type": "hero",
+        "section_id": "hero",
+        "props": [
+          { "name": "headline", "type": "string", "required": true, "description": "主标题，如"重拾内心平静，唤醒身体复原力"" },
+          { "name": "subheadline", "type": "string", "required": true, "description": "副标题，阐述产品价值" },
+          { "name": "primaryCta", "type": "object", "required": true, "description": "主CTA按钮配置" },
+          { "name": "secondaryCta", "type": "object", "required": false, "description": "次级CTA（了解更多）" },
+          { "name": "backgroundMedia", "type": "string", "required": true, "description": "背景图/视频URL" },
+          { "name": "trustBadges", "type": "array", "required": false, "description": "信任标识（FDA认证、有机认证等）" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" },
+          { "name": "loading", "description": "视频加载中", "visual_changes": ["显示占位图"] }
+        ]
+      },
+      {
+        "id": "pain-point-card",
+        "type": "card",
+        "section_id": "pain-points",
+        "props": [
+          { "name": "icon", "type": "node", "required": true, "description": "场景图标" },
+          { "name": "title", "type": "string", "required": true, "description": "场景标题，如"深夜加班后难以入睡"" },
+          { "name": "description", "type": "string", "required": true, "description": "场景描述" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常卡片" },
+          { "name": "hover", "description": "悬停状态", "visual_changes": ["轻微上浮", "阴影加深"] }
+        ]
+      },
+      {
+        "id": "pain-points-grid",
+        "type": "grid",
+        "section_id": "pain-points",
+        "props": [
+          { "name": "items", "type": "array", "required": true, "description": "痛点卡片数据数组" },
+          { "name": "columns", "type": "number", "required": false, "default_value": 4 }
+        ],
+        "states": [
+          { "name": "default", "description": "网格布局" }
+        ],
+        "children": ["pain-point-card"]
+      },
+      {
+        "id": "product-card",
+        "type": "card",
+        "section_id": "products",
+        "props": [
+          { "name": "image", "type": "string", "required": true, "description": "产品图片URL" },
+          { "name": "name", "type": "string", "required": true, "description": "产品名称" },
+          { "name": "tagline", "type": "string", "required": true, "description": "核心功效一句话" },
+          { "name": "keyIngredients", "type": "array", "required": true, "description": "主要成分标签" },
+          { "name": "price", "type": "object", "required": true, "description": "价格信息（原价、现价）" },
+          { "name": "ctaLabel", "type": "string", "required": false, "default_value": "立即购买" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" },
+          { "name": "hover", "description": "悬停", "visual_changes": ["图片轻微放大", "显示快速查看按钮"] },
+          { "name": "focus", "description": "键盘聚焦", "visual_changes": ["焦点环可见"] }
+        ],
+        "variants": [
+          { "name": "featured", "description": "主推产品，更大尺寸" },
+          { "name": "compact", "description": "紧凑版本" }
+        ]
+      },
+      {
+        "id": "products-carousel",
+        "type": "carousel",
+        "section_id": "products",
+        "props": [
+          { "name": "items", "type": "array", "required": true, "description": "产品数据数组" },
+          { "name": "showArrows", "type": "boolean", "required": false, "default_value": true },
+          { "name": "showDots", "type": "boolean", "required": false, "default_value": true },
+          { "name": "autoPlay", "type": "boolean", "required": false, "default_value": false }
+        ],
+        "states": [
+          { "name": "default", "description": "静止" },
+          { "name": "active", "description": "滑动中", "visual_changes": ["过渡动画"] }
+        ],
+        "children": ["product-card"]
+      },
+      {
+        "id": "ingredient-card",
+        "type": "card",
+        "section_id": "science",
+        "props": [
+          { "name": "name", "type": "string", "required": true, "description": "成分名称（如GABA、茶氨酸）" },
+          { "name": "icon", "type": "node", "required": true, "description": "成分图标/分子结构" },
+          { "name": "benefit", "type": "string", "required": true, "description": "功效说明" },
+          { "name": "dosage", "type": "string", "required": false, "description": "含量" },
+          { "name": "researchLink", "type": "string", "required": false, "description": "研究论文链接" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" },
+          { "name": "expanded", "description": "展开详情", "visual_changes": ["显示更多研究信息"] }
+        ]
+      },
+      {
+        "id": "science-stats",
+        "type": "stats-bar",
+        "section_id": "science",
+        "props": [
+          { "name": "stats", "type": "array", "required": true, "description": "统计数据数组（如：92%用户感到改善）" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" },
+          { "name": "loading", "description": "数字动画加载", "visual_changes": ["数字滚动动画"] }
+        ]
+      },
+      {
+        "id": "certification-badges",
+        "type": "badge-group",
+        "section_id": "science",
+        "props": [
+          { "name": "badges", "type": "array", "required": true, "description": "认证标识数组（GMP、有机认证、第三方检测）" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" }
+        ]
+      },
+      {
+        "id": "testimonial-card",
+        "type": "card",
+        "section_id": "testimonials",
+        "props": [
+          { "name": "quote", "type": "string", "required": true, "description": "用户评价内容" },
+          { "name": "authorName", "type": "string", "required": true },
+          { "name": "authorTitle", "type": "string", "required": true, "description": "职业/身份" },
+          { "name": "authorPhoto", "type": "string", "required": false },
+          { "name": "rating", "type": "number", "required": true, "description": "评分1-5" },
+          { "name": "productUsed", "type": "string", "required": false, "description": "使用的产品" },
+          { "name": "beforeAfter", "type": "object", "required": false, "description": "使用前后对比" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" }
+        ]
+      },
+      {
+        "id": "testimonials-slider",
+        "type": "carousel",
+        "section_id": "testimonials",
+        "props": [
+          { "name": "items", "type": "array", "required": true },
+          { "name": "showRating", "type": "boolean", "required": false, "default_value": true }
+        ],
+        "states": [
+          { "name": "default", "description": "静止" },
+          { "name": "active", "description": "切换中" }
+        ],
+        "children": ["testimonial-card"]
+      },
+      {
+        "id": "expert-card",
+        "type": "card",
+        "section_id": "experts",
+        "props": [
+          { "name": "photo", "type": "string", "required": true, "description": "专家头像" },
+          { "name": "name", "type": "string", "required": true },
+          { "name": "title", "type": "string", "required": true, "description": "头衔/职位" },
+          { "name": "credentials", "type": "array", "required": true, "description": "资质列表" },
+          { "name": "bio", "type": "string", "required": true, "description": "简介" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" },
+          { "name": "hover", "description": "悬停显示更多信息" }
+        ]
+      },
+      {
+        "id": "experts-grid",
+        "type": "grid",
+        "section_id": "experts",
+        "props": [
+          { "name": "items", "type": "array", "required": true },
+          { "name": "columns", "type": "number", "required": false, "default_value": 3 }
+        ],
+        "states": [
+          { "name": "default", "description": "网格布局" }
+        ],
+        "children": ["expert-card"]
+      },
+      {
+        "id": "usage-step",
+        "type": "step-card",
+        "section_id": "how-to-use",
+        "props": [
+          { "name": "stepNumber", "type": "number", "required": true },
+          { "name": "title", "type": "string", "required": true, "description": "步骤标题" },
+          { "name": "description", "type": "string", "required": true },
+          { "name": "icon", "type": "node", "required": true },
+          { "name": "timing", "type": "string", "required": false, "description": "建议时间（如：睡前30分钟）" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" },
+          { "name": "active", "description": "当前步骤高亮" }
+        ]
+      },
+      {
+        "id": "usage-timeline",
+        "type": "timeline",
+        "section_id": "how-to-use",
+        "props": [
+          { "name": "steps", "type": "array", "required": true },
+          { "name": "orientation", "type": "string", "required": false, "default_value": "horizontal" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" }
+        ],
+        "children": ["usage-step"]
+      },
+      {
+        "id": "faq-item",
+        "type": "accordion-item",
+        "section_id": "faq",
+        "props": [
+          { "name": "question", "type": "string", "required": true },
+          { "name": "answer", "type": "string", "required": true },
+          { "name": "isOpen", "type": "boolean", "required": false, "default_value": false }
+        ],
+        "states": [
+          { "name": "collapsed", "description": "问题收起" },
+          { "name": "expanded", "description": "答案展开", "visual_changes": ["内容可见", "图标旋转"] }
+        ]
+      },
+      {
+        "id": "faq-accordion",
+        "type": "accordion",
+        "section_id": "faq",
+        "props": [
+          { "name": "items", "type": "array", "required": true },
+          { "name": "allowMultiple", "type": "boolean", "required": false, "default_value": false }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" }
+        ],
+        "children": ["faq-item"]
+      },
+      {
+        "id": "cta-banner",
+        "type": "banner",
+        "section_id": "cta-section",
+        "props": [
+          { "name": "headline", "type": "string", "required": true, "description": "转化标题" },
+          { "name": "subheadline", "type": "string", "required": false },
+          { "name": "offerText", "type": "string", "required": false, "description": "优惠信息" },
+          { "name": "primaryCta", "type": "object", "required": true },
+          { "name": "secondaryCta", "type": "object", "required": false },
+          { "name": "backgroundStyle", "type": "string", "required": false, "default_value": "gradient" }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" }
+        ]
+      },
+      {
+        "id": "purchase-button",
+        "type": "button",
+        "section_id": "cta-section",
+        "props": [
+          { "name": "label", "type": "string", "required": true, "default_value": "立即购买" },
+          { "name": "variant", "type": "string", "required": false, "default_value": "primary" },
+          { "name": "size", "type": "string", "required": false, "default_value": "large" },
+          { "name": "href", "type": "string", "required": true }
+        ],
+        "states": [
+          { "name": "default", "description": "正常按钮" },
+          { "name": "hover", "description": "悬停", "visual_changes": ["背景加亮", "轻微放大"] },
+          { "name": "focus", "description": "键盘聚焦", "visual_changes": ["焦点环"] },
+          { "name": "active", "description": "点击中" },
+          { "name": "loading", "description": "跳转中", "visual_changes": ["显示加载指示器"] }
+        ]
+      },
+      {
+        "id": "consultation-form",
+        "type": "form",
+        "section_id": "cta-section",
+        "props": [
+          { "name": "headline", "type": "string", "required": true, "description": "表单标题" },
+          { "name": "fields", "type": "array", "required": true, "description": "表单字段配置" },
+          { "name": "submitLabel", "type": "string", "required": false, "default_value": "预约咨询" },
+          { "name": "onSubmit", "type": "function", "required": true }
+        ],
+        "states": [
+          { "name": "default", "description": "空表单" },
+          { "name": "loading", "description": "提交中", "visual_changes": ["按钮显示loading", "字段禁用"] },
+          { "name": "success", "description": "提交成功", "visual_changes": ["显示感谢信息"] },
+          { "name": "error", "description": "提交失败", "visual_changes": ["显示错误信息"] }
+        ]
+      },
+      {
+        "id": "footer-container",
+        "type": "footer",
+        "section_id": "footer",
+        "props": [
+          { "name": "logo", "type": "node", "required": true },
+          { "name": "linkGroups", "type": "array", "required": true, "description": "链接分组（产品、关于、帮助）" },
+          { "name": "contactInfo", "type": "object", "required": true },
+          { "name": "socialLinks", "type": "array", "required": true },
+          { "name": "certifications", "type": "array", "required": false },
+          { "name": "copyright", "type": "string", "required": true }
+        ],
+        "states": [
+          { "name": "default", "description": "正常展示" }
+        ]
+      }
+    ],
+    "interactions": [
+      {
+        "id": "hero-cta-click",
+        "trigger": "hero-section",
+        "event": "click",
+        "action": "跳转到产品列表或购买页面",
+        "target": "products",
+        "transition": {
+          "type": "custom",
+          "duration_ms": 600,
+          "easing": "ease-out"
+        },
+        "feedback": "平滑滚动到产品区域"
+      },
+      {
+        "id": "product-card-hover",
+        "trigger": "product-card",
+        "event": "hover",
+        "action": "显示产品快速预览效果",
+        "target": "product-card",
+        "transition": {
+          "type": "scale",
+          "duration_ms": 200,
+          "easing": "ease-in-out"
+        }
+      },
+      {
+        "id": "product-card-click",
+        "trigger": "product-card",
+        "event": "click",
+        "action": "跳转到产品详情页或打开快速购买弹窗",
+        "target": "product-detail-modal",
+        "transition": {
+          "type": "fade",
+          "duration_ms": 300
+        }
+      },
+      {
+        "id": "ingredient-expand",
+        "trigger": "ingredient-card",
+        "event": "click",
+        "action": "展开成分详情和研究信息",
+        "target": "ingredient-card",
+        "transition": {
+          "type": "slide",
+          "duration_ms": 300,
+          "easing": "ease-out"
+        }
+      },
+      {
+        "id": "faq-toggle",
+        "trigger": "faq-item",
+        "event": "click",
+        "action": "展开/收起FAQ答案",
+        "target": "faq-item",
+        "transition": {
+          "type": "slide",
+          "duration_ms": 250,
+          "easing": "ease-out"
+        },
+        "feedback": "箭头图标旋转指示状态"
+      },
+      {
+        "id": "testimonial-swipe",
+        "trigger": "testimonials-slider",
+        "event": "swipe",
+        "action": "切换到下一条/上一条评价",
+        "target": "testimonials-slider",
+        "transition": {
+          "type": "slide",
+          "duration_ms": 400,
+          "easing": "ease-in-out"
+        }
+      },
+      {
+        "id": "form-submit",
+        "trigger": "consultation-form",
+        "event": "submit",
+        "action": "验证表单并提交咨询请求",
+        "target": "consultation-form",
+        "transition": {
+          "type": "fade",
+          "duration_ms": 200
+        },
+        "conditions": ["所有必填字段已填写", "邮箱格式正确"],
+        "feedback": "提交时显示loading，成功后显示感谢信息"
+      },
+      {
+        "id": "nav-scroll-spy",
+        "trigger": "nav-bar",
+        "event": "scroll",
+        "action": "根据滚动位置高亮当前导航项",
+        "target": "nav-bar",
+        "feedback": "当前区域对应的导航链接高亮"
+      },
+      {
+        "id": "mobile-menu-toggle",
+        "trigger": "nav-bar",
+        "event": "click",
+        "action": "切换移动端导航菜单",
+        "target": "nav-bar",
+        "transition": {
+          "type": "slide",
+          "duration_ms": 300,
+          "easing": "ease-out"
+        },
+        "conditions": ["视窗宽度 < 768px"]
+      }
+    ],
+    "responsive": {
+      "breakpoints": [
+        { "name": "mobile", "min_width": 320, "max_width": 767 },
+        { "name": "tablet", "min_width": 768, "max_width": 1023 },
+        { "name": "desktop", "min_width": 1024, "max_width": 1439 },
+        { "name": "wide", "min_width": 1440, "max_width": null }
+      ],
+      "layout_rules": [
+        {
+          "breakpoint": "mobile",
+          "rules": [
+            { "target": "nav-bar", "property": "nav-links", "value": "隐藏，通过汉堡菜单访问" },
+            { "target": "pain-points-grid", "property": "grid-template-columns", "value": "1fr" },
+            { "target": "products-carousel", "property": "slides-per-view", "value": "1" },
+            { "target": "experts-grid", "property": "grid-template-columns", "value": "1fr" },
+            { "target": "usage-timeline", "property": "orientation", "value": "vertical" },
+            { "target": "hero-section", "property": "text-align", "value": "center" },
+            { "target": "cta-banner", "property": "flex-direction", "value": "column" }
+          ]
+        },
+        {
+          "breakpoint": "tablet",
+          "rules": [
+            { "target": "pain-points-grid", "property": "grid-template-columns", "value": "repeat(2, 1fr)" },
+            { "target": "products-carousel", "property": "slides-per-view", "value": "2" },
+            { "target": "experts-grid", "property": "grid-template-columns", "value": "repeat(2, 1fr)" },
+            { "target": "usage-timeline", "property": "orientation", "value": "horizontal" }
+          ]
+        },
+        {
+          "breakpoint": "desktop",
+          "rules": [
+            { "target": "nav-bar", "property": "nav-links", "value": "inline-flex" },
+            { "target": "pain-points-grid", "property": "grid-template-columns", "value": "repeat(4, 1fr)" },
+            { "target": "products-carousel", "property": "slides-per-view", "value": "3" },
+            { "target": "experts-grid", "property": "grid-template-columns", "value": "repeat(3, 1fr)" }
+          ]
+        },
+        {
+          "breakpoint": "wide",
+          "rules": [
+            { "target": "hero-section", "property": "max-width", "value": "1400px" },
+            { "target": "products-carousel", "property": "slides-per-view", "value": "4" }
+          ]
+        }
+      ],
+      "fluid_typography": true,
+      "container_queries": [
+        {
+          "component_id": "product-card",
+          "condition": "container width < 280px",
+          "changes": ["隐藏成分标签", "缩小图片"]
+        },
+        {
+          "component_id": "testimonial-card",
+          "condition": "container width < 300px",
+          "changes": ["隐藏用户照片", "减少引用文字行数"]
+        }
+      ]
+    },
+    "accessibility": {
+      "level": "WCAG-AA",
+      "requirements": [
+        {
+          "id": "a11y-1",
+          "category": "perceivable",
+          "requirement": "所有产品图片必须有描述性alt文本",
+          "implementation": "为产品图片添加包含产品名称和特征的alt属性",
+          "affected_components": ["product-card", "hero-section", "expert-card"],
+          "wcag_criterion": "1.1.1 Non-text Content"
+        },
+        {
+          "id": "a11y-2",
+          "category": "perceivable",
+          "requirement": "文本与背景对比度至少4.5:1",
+          "implementation": "验证所有文本/背景色组合，特别是hero区域叠加文字",
+          "affected_components": ["hero-section", "cta-banner", "product-card"],
+          "wcag_criterion": "1.4.3 Contrast (Minimum)"
+        },
+        {
+          "id": "a11y-3",
+          "category": "perceivable",
+          "requirement": "视频内容需提供字幕或文字替代",
+          "implementation": "如hero使用视频背景，确保核心信息也以文本形式呈现",
+          "affected_components": ["hero-section"],
+          "wcag_criterion": "1.2.2 Captions (Prerecorded)"
+        },
+        {
+          "id": "a11y-4",
+          "category": "operable",
+          "requirement": "所有交互元素可通过键盘操作",
+          "implementation": "确保按钮、链接、轮播、折叠面板都可用Tab键导航和Enter/Space激活",
+          "affected_components": ["nav-bar", "product-card", "faq-accordion", "products-carousel"],
+          "wcag_criterion": "2.1.1 Keyboard"
+        },
+        {
+          "id": "a11y-5",
+          "category": "operable",
+          "requirement": "焦点指示器清晰可见",
+          "implementation": "为所有可聚焦元素设置明显的焦点样式（至少2px轮廓）",
+          "affected_components": ["purchase-button", "nav-bar", "faq-item"],
+          "wcag_criterion": "2.4.7 Focus Visible"
+        },
+        {
+          "id": "a11y-6",
+          "category": "operable",
+          "requirement": "提供跳过导航的快捷链接",
+          "implementation": "在页面顶部添加"跳至主要内容"链接",
+          "affected_components": ["nav-bar"],
+          "wcag_criterion": "2.4.1 Bypass Blocks"
+        },
+        {
+          "id": "a11y-7",
+          "category": "understandable",
+          "requirement": "表单字段有关联的标签",
+          "implementation": "使用label元素或aria-label关联每个表单输入",
+          "affected_components": ["consultation-form"],
+          "wcag_criterion": "3.3.2 Labels or Instructions"
+        },
+        {
+          "id": "a11y-8",
+          "category": "understandable",
+          "requirement": "表单错误信息清晰且关联到字段",
+          "implementation": "使用aria-describedby关联错误信息，明确说明如何修正",
+          "affected_components": ["consultation-form"],
+          "wcag_criterion": "3.3.1 Error Identification"
+        },
+        {
+          "id": "a11y-9",
+          "category": "robust",
+          "requirement": "使用语义化HTML结构",
+          "implementation": "使用nav、main、article、section、header、footer等语义标签",
+          "affected_components": ["nav-bar", "hero-section", "footer-container"],
+          "wcag_criterion": "4.1.1 Parsing"
+        },
+        {
+          "id": "a11y-10",
+          "category": "operable",
+          "requirement": "轮播组件可暂停且有替代导航",
+          "implementation": "提供暂停按钮、前后箭头、分页指示器；禁用自动播放或允许暂停",
+          "affected_components": ["products-carousel", "testimonials-slider"],
+          "wcag_criterion": "2.2.2 Pause, Stop, Hide"
+        }
+      ],
+      "keyboard_navigation": {
+        "tab_order": [
+          "skip-link",
+          "nav-logo",
+          "nav-links",
+          "nav-cta",
+          "hero-primary-cta",
+          "hero-secondary-cta",
+          "pain-point-cards",
+          "product-cards",
+          "products-carousel-controls",
+          "ingredient-cards",
+          "testimonials-controls",
+          "expert-cards",
+          "usage-steps",
+          "faq-items",
+          "cta-form-fields",
+          "purchase-button",
+          "footer-links"
+        ],
+        "focus_trap_regions": ["mobile-nav-drawer", "product-quick-view-modal"],
+        "skip_links": [
+          { "label": "跳至主要内容", "target": "hero" },
+          { "label": "跳至产品", "target": "products" },
+          { "label": "跳至购买", "target": "cta-section" }
+        ]
+      },
+      "aria_landmarks": [
+        { "role": "banner", "section_id": "nav", "label": "网站头部" },
+        { "role": "main", "section_id": "hero", "label": "主要内容" },
+        { "role": "region", "section_id": "pain-points", "label": "了解您的压力" },
+        { "role": "region", "section_id": "products", "label": "产品系列" },
+        { "role": "region", "section_id": "science", "label": "科学背书" },
+        { "role": "region", "section_id": "testimonials", "label": "用户评价" },
+        { "role": "region", "section_id": "experts", "label": "专家团队" },
+        { "role": "region", "section_id": "faq", "label": "常见问题" },
+        { "role": "form", "section_id": "cta-section", "label": "购买或咨询" },
+        { "role": "contentinfo", "section_id": "footer", "label": "网站页脚" }
+      ]
+    },
+    "design_tokens": {
+      "status": "unknown",
+      "tokens": {},
+      "unknown_tokens": [
+        "colors（主色调、辅助色、文字色、背景色、成功/警告/错误色）",
+        "typography（字体家族、字号梯度、行高、字重）",
+        "spacing（基础间距单位、间距梯度）",
+        "shadows（阴影层级：卡片、弹窗、悬停）",
+        "borders（边框宽度、圆角半径）",
+        "transitions（动画时长、缓动函数）"
+      ]
+    },
+    "acceptance_criteria": [
+      {
+        "id": "AC-1",
+        "description": "Hero区域正确展示品牌主张",
+        "type": "visual",
+        "testable_condition": "首屏可见主标题、副标题、至少一个CTA按钮；背景媒体正常加载",
+        "related_components": ["hero-section"],
+        "related_feature": "Hero品牌主张"
+      },
+      {
+        "id": "AC-2",
+        "description": "痛点卡片完整展示",
+        "type": "visual",
+        "testable_condition": "至少4个痛点场景可见，每个包含图标、标题、描述；移动端单列排列",
+        "related_components": ["pain-point-card", "pain-points-grid"],
+        "related_feature": "痛点场景"
+      },
+      {
+        "id": "AC-3",
+        "description": "产品卡片信息完整",
+        "type": "visual",
+        "testable_condition": "每个产品卡片显示：产品图、名称、功效描述、主要成分标签、价格、购买按钮",
+        "related_components": ["product-card"],
+        "related_feature": "产品系列展示"
+      },
+      {
+        "id": "AC-4",
+        "description": "产品轮播可交互",
+        "type": "functional",
+        "testable_condition": "可通过箭头、分页点、滑动手势切换产品；当前位置有指示",
+        "related_components": ["products-carousel"],
+        "related_feature": "产品系列展示"
+      },
+      {
+        "id": "AC-5",
+        "description": "成分详情可展开",
+        "type": "functional",
+        "testable_condition": "点击成分卡片展开详情，再次点击收起；支持键盘操作",
+        "related_components": ["ingredient-card"],
+        "related_feature": "科学背书"
+      },
+      {
+        "id": "AC-6",
+        "description": "FAQ折叠面板正常工作",
+        "type": "functional",
+        "testable_condition": "点击问题展开答案，箭头图标旋转；单次只展开一个（或按配置支持多个）",
+        "related_components": ["faq-accordion", "faq-item"],
+        "related_feature": "FAQ常见问题"
+      },
+      {
+        "id": "AC-7",
+        "description": "咨询表单验证和提交",
+        "type": "functional",
+        "testable_condition": "必填字段为空时显示错误提示；邮箱格式错误时提示；提交成功显示感谢信息",
+        "related_components": ["consultation-form"],
+        "related_feature": "购买CTA"
+      },
+      {
+        "id": "AC-8",
+        "description": "移动端导航正常工作",
+        "type": "responsive",
+        "testable_condition": "视窗<768px时显示汉堡菜单；点击展开抽屉菜单；可关闭",
+        "related_components": ["nav-bar"],
+        "related_feature": "导航"
+      },
+      {
+        "id": "AC-9",
+        "description": "响应式布局适配",
+        "type": "responsive",
+        "testable_condition": "痛点卡片：mobile 1列/tablet 2列/desktop 4列；产品轮播：mobile 1个/tablet 2个/desktop 3-4个",
+        "related_components": ["pain-points-grid", "products-carousel"],
+        "related_feature": "响应式布局"
+      },
+      {
+        "id": "AC-10",
+        "description": "键盘导航完整",
+        "type": "accessibility",
+        "testable_condition": "可用Tab键按逻辑顺序访问所有交互元素；焦点指示器始终可见",
+        "related_components": ["nav-bar", "product-card", "faq-item", "purchase-button"],
+        "related_feature": "可访问性"
+      },
+      {
+        "id": "AC-11",
+        "description": "屏幕阅读器兼容",
+        "type": "accessibility",
+        "testable_condition": "所有图片有alt文本；表单错误被朗读；区域有ARIA标签",
+        "related_components": ["product-card", "consultation-form"],
+        "related_feature": "可访问性"
+      },
+      {
+        "id": "AC-12",
+        "description": "页面加载性能",
+        "type": "performance",
+        "testable_condition": "LCP < 3000ms（4G网络）；总JS包 < 600KB；图片懒加载",
+        "related_components": [],
+        "related_feature": "性能"
+      },
+      {
+        "id": "AC-13",
+        "description": "微信浏览器兼容",
+        "type": "functional",
+        "testable_condition": "在微信内置浏览器中所有功能正常；分享卡片正确显示",
+        "related_components": [],
+        "related_feature": "浏览器兼容"
+      }
+    ]
+  },
+  "rationale": {
+    "decisions": [
+      {
+        "aspect": "信息架构",
+        "decision": "采用11个区块的长滚动单页结构",
+        "reasoning": "健康产品需要建立信任，用户需要充分了解产品、科学依据、他人评价后才会购买。长页面符合「认知-兴趣-信任-行动」的转化漏斗。",
+        "alternatives_considered": ["多页面结构", "Tab切换内容"],
+        "tradeoffs": ["页面较长可能增加跳出率", "需要优化懒加载保证性能"]
+      },
+      {
+        "aspect": "痛点共鸣区位置",
+        "decision": "放在Hero之后、产品之前",
+        "reasoning": "先让用户感受到「品牌理解我」，产生情感共鸣后再看产品，转化率更高。这是经典的PAS（Problem-Agitate-Solution）文案结构。",
+        "alternatives_considered": ["痛点融入Hero", "痛点放在产品之后"],
+        "tradeoffs": ["增加页面长度"]
+      },
+      {
+        "aspect": "产品展示方式",
+        "decision": "使用轮播而非网格",
+        "reasoning": "精英用户时间宝贵，轮播可以聚焦单品，支持快速浏览。同时支持移动端友好的滑动交互。",
+        "alternatives_considered": ["产品网格", "产品列表"],
+        "tradeoffs": ["部分产品可能被忽视", "需要明确的轮播控件引导"]
+      },
+      {
+        "aspect": "科学背书区设计",
+        "decision": "包含成分卡片、数据统计、认证标识三个模块",
+        "reasoning": "25-45岁精英人群偏理性消费，需要数据和权威背书。成分透明度是健康食品的核心信任点。",
+        "alternatives_considered": ["仅展示认证", "深度论文引用"],
+        "tradeoffs": ["信息量大需要控制篇幅"]
+      },
+      {
+        "aspect": "CTA策略",
+        "decision": "提供「立即购买」和「预约咨询」双路径",
+        "reasoning": "健康产品决策周期可能较长，提供咨询选项可以捕获还在考虑的高意向用户。",
+        "alternatives_considered": ["仅购买按钮", "仅咨询表单"],
+        "tradeoffs": ["双CTA可能分散注意力"]
+      },
+      {
+        "aspect": "FAQ设计",
+        "decision": "采用折叠手风琴组件",
+        "reasoning": "FAQ内容多，折叠设计节省空间，用户可以快速定位关心的问题。",
+        "alternatives_considered": ["全部展开", "分页Tab"],
+        "tradeoffs": ["需要点击才能看到答案"]
+      }
+    ],
+    "assumptions": [
+      {
+        "assumption": "品牌已有视觉设计系统（Logo、色彩、字体）",
+        "impact": "high",
+        "recommendation": "开发前需提供完整的Design Tokens"
+      },
+      {
+        "assumption": "产品线包含至少3个系列产品",
+        "impact": "medium",
+        "recommendation": "确认具体产品SKU数量"
+      },
+      {
+        "assumption": "有真实用户评价可展示",
+        "impact": "medium",
+        "recommendation": "收集5-10条高质量用户反馈"
+      },
+      {
+        "assumption": "有专家团队信息可公开",
+        "impact": "medium",
+        "recommendation": "准备专家照片、资质和简介"
+      },
+      {
+        "assumption": "产品有科学研究或成分认证支持",
+        "impact": "high",
+        "recommendation": "整理可公开的研究数据和认证证书"
+      }
+    ],
+    "open_questions": [
+      "购买按钮点击后是跳转电商平台还是自建购物车？",
+      "是否需要支持会员登录和订阅制购买？",
+      "产品是否有针对不同人群的推荐（如职场新人vs高管）？",
+      "是否需要在线客服/智能问答功能？",
+      "是否需要多语言版本（英文）？",
+      "是否需要小程序或APP引导入口？",
+      "促销活动信息如何更新（CMS还是硬编码）？"
+    ]
+  },
+  "confidence": 0.82,
+  "confidence_breakdown": {
+    "information_architecture": 0.9,
+    "components": 0.88,
+    "interactions": 0.85,
+    "responsive": 0.88,
+    "accessibility": 0.9,
+    "design_tokens": 0.3
+  }
+}
