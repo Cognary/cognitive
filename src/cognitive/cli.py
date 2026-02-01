@@ -1,20 +1,21 @@
 """
-Cognitive CLI - Main entry point for the cog command.
+Cognitive CLI - Main entry point for the cogn command.
 
 Commands:
-    cog list                      List installed modules
-    cog run <module> <input>      Run a module
-    cog validate <module>         Validate module structure
-    cog add <url> --module <name> Add module from GitHub (recommended)
-    cog update <module>           Update module to latest version
-    cog versions <url>            List available versions for a repo
-    cog install <source>          Install module from git/local/registry
-    cog remove <module>           Remove an installed module
-    cog uninstall <module>        Remove an installed module (alias)
-    cog init <name>               Create a new module from template
-    cog search <query>            Search the public registry
-    cog doctor                    Check environment setup
-    cog info <module>             Show module details
+    cogn list                      List installed modules
+    cogn run <module> <input>      Run a module
+    cogn validate <module>         Validate module structure
+    cogn add <url> --module <name> Add module from GitHub (recommended)
+    cogn update <module>           Update module to latest version
+    cogn versions <url>            List available versions for a repo
+    cogn install <source>          Install module from git/local/registry
+    cogn remove <module>           Remove an installed module
+    cogn uninstall <module>        Remove an installed module (alias)
+    cogn init <name>               Create a new module from template
+    cogn search <query>            Search the public registry
+    cogn doctor                    Check environment setup
+    cogn info <module>             Show module details
+    cogn serve                     Start HTTP API server
 """
 
 import json
@@ -605,6 +606,39 @@ def info_cmd(
         if install_info.get("installed_time"):
             rprint(f"  Installed: {install_info['installed_time'][:10]}")
         rprint(f"\n  Update with: [cyan]cog update {meta.get('name', module)}[/cyan]")
+
+
+@app.command("serve")
+def serve_cmd(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host to bind"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind"),
+):
+    """
+    Start HTTP API server for workflow integration.
+    
+    Example:
+        cogn serve --port 8000
+        
+    Then use:
+        curl -X POST http://localhost:8000/run \\
+          -H "Content-Type: application/json" \\
+          -d '{"module": "code-reviewer", "args": "your code"}'
+    """
+    try:
+        import uvicorn
+    except ImportError:
+        rprint("[red]Error:[/red] Server dependencies not installed.")
+        rprint("\nInstall with:")
+        rprint("  [cyan]pip install cognitive-modules[server][/cyan]")
+        raise typer.Exit(1)
+    
+    rprint(f"[green]Starting Cognitive API server...[/green]")
+    rprint(f"  Host: {host}")
+    rprint(f"  Port: {port}")
+    rprint(f"  Docs: http://{host if host != '0.0.0.0' else 'localhost'}:{port}/docs")
+    rprint()
+    
+    uvicorn.run("cognitive.server:app", host=host, port=port, reload=False)
 
 
 @app.callback(invoke_without_command=True)
