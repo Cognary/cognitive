@@ -83,7 +83,7 @@ EXAMPLE_OUTPUT = {
 def get_schema_template(name: str) -> dict:
     """Generate schema template as dict."""
     return {
-        "$schema": "https://cognitive-modules.io/schema/v1",
+        "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
         "$id": name,
         "title": f"{name.replace('-', ' ').title()} Schema",
         "input": {

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://cognitive-modules.io/schema/v2",
+  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v2.json",
   "input": {
     "type": "object",
     "required": ["code"],

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://cognitive-modules.io/registry/v1",
+  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/registry-v1.json",
   "version": "1.0.0",
   "updated": "2026-02-01",
   "modules": {

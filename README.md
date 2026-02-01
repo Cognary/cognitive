@@ -252,7 +252,7 @@ EOF
 ```bash
 cat > cognitive/modules/code-simplifier/schema.json << 'EOF'
 {
-  "$schema": "https://cognitive-modules.io/schema/v1",
+  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
   "input": {
     "type": "object",
     "properties": {

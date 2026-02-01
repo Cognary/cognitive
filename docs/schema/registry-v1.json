@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ziel-io.github.io/cognitive-modules/schema/registry-v1.json",
+  "title": "Cognitive Module Registry Schema",
+  "description": "Schema for the Cognitive Module public registry",
+  "type": "object",
+  "required": ["version", "modules"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Registry schema version"
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "version", "source"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Module name (kebab-case)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of what the module does"
+          },
+          "version": {
+            "type": "string",
+            "description": "Semantic version"
+          },
+          "source": {
+            "type": "string",
+            "description": "GitHub URL to the module"
+          },
+          "author": {
+            "type": "string",
+            "description": "GitHub username of the author"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Categorization tags"
+          }
+        }
+      }
+    }
+  }
+}

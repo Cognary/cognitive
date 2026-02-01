@@ -87,7 +87,7 @@ context: fork               # fork=隔离, main=共享（默认）
 
 ```json
 {
-  "$schema": "https://cognitive-modules.io/schema/v1",
+  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v1.json",
   "input": {
     "type": "object",
     "required": ["field1"],
