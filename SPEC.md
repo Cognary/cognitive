@@ -11,6 +11,86 @@
 3. **可验证输出**：必须包含 `confidence` 和 `rationale`
 4. **约束执行**：明确禁止的行为（不编造、不访问网络等）
 5. **示例驱动**：必须提供可验证的示例
+6. **显式上下文**：上下文必须是输入的一部分，结构化且可追溯
+
+---
+
+## 上下文哲学
+
+> **Cognitive trades conversational convenience for engineering certainty.**
+> 
+> 不是不做动态，是不做不可控的动态。
+
+Cognitive Modules 的优势来自**契约层面的可确定性（determinism at the contract level）**，但这不等于"不能有动态上下文"。
+
+**核心区分**：
+
+| | 说明 | Cognitive |
+|--|------|-----------|
+| 隐式上下文 | 对话历史自动叠加、Agent scratchpad、模型"记住" | ❌ 禁止 |
+| 显式上下文 | 结构化状态快照、事件窗口、上游模块输出 | ✅ 允许 |
+
+**判断标准**：是否在输入 schema 里声明？
+
+- 在 schema 里 → 可验证 → 允许
+- 不在 schema 里 → 不可控 → 禁止
+
+### 允许的动态上下文形态
+
+**1. 状态快照（State Snapshot）**
+
+```json
+{
+  "current_state": {
+    "mode": "exploration",
+    "confidence_history": [0.82, 0.76, 0.61],
+    "open_questions": 2
+  },
+  "input": { ... }
+}
+```
+
+每次调用传入快照，无隐式记忆，可裁剪、可回放。
+
+**2. 事件窗口（Event Log / Windowed）**
+
+```json
+{
+  "recent_events": [
+    { "type": "validation_failed", "module": "ui-spec-generator" },
+    { "type": "missing_field", "field": "breakpoints" }
+  ],
+  "input": { ... }
+}
+```
+
+时间窗口明确（last N events），不是完整历史，可被规则约束。
+
+**3. 上游模块输出（Typed Handoff）**
+
+```json
+{
+  "ui_spec": { ... },
+  "review_policy": { ... }
+}
+```
+
+上下游通过 schema 对接，上下文来源清晰，组合性极强。
+
+### 推荐架构：Context Builder 模式
+
+```
+脏数据 / 对话 / 日志
+       ↓
+Context Builder（可脏、可自由）
+       ↓
+Structured Context（JSON, windowed, typed）
+       ↓
+Cognitive Module（严格、可验证）
+```
+
+Context Builder 可以是 Agent、Prompt、Skill、检索系统等。
+Cognitive Module 只接收"已整理好的上下文"。
 
 ---
 
