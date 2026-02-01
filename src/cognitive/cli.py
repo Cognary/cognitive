@@ -331,7 +331,7 @@ def doctor_cmd():
     table.add_column("Installed")
     table.add_column("Configured")
     
-    for provider in ["openai", "anthropic", "ollama"]:
+    for provider in ["openai", "anthropic", "minimax", "ollama"]:
         info = status[provider]
         installed = "[green]✓[/green]" if info["installed"] else "[red]✗[/red]"
         configured = "[green]✓[/green]" if info["configured"] else "[yellow]–[/yellow]"

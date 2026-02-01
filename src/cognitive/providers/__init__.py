@@ -13,8 +13,8 @@ def call_llm(prompt: str, model: Optional[str] = None) -> str:
     Call the configured LLM with the given prompt.
     
     Configure via environment variables:
-    - LLM_PROVIDER: "openai", "anthropic", "ollama", "stub"
-    - OPENAI_API_KEY / ANTHROPIC_API_KEY
+    - LLM_PROVIDER: "openai", "anthropic", "ollama", "minimax", "stub"
+    - OPENAI_API_KEY / ANTHROPIC_API_KEY / MINIMAX_API_KEY
     - LLM_MODEL: model override
     
     Args:
@@ -32,6 +32,8 @@ def call_llm(prompt: str, model: Optional[str] = None) -> str:
         return _call_anthropic(prompt, model)
     elif provider == "ollama":
         return _call_ollama(prompt, model)
+    elif provider == "minimax":
+        return _call_minimax(prompt, model)
     else:
         return _call_stub(prompt)
 
@@ -85,6 +87,35 @@ def _call_anthropic(prompt: str, model: Optional[str] = None) -> str:
     )
     
     return response.content[0].text
+
+
+def _call_minimax(prompt: str, model: Optional[str] = None) -> str:
+    """Call MiniMax API (OpenAI-compatible)."""
+    try:
+        from openai import OpenAI
+    except ImportError:
+        raise ImportError("OpenAI SDK not installed. Run: pip install openai")
+    
+    api_key = os.environ.get("MINIMAX_API_KEY")
+    if not api_key:
+        raise ValueError("MINIMAX_API_KEY environment variable not set")
+    
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.minimax.chat/v1"
+    )
+    model = model or os.environ.get("LLM_MODEL", "MiniMax-Text-01")
+    
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You output only valid JSON matching the required schema. Do not include any text before or after the JSON."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2,
+    )
+    
+    return response.choices[0].message.content
 
 
 def _call_ollama(prompt: str, model: Optional[str] = None) -> str:
@@ -175,6 +206,16 @@ def check_provider_status() -> dict:
         }
     except ImportError:
         status["anthropic"] = {"installed": False, "configured": False}
+    
+    # MiniMax (uses OpenAI SDK)
+    try:
+        import openai
+        status["minimax"] = {
+            "installed": True,
+            "configured": bool(os.environ.get("MINIMAX_API_KEY")),
+        }
+    except ImportError:
+        status["minimax"] = {"installed": False, "configured": False}
     
     # Ollama
     try:

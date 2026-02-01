@@ -36,7 +36,7 @@
           "properties": {
             "severity": {
               "type": "string",
-              "enum": ["critical", "major", "minor", "info"]
+              "enum": ["critical", "high", "major", "medium", "minor", "low", "info"]
             },
             "category": {
               "type": "string",
@@ -61,25 +61,30 @@
         "description": "整体评价"
       },
       "rationale": {
-        "type": "object",
-        "required": ["decisions"],
-        "properties": {
-          "decisions": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "aspect": { "type": "string" },
-                "decision": { "type": "string" },
-                "reasoning": { "type": "string" }
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["decisions"],
+            "properties": {
+              "decisions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "aspect": { "type": "string" },
+                    "decision": { "type": "string" },
+                    "reasoning": { "type": "string" }
+                  }
+                }
+              },
+              "assumptions": {
+                "type": "array",
+                "items": { "type": "string" }
               }
             }
-          },
-          "assumptions": {
-            "type": "array",
-            "items": { "type": "string" }
           }
-        }
+        ]
       },
       "confidence": {
         "type": "number",
