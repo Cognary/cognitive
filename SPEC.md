@@ -115,6 +115,63 @@ cog run ui-spec-generator --args "健康产品官网 情绪压力保健食品"
 
 ---
 
+## 子代理 (Subagent)
+
+支持模块间调用，实现复杂任务的分解与组合。
+
+### context 配置
+
+在 MODULE.md 的 frontmatter 中声明：
+
+```yaml
+context: fork   # 隔离执行：子模块有独立上下文，结果不共享
+context: main   # 共享执行：默认，子模块可访问父模块上下文
+```
+
+### @call 语法
+
+在 prompt 中使用 `@call:module-name` 调用其他模块：
+
+```markdown
+## 处理流程
+
+1. 分析用户需求
+2. 调用 UI 规范生成器：
+   @call:ui-spec-generator($ARGUMENTS)
+3. 整合结果
+```
+
+### 带参数调用
+
+```markdown
+@call:ui-spec-generator(健康产品官网，25-45岁精英)
+```
+
+### 执行流程
+
+1. 解析 prompt 中的 `@call` 指令
+2. 递归执行子模块
+3. 将子模块结果注入父 prompt
+4. 执行父模块生成最终输出
+
+### 命令行使用
+
+```bash
+# 启用子代理模式
+cog run product-analyzer --args "健康产品" --subagent
+
+# 或简写
+cog run product-analyzer -a "健康产品" -s
+```
+
+### 限制
+
+- 最大调用深度：5 层
+- 禁止循环调用（A → B → A）
+- 子模块结果自动注入，无需手动处理
+
+---
+
 ## schema.json 格式
 
 ```json

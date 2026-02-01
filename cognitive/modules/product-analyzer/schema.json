@@ -1,0 +1,73 @@
+{
+  "$schema": "https://cognitive-modules.io/schema/v1",
+  "input": {
+    "type": "object",
+    "properties": {
+      "$ARGUMENTS": {
+        "type": "string",
+        "description": "产品描述文本"
+      },
+      "query": {
+        "type": "string",
+        "description": "同 $ARGUMENTS"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["analysis", "recommendations", "rationale", "confidence"],
+    "properties": {
+      "analysis": {
+        "type": "object",
+        "description": "产品分析结果",
+        "properties": {
+          "product_type": { "type": "string" },
+          "target_users": { "type": "array", "items": { "type": "string" } },
+          "core_features": { "type": "array", "items": { "type": "string" } },
+          "design_preferences": { "type": "object" }
+        }
+      },
+      "ui_spec": {
+        "type": "object",
+        "description": "来自子模块的 UI 规范（可选，取决于 @call 是否成功）"
+      },
+      "recommendations": {
+        "type": "array",
+        "description": "额外建议",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": { "type": "string" },
+            "suggestion": { "type": "string" },
+            "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+          }
+        }
+      },
+      "rationale": {
+        "type": "object",
+        "required": ["decisions"],
+        "properties": {
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "aspect": { "type": "string" },
+                "decision": { "type": "string" },
+                "reasoning": { "type": "string" }
+              }
+            }
+          },
+          "assumptions": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "置信度"
+      }
+    },
+    "additionalProperties": false
+  }
+}
