@@ -19,7 +19,7 @@ import { getProvider, listProviders } from './providers/index.js';
 import { run, list, pipe, init, add, update, remove, versions } from './commands/index.js';
 import type { CommandContext } from './types.js';
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 
 async function main() {
   const args = process.argv.slice(2);
