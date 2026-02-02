@@ -1,0 +1,214 @@
+/* Hero Section */
+.heroBanner {
+  padding: 6rem 2rem;
+  text-align: center;
+  background: linear-gradient(180deg, #141416 0%, #18181b 100%);
+  border-bottom: 1px solid #2e2e32;
+}
+
+.heroContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #fafafa;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  color: #a1a1a1;
+  margin-bottom: 2rem;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.heroPrimaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  color: #fafafa;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.heroPrimaryButton:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fafafa;
+  text-decoration: none;
+}
+
+.heroSecondaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid #3a3a3f;
+  border-radius: 6px;
+  color: #a1a1a1;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.heroSecondaryButton:hover {
+  background: #27272a;
+  border-color: #4a4a50;
+  color: #fafafa;
+  text-decoration: none;
+}
+
+/* Features Section */
+.features {
+  padding: 4rem 2rem;
+  background: #18181b;
+}
+
+.featuresContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.featuresTitle {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #fafafa;
+  margin-bottom: 2.5rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.featureCard {
+  background: #1f1f23;
+  border: 1px solid #2e2e32;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.featureCard:hover {
+  border-color: #3a3a3f;
+  background: #27272a;
+}
+
+.featureIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: #60a5fa;
+}
+
+.featureCard h3 {
+  color: #fafafa;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.featureCard p {
+  color: #a1a1a1;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Quick Start Section */
+.quickStart {
+  padding: 4rem 2rem;
+  background: #141416;
+  border-top: 1px solid #2e2e32;
+}
+
+.quickStartContainer {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.quickStart h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fafafa;
+  margin-bottom: 1.5rem;
+}
+
+.codeBlock {
+  background: #1f1f23;
+  border: 1px solid #2e2e32;
+  border-radius: 8px;
+  text-align: left;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.codeBlock pre {
+  margin: 0;
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+
+.codeBlock code {
+  color: #a1a1a1;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.quickStartLink {
+  color: #60a5fa;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.quickStartLink:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2rem;
+  }
+  
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+  
+  .heroBanner {
+    padding: 4rem 1.5rem;
+  }
+  
+  .features,
+  .quickStart {
+    padding: 3rem 1.5rem;
+  }
+}
