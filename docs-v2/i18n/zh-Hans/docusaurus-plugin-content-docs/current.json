@@ -1,0 +1,34 @@
+{
+  "sidebar.docsSidebar.doc.Introduction": {
+    "message": "首页",
+    "description": "The label for the doc item 'Introduction' in sidebar 'docsSidebar', linking to the doc index"
+  },
+  "sidebar.docsSidebar.category.Getting Started": {
+    "message": "快速开始",
+    "description": "The label for category 'Getting Started' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.Guide": {
+    "message": "指南",
+    "description": "The label for category 'Guide' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.CLI Reference": {
+    "message": "CLI 参考",
+    "description": "The label for category 'CLI Reference' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.Modules": {
+    "message": "模块库",
+    "description": "The label for category 'Modules' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.Integration": {
+    "message": "集成",
+    "description": "The label for category 'Integration' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.doc.Specification": {
+    "message": "规范",
+    "description": "The label for the doc item 'Specification' in sidebar 'docsSidebar', linking to the doc spec"
+  },
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  }
+}
