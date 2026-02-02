@@ -131,11 +131,17 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
     schema_output_alias: (compatRaw.schema_output_alias as 'data' | 'output') ?? 'data'
   };
   
-  // Parse meta config (including risk_rule)
+  // Parse meta config (including risk_rule) with validation
   const metaRaw = (manifest.meta as Record<string, unknown>) || {};
+  const rawRiskRule = metaRaw.risk_rule as string | undefined;
+  const validRiskRules = ['max_changes_risk', 'max_issues_risk', 'explicit'];
+  const validatedRiskRule = rawRiskRule && validRiskRules.includes(rawRiskRule)
+    ? rawRiskRule as 'max_changes_risk' | 'max_issues_risk' | 'explicit'
+    : undefined;
+  
   const metaConfig: MetaConfig = {
     required: metaRaw.required as string[] | undefined,
-    risk_rule: metaRaw.risk_rule as 'max_changes_risk' | 'max_issues_risk' | 'explicit' | undefined,
+    risk_rule: validatedRiskRule,
   };
 
   return {

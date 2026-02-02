@@ -265,13 +265,19 @@ def _migrate_from_v2(
         manifest_changes.append("Added schema_strictness: medium")
     
     if 'overflow' not in manifest:
+        # Determine default max_items based on schema_strictness (consistent with loader.py)
+        schema_strictness = manifest.get('schema_strictness', 'medium')
+        strictness_max_items = {'high': 0, 'medium': 5, 'low': 20}
+        default_max_items = strictness_max_items.get(schema_strictness, 5)
+        default_enabled = schema_strictness != 'high'
+        
         manifest['overflow'] = {
-            'enabled': True,
+            'enabled': default_enabled,
             'recoverable': True,
-            'max_items': 5,
+            'max_items': default_max_items,
             'require_suggested_mapping': True
         }
-        manifest_changes.append("Added overflow config")
+        manifest_changes.append(f"Added overflow config (max_items={default_max_items} based on schema_strictness={schema_strictness})")
     
     if 'enums' not in manifest:
         manifest['enums'] = {

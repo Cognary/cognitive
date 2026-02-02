@@ -32,6 +32,19 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 
 ## 安装
 
+### Node.js (npm) - 推荐
+
+```bash
+# 零安装快速体验（推荐）
+npx cogn run code-reviewer --args "your code"
+
+# 全局安装
+npm install -g cogn
+
+# 或安装完整包名
+npm install -g cognitive-modules-cli
+```
+
 ### Python (pip)
 
 ```bash
@@ -43,20 +56,10 @@ pip install cognitive-modules[anthropic]   # Claude
 pip install cognitive-modules[all]         # 全部
 ```
 
-### Node.js (npm)
-
-```bash
-# 全局安装
-npm install -g cogn
-
-# 或 npx 零安装使用（推荐）
-npx cogn --help
-```
-
-| 平台 | 包名 | 命令 |
-|------|------|------|
-| pip | `cognitive-modules` | `cogn` |
-| npm | `cognitive-modules-cli` | `cog` |
+| 平台 | 包名 | 命令 | 特性 |
+|------|------|------|------|
+| **npm** | `cogn` | `cog` | ✅ 推荐，零安装，完整功能 |
+| pip | `cognitive-modules` | `cogn` | ✅ 完整功能 |
 
 ## 快速开始
 
@@ -65,14 +68,23 @@ npx cogn --help
 export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
 
-# 运行代码审查
-cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+# 运行代码审查（npm）
+npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+
+# 或使用全局安装的 cog 命令
+cog run code-reviewer --args "..." --pretty
 
 # 运行任务排序
-cogn run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --pretty
+cog run task-prioritizer --args "修复bug(紧急), 写文档, 优化性能" --pretty
 
 # 运行 API 设计
-cogn run api-designer --args "用户系统 CRUD API" --pretty
+cog run api-designer --args "用户系统 CRUD API" --pretty
+
+# 启动 HTTP 服务（API 集成）
+cog serve --port 8000
+
+# 启动 MCP 服务（Claude Code / Cursor 集成）
+cog mcp
 ```
 
 ## v2.2 响应格式
@@ -372,7 +384,7 @@ cognitive-modules/
 | 平台 | 包名 | 命令 | 安装 |
 |------|------|------|------|
 | Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
-| Node.js | `cogn` | `cog` | `npm install -g cogn` 或 `npx cogn` |
+| Node.js | `cogn` 或 `cognitive-modules-cli` | `cog` | `npm install -g cogn` 或 `npx cogn` |
 
 两个版本共享相同的模块格式和 v2.2 规范。
 

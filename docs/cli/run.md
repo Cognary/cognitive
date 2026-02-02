@@ -2,6 +2,9 @@
 
 运行 Cognitive Module。
 
+!!! note "命令名称"
+    本文档使用 `cog`（npm 版本）。如果使用 pip 版本，请将 `cog` 替换为 `cogn`。
+
 ## 语法
 
 ```bash

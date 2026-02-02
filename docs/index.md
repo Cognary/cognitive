@@ -1,221 +1,171 @@
----
-hide:
-  - navigation
-  - toc
----
-
 # Cognitive Modules
 
-<div style="text-align: center; margin: 2rem 0;">
-  <p style="font-size: 1.4rem; color: var(--md-default-fg-color--light);">
-    🧠 可验证的结构化 AI 任务规范
-  </p>
-  <p>
-    <a href="getting-started/installation/" class="md-button md-button--primary">
-      快速开始
-    </a>
-    <a href="https://github.com/ziel-io/cognitive-modules" class="md-button">
-      GitHub
-    </a>
-  </p>
-</div>
+> **可验证的结构化 AI 任务规范**
+
+Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、可验证、可审计**的生成任务设计。
 
 ---
 
 ## ✨ v2.2 新特性
 
-<div class="grid cards" markdown>
-
--   :material-layers:{ .lg .middle } **Control/Data 分离**
-
-    ---
-
-    `meta` 控制面 + `data` 数据面，中间件无需解析业务即可路由
-
--   :material-stairs:{ .lg .middle } **模块分级 (Tier)**
-
-    ---
-
-    `exec` / `decision` / `exploration` 三级约束，按需选择
-
--   :material-lightbulb-on:{ .lg .middle } **可回收溢出**
-
-    ---
-
-    `extensions.insights` 保留 LLM 的额外洞察，不丢失灵感
-
--   :material-shield-check:{ .lg .middle } **可扩展 Enum**
-
-    ---
-
-    允许自定义类型值，不牺牲类型安全
-
-</div>
+| 特性 | 说明 |
+|------|------|
+| **Control/Data 分离** | `meta` 控制面 + `data` 数据面，中间件无需解析业务 |
+| **模块分级 (Tier)** | `exec` / `decision` / `exploration` 不同严格度 |
+| **可回收溢出** | `extensions.insights` 保留 LLM 的额外洞察 |
+| **可扩展 Enum** | 允许自定义类型，不牺牲类型安全 |
+| **Repair Pass** | 自动修复格式问题，降低验证失败率 |
 
 ---
 
-## ✨ 核心特性
+## 🚀 快速开始
 
-<div class="grid cards" markdown>
+### 安装
 
--   :material-check-all:{ .lg .middle } **强类型契约**
+=== "Node.js (npm) - 推荐"
 
-    ---
+    ```bash
+    # 零安装快速体验
+    npx cogn run code-reviewer --args "your code" --pretty
 
-    JSON Schema 双向验证输入输出，确保数据结构正确
+    # 全局安装
+    npm install -g cogn
+    ```
 
-    [:octicons-arrow-right-24: 了解模块格式](guide/module-format.md)
-
--   :material-brain:{ .lg .middle } **可解释输出**
-
-    ---
-
-    `meta.explain` 快速决策 + `data.rationale` 详细审计
-
-    [:octicons-arrow-right-24: 上下文哲学](guide/context-philosophy.md)
-
--   :material-vector-link:{ .lg .middle } **子代理编排**
-
-    ---
-
-    `@call:module` 支持模块间调用，构建复杂工作流
-
-    [:octicons-arrow-right-24: 子代理指南](guide/subagent.md)
-
--   :material-cloud-sync:{ .lg .middle } **多 LLM 支持**
-
-    ---
-
-    OpenAI / Anthropic / MiniMax / Ollama，随时切换
-
-    [:octicons-arrow-right-24: 配置 LLM](getting-started/llm-config.md)
-
-</div>
-
----
-
-## 🚀 快速体验
-
-=== "安装"
+=== "Python (pip)"
 
     ```bash
     pip install cognitive-modules
     ```
 
-=== "配置 LLM"
+### 运行第一个模块
 
-    ```bash
-    export LLM_PROVIDER=openai
-    export OPENAI_API_KEY=sk-xxx
-    ```
+```bash
+# 配置 LLM
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=sk-xxx
 
-=== "运行模块"
+# 运行代码审查（npm）
+npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
-    ```bash
-    cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
-    ```
+# 或使用全局安装的 cog 命令
+cog run code-reviewer --args "..."
 
-**v2.2 输出示例：**
+# 启动 HTTP 服务
+cog serve --port 8000
 
-```json
-{
-  "ok": true,
-  "meta": {
-    "confidence": 0.95,
-    "risk": "high",
-    "explain": "检测到 1 个严重安全问题：SQL 注入风险"
-  },
-  "data": {
-    "issues": [
-      {
-        "severity": "critical",
-        "category": "security",
-        "description": "SQL 注入漏洞",
-        "risk": "high"
-      }
-    ],
-    "rationale": "代码使用 f-string 直接拼接用户输入到 SQL 查询，攻击者可构造恶意输入绕过认证..."
-  }
-}
+# 启动 MCP 服务（Claude Code / Cursor 集成）
+cog mcp
 ```
 
 ---
 
-## 📦 内置模块
+## ✨ 核心特性
 
-| 模块 | Tier | 功能 | 命令 |
-|------|:----:|------|------|
-| :material-code-braces: **code-reviewer** | decision | 代码审查 | `cogn run code-reviewer --args "代码"` |
-| :material-auto-fix: **code-simplifier** | decision | 代码简化 | `cogn run code-simplifier --args "代码"` |
-| :material-format-list-numbered: **task-prioritizer** | decision | 任务排序 | `cogn run task-prioritizer --args "任务列表"` |
-| :material-api: **api-designer** | decision | API 设计 | `cogn run api-designer --args "资源名"` |
-| :material-palette: **ui-spec-generator** | exploration | UI 规范 | `cogn run ui-spec-generator --args "页面需求"` |
-| :material-chart-bar: **product-analyzer** | exploration | 产品分析 | `cogn run product-analyzer --args "产品" -s` |
-
-[:octicons-arrow-right-24: 查看所有模块](modules/index.md)
+- **强类型契约** - JSON Schema 双向验证输入输出
+- **可解释输出** - 强制输出 `confidence` + `rationale`
+- **Control/Data 分离** - `meta.explain` 快速路由 + `data.rationale` 详细审计
+- **模块分级** - exec / decision / exploration 不同约束等级
+- **子代理编排** - `@call:module` 支持模块间调用
+- **参数传递** - `$ARGUMENTS` 运行时替换
+- **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
+- **公共注册表** - `cogn install registry:module-name`
 
 ---
 
 ## 🔄 v2.2 响应格式
 
+所有模块现在返回统一的 v2.2 envelope 格式：
+
+```json
+{
+  "ok": true,
+  "meta": {
+    "confidence": 0.92,
+    "risk": "low",
+    "explain": "简短摘要，用于快速路由决策（≤280字符）"
+  },
+  "data": {
+    "...业务字段...",
+    "rationale": "详细推理过程，用于审计和人工审核",
+    "extensions": {
+      "insights": [
+        {
+          "text": "额外洞察",
+          "suggested_mapping": "建议添加到 schema 的字段"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Control vs Data Plane
+
 | 层 | 字段 | 用途 |
 |---|------|------|
 | **Control Plane** | `meta.confidence` | 路由/降级决策 |
 | **Control Plane** | `meta.risk` | 人工审核触发 |
-| **Control Plane** | `meta.explain` | 日志/卡片 UI（≤280字符） |
-| **Data Plane** | `data.rationale` | 详细审计（无限制） |
+| **Control Plane** | `meta.explain` | 日志/卡片 UI |
+| **Data Plane** | `data.rationale` | 详细审计 |
 | **Data Plane** | `data.extensions` | 可回收洞察 |
+
+---
+
+## 📦 内置模块
+
+| 模块 | Tier | 功能 | 示例 |
+|------|------|------|------|
+| `code-reviewer` | decision | 代码审查 | `cogn run code-reviewer --args "你的代码"` |
+| `code-simplifier` | decision | 代码简化 | `cogn run code-simplifier --args "复杂代码"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `cogn run task-prioritizer --args "任务1,任务2"` |
+| `api-designer` | decision | REST API 设计 | `cogn run api-designer --args "订单系统"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `cogn run ui-spec-generator --args "电商首页"` |
 
 ---
 
 ## 🔄 与 Skills 对比
 
-| 特性 | Skills | Cognitive Modules |
-|------|:------:|:-----------------:|
-| 输入验证 | :material-close: | :material-check: JSON Schema |
-| 输出验证 | :material-close: | :material-check: JSON Schema |
-| 置信度 | :material-close: | :material-check: meta.confidence |
-| 推理过程 | :material-close: | :material-check: data.rationale |
-| Control/Data 分离 | :material-close: | :material-check: meta + data |
-| 可测试 | :material-close: 困难 | :material-check: Golden 测试 |
-| 子代理 | :material-check: | :material-check: @call 语法 |
+| 特性 | Cognitive Modules | Skills |
+|------|-------------------|--------|
+| **验证** | JSON Schema 双向验证 | 无强制验证 |
+| **置信度** | 强制输出 confidence | 可选 |
+| **审计** | rationale + explain 分离 | 单一说明 |
+| **分级** | tier 决定严格度 | 无分级 |
+| **溢出** | extensions.insights 可回收 | 无溢出机制 |
 
 ---
 
 ## 📚 下一步
 
-<div class="grid cards" markdown>
+- 📖 [安装指南](getting-started/installation.md) - 安装和配置
+- 🎯 [第一个模块](getting-started/first-module.md) - 创建你的第一个模块
+- 📋 [模块格式](guide/module-format.md) - 了解 v2.2 格式
+- 🔧 [CLI 参考](cli/overview.md) - 命令行工具使用
+- 📐 [规范文档](spec.md) - 完整规范说明
+- 🔌 [集成指南](integration/ai-tools.md) - 与 AI 工具集成
 
--   :material-download:{ .lg .middle } **安装指南**
+---
 
-    ---
+## 💡 为什么选择 Cognitive Modules？
 
-    5 分钟完成安装和配置
+### 对开发者的收益
 
-    [:octicons-arrow-right-24: 开始安装](getting-started/installation.md)
+- ✅ **确定性** - 知道 AI 会返回什么结构
+- ✅ **可复用** - 模块可以分享、安装、版本管理
+- ✅ **可信任** - 有 confidence 和 risk 指示
+- ✅ **可测试** - 模块有 Contract，可以写黄金测试
 
--   :material-book-open-variant:{ .lg .middle } **第一个模块**
+### 对 AI IDE 的收益
 
-    ---
+- ✅ **结构化输出** - 用户说"用 code-reviewer 模块审查"，直接按 schema 输出
+- ✅ **可测试** - 模块有 Contract，可以写黄金测试
+- ✅ **可审计** - 每次输出有 confidence + rationale
+- ✅ **可编排** - 模块间可以安全组合（子代理）
+- ✅ **零配置** - 用户只需一个模块目录，无需额外 API 调用
 
-    创建你的第一个 Cognitive Module
+---
 
-    [:octicons-arrow-right-24: 创建模块](getting-started/first-module.md)
+## 📄 License
 
--   :material-puzzle:{ .lg .middle } **集成指南**
-
-    ---
-
-    与 Cursor、Codex、Claude 集成
-
-    [:octicons-arrow-right-24: 了解集成](integration/ai-tools.md)
-
--   :material-file-document:{ .lg .middle } **v2.2 规范**
-
-    ---
-
-    深入了解 Control/Data 分离设计
-
-    [:octicons-arrow-right-24: 阅读规范](spec.md)
-
-</div>
+MIT

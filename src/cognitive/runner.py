@@ -154,10 +154,11 @@ def repair_envelope(
     """
     Attempt to repair envelope format issues without changing semantics.
     
-    Repairs (lossless only):
+    Repairs (mostly lossless, except explain truncation):
     - Missing meta fields (fill with conservative defaults)
-    - Truncate explain if too long
-    - Trim whitespace from string fields
+    - Truncate explain if too long (lossy operation, but required for v2.2 spec)
+    - Trim whitespace from string fields (lossless)
+    - Clamp confidence to [0, 1] range (lossy if out of range)
     
     Does NOT repair:
     - Invalid enum values (treated as validation failure)
@@ -575,6 +576,20 @@ def run_module(
             meta_errors = validate_data(result.get("meta", {}), meta_schema, "Meta")
             if meta_errors and enable_repair:
                 result = repair_envelope(result, meta_schema, risk_rule=risk_rule)
+                # Re-validate meta after repair
+                meta_errors = validate_data(result.get("meta", {}), meta_schema, "Meta")
+                if meta_errors:
+                    # Meta validation failed after repair attempt
+                    return {
+                        "ok": False,
+                        "meta": {
+                            "confidence": 0.0,
+                            "risk": "high",
+                            "explain": "Meta schema validation failed after repair attempt."
+                        },
+                        "error": {"code": "META_VALIDATION_FAILED", "message": str(meta_errors)},
+                        "partial_data": result.get("data")
+                    }
     
     return result
 

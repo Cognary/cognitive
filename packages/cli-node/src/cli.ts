@@ -19,7 +19,7 @@ import { getProvider, listProviders } from './providers/index.js';
 import { run, list, pipe, init, add, update, remove, versions } from './commands/index.js';
 import type { CommandContext } from './types.js';
 
-const VERSION = '1.0.1';
+const VERSION = '1.2.0';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -52,6 +52,9 @@ async function main() {
       tag: { type: 'string', short: 't' },
       branch: { type: 'string', short: 'b' },
       limit: { type: 'string', short: 'l' },
+      // Server options
+      host: { type: 'string', short: 'H' },
+      port: { type: 'string', short: 'P' },
     },
     allowPositionals: true,
   });
@@ -288,6 +291,30 @@ async function main() {
         break;
       }
 
+      case 'serve': {
+        const { serve } = await import('./server/http.js');
+        const port = values.port ? parseInt(values.port as string, 10) : 8000;
+        const host = (values.host as string) || '0.0.0.0';
+        console.log('Starting Cognitive Modules HTTP Server...');
+        await serve({ host, port, cwd: ctx.cwd });
+        break;
+      }
+
+      case 'mcp': {
+        try {
+          const { serve: serveMcp } = await import('./mcp/server.js');
+          await serveMcp();
+        } catch (e) {
+          if (e instanceof Error && e.message.includes('Cannot find module')) {
+            console.error('MCP dependencies not installed.');
+            console.error('Install with: npm install @modelcontextprotocol/sdk');
+            process.exit(1);
+          }
+          throw e;
+        }
+        break;
+      }
+
       default:
         console.error(`Unknown command: ${command}`);
         console.error('Run "cog --help" for usage.');
@@ -319,6 +346,8 @@ COMMANDS:
   versions <url>    List available versions
   pipe              Pipe mode (stdin/stdout)
   init [name]       Initialize project or create module
+  serve             Start HTTP API server
+  mcp               Start MCP server (for Claude Code, Cursor)
   doctor            Check configuration
 
 OPTIONS:
@@ -333,6 +362,8 @@ OPTIONS:
   --pretty              Pretty-print JSON output
   -V, --verbose         Verbose output
   --no-validate         Skip schema validation
+  -H, --host <host>     Server host (default: 0.0.0.0)
+  -P, --port <port>     Server port (default: 8000)
   -v, --version         Show version
   -h, --help            Show this help
 
@@ -350,6 +381,10 @@ EXAMPLES:
   cog run code-reviewer --args "def foo(): pass"
   cog run code-reviewer --provider openai --model gpt-4o --args "..."
   cog list
+
+  # Servers
+  cog serve --port 8080
+  cog mcp
 
   # Other
   echo "review this code" | cog pipe --module code-reviewer

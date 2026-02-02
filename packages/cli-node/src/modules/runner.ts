@@ -80,9 +80,13 @@ function repairEnvelope(
   if (!meta.risk) {
     meta.risk = aggregateRisk(data, riskRule);
   }
-  // Trim whitespace only (lossless), do NOT invent new values
+  // Trim whitespace only (lossless), validate is valid RiskLevel
   if (typeof meta.risk === 'string') {
-    meta.risk = meta.risk.trim().toLowerCase();
+    const trimmedRisk = meta.risk.trim().toLowerCase();
+    const validRisks = ['none', 'low', 'medium', 'high'];
+    meta.risk = validRisks.includes(trimmedRisk) ? trimmedRisk : 'medium';
+  } else {
+    meta.risk = 'medium'; // Default for invalid type
   }
   
   // Repair explain
