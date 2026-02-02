@@ -1,82 +1,82 @@
 # Cognitive Modules Specification v2.2
 
-> **Verifiable Structured AI Task Specification — Second Generation Enhanced**
+> **可验证的结构化 AI 任务规范 — 第二代增强版**
 
-English | [中文](SPEC-v2.2_zh.md)
-
----
-
-## 0. Core Design Goals
-
-| # | Principle | Description |
-|---|-----------|-------------|
-| 1 | **Contract-first** | Input/output/failure semantics must be verifiable |
-| 2 | **Control/Data Plane Separation** | Middleware can route without parsing business payload |
-| 3 | **Strict where needed** | Module tier determines schema strictness |
-| 4 | **Overflow but recoverable** | Allow "brilliant insights" but must be recoverable |
-| 5 | **Enum extensible safely** | Type safety without sacrificing expressiveness |
+[English](SPEC-v2.2.md) | 中文
 
 ---
 
-## 0.1 Core Concepts
+## 0. 核心设计目标
 
-### Module
+| # | 原则 | 说明 |
+|---|------|------|
+| 1 | **Contract-first** | 输入/输出/失败语义必须可验证 |
+| 2 | **Control/Data Plane 分离** | 中间件无需解析业务 payload 即可路由 |
+| 3 | **Strict where needed** | 按模块分级决定 schema 严格程度 |
+| 4 | **Overflow but recoverable** | 允许"妙不可言的洞察"，但必须可回收 |
+| 5 | **Enum extensible safely** | 类型安全不牺牲表达力 |
 
-A Cognitive Module consists of three parts:
+---
+
+## 0.1 核心概念
+
+### Module（模块）
+
+一个 Cognitive Module 由三个部分组成：
 
 ```
 Module = Manifest + Prompt + Contract
 ```
 
-| Component | File | Responsibility | Reader |
-|-----------|------|----------------|--------|
-| **Manifest** | `module.yaml` | Machine-readable config, policies, tiers | Runtime |
-| **Prompt** | `prompt.md` | Human-readable instructions, rules | LLM |
-| **Contract** | `schema.json` | Verifiable input/output/error contract | Validator |
+| 组成部分 | 文件 | 职责 | 读取者 |
+|----------|------|------|--------|
+| **Manifest** | `module.yaml` | 机器可读配置、策略、分级 | Runtime |
+| **Prompt** | `prompt.md` | 人类可读指令、规则 | LLM |
+| **Contract** | `schema.json` | 可验证的输入/输出/错误契约 | Validator |
 
-### Contract
+### Contract（契约）
 
-Contract is the verifiable promise between module and caller, divided into two layers:
+Contract 是模块与调用者之间的可验证承诺，分为两层：
 
-#### Schema Contract
+#### Schema Contract（模式契约）
 
-Defined in `schema.json`, describes the **structure** of data:
+定义在 `schema.json` 中，描述数据的**结构**：
 
-| Schema Contract | Description | Corresponding Field |
-|-----------------|-------------|---------------------|
-| **Input Schema** | Input data structure | `schema.json#/input` |
-| **Meta Schema** | Control plane data structure | `schema.json#/meta` |
-| **Data Schema** | Business data structure | `schema.json#/data` |
-| **Error Schema** | Error data structure | `schema.json#/error` |
+| Schema Contract | 说明 | 对应字段 |
+|-----------------|------|----------|
+| **Input Schema** | 输入数据结构 | `schema.json#/input` |
+| **Meta Schema** | 控制面数据结构 | `schema.json#/meta` |
+| **Data Schema** | 业务数据结构 | `schema.json#/data` |
+| **Error Schema** | 错误数据结构 | `schema.json#/error` |
 
-#### Envelope Contract
+#### Envelope Contract（信封契约）
 
-Defines the **fixed wrapper format** for responses, independent of specific modules:
+定义响应的**固定包装格式**，与具体模块无关：
 
 ```json
-// Success response
+// 成功响应
 { "ok": true,  "meta": {...}, "data": {...} }
 
-// Failure response
+// 失败响应
 { "ok": false, "meta": {...}, "error": {...}, "partial_data"?: {...} }
 ```
 
-| Field | Type | On Success | On Failure |
-|-------|------|------------|------------|
+| 字段 | 类型 | 成功时 | 失败时 |
+|------|------|--------|--------|
 | `ok` | boolean | `true` | `false` |
-| `meta` | object | ✅ Required | ✅ Required |
-| `data` | object | ✅ Required | ❌ None |
-| `error` | object | ❌ None | ✅ Required |
-| `partial_data` | object | ❌ None | ❌ Optional |
+| `meta` | object | ✅ 必填 | ✅ 必填 |
+| `data` | object | ✅ 必填 | ❌ 无 |
+| `error` | object | ❌ 无 | ✅ 必填 |
+| `partial_data` | object | ❌ 无 | ❌ 可选 |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Contract Two-Layer Structure                   │
+│                      Contract 两层结构                           │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │  Schema Contract (schema.json)                           │   │
-│  │  Defines data structure, different for each module       │   │
+│  │  定义数据结构，每个模块不同                              │   │
 │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       │   │
 │  │  │  input  │ │  meta   │ │  data   │ │  error  │       │   │
 │  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘       │   │
@@ -84,41 +84,41 @@ Defines the **fixed wrapper format** for responses, independent of specific modu
 │                              │                                  │
 │                              ▼                                  │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Envelope Contract (Fixed Format)                        │   │
-│  │  Wrapper format, unified across all modules              │   │
+│  │  Envelope Contract (固定格式)                            │   │
+│  │  包装格式，所有模块统一                                  │   │
 │  │  { ok: bool, meta: {...}, data|error: {...} }           │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Contract is the core of Cognitive Modules:
-- **Verifiable**: Schema Contract validated via JSON Schema
-- **Routable**: Envelope Contract lets middleware decide without parsing business
-- **Composable**: Unified format enables safe inter-module orchestration
+Contract 是 Cognitive Modules 的核心：
+- **可验证**：Schema Contract 通过 JSON Schema 验证
+- **可路由**：Envelope Contract 让中间件无需解析业务即可决策
+- **可组合**：统一格式让模块间可以安全编排
 
 ---
 
-## 1. Module Manifest (module.yaml)
+## 1. Module Manifest（module.yaml）
 
-### 1.1 Module Tiers
+### 1.1 模块分级（Tier）
 
 ```yaml
 tier: decision           # exec | decision | exploration
 schema_strictness: medium # high | medium | low
 ```
 
-**Tier Semantics**:
+**Tier 语义**：
 
-| Tier | Purpose | Schema Strictness | Overflow |
-|------|---------|-------------------|----------|
-| `exec` | Auto-execution/deployment (patch, approval, instruction generation) | high | Disabled or limited |
-| `decision` | Judgment/evaluation/classification (risk, boundary, comparison, review) | medium | Enabled, recoverable |
-| `exploration` | Exploration/research/inspiration generation | low | Relaxed |
+| Tier | 用途 | Schema 严格度 | Overflow |
+|------|------|---------------|----------|
+| `exec` | 自动执行/落地（patch、审批、指令生成） | high | 关闭或受限 |
+| `decision` | 判断/评估/分类（风险、边界、对比、审核） | medium | 开启，可回收 |
+| `exploration` | 探索/调研/灵感生成 | low | 宽松 |
 
-> **Principle**: Tier determines "allowed freedom of expression", not "model intelligence".
+> **原则**：Tier 决定"允许表达的自由度"，而不是决定"模型聪明不聪明"。
 
-### 1.2 Overflow Policy
+### 1.2 溢出与回收（Overflow Policy）
 
 ```yaml
 overflow:
@@ -128,27 +128,27 @@ overflow:
   require_suggested_mapping: true
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `enabled` | boolean | Whether to allow extensions.insights |
-| `recoverable` | boolean | Whether insights must have suggested_mapping |
-| `max_items` | number | Maximum number of insights allowed |
-| `require_suggested_mapping` | boolean | Whether to require mapping suggestions |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `enabled` | boolean | 是否允许 extensions.insights |
+| `recoverable` | boolean | 洞察是否必须带 suggested_mapping |
+| `max_items` | number | 最多允许几条洞察 |
+| `require_suggested_mapping` | boolean | 是否强制要求映射建议 |
 
-### 1.3 Enum Extension Strategy
+### 1.3 Enum 扩展策略
 
 ```yaml
 enums:
   strategy: extensible   # strict | extensible
-  unknown_tag: custom    # How to represent unknown enum
+  unknown_tag: custom    # 未知 enum 的表示方式
 ```
 
-| Strategy | Default For | Description |
-|----------|-------------|-------------|
-| `strict` | exec modules | Only allow predefined enum values |
-| `extensible` | decision/exploration | Allow custom extensions |
+| 策略 | 默认用于 | 说明 |
+|------|----------|------|
+| `strict` | exec 模块 | 只允许预定义的 enum 值 |
+| `extensible` | decision/exploration | 允许 custom 扩展 |
 
-### 1.4 Complete module.yaml Example
+### 1.4 完整 module.yaml 示例
 
 ```yaml
 # Cognitive Module Manifest v2.2
@@ -156,11 +156,11 @@ name: code-simplifier
 version: 2.2.0
 responsibility: Simplify code while preserving behavior
 
-# Module tier
+# 模块分级
 tier: decision
 schema_strictness: medium
 
-# Explicit exclusions
+# 明确排除项
 excludes:
   - changing observable behavior
   - adding new features
@@ -168,14 +168,14 @@ excludes:
   - executing code
   - writing files
 
-# Runtime policies
+# 运行时策略
 policies:
   network: deny
   filesystem_write: deny
   side_effects: deny
   code_execution: deny
 
-# Tool policies
+# 工具策略
 tools:
   policy: deny_by_default
   allowed: []
@@ -185,24 +185,24 @@ tools:
     - network
     - code_interpreter
 
-# Overflow policy
+# 溢出策略
 overflow:
   enabled: true
   recoverable: true
   max_items: 5
   require_suggested_mapping: true
 
-# Enum policy
+# Enum 策略
 enums:
   strategy: extensible
 
-# Failure contract
+# 失败契约
 failure:
   contract: error_union
   partial_allowed: true
   must_return_error_schema: true
 
-# Runtime requirements
+# 运行时要求
 runtime_requirements:
   structured_output: true
   max_input_tokens: 8000
@@ -217,13 +217,13 @@ io:
   meta: ./schema.json#/meta
   error: ./schema.json#/error
 
-# Compatibility configuration
+# 兼容性配置
 compat:
   accepts_v21_payload: true
   runtime_auto_wrap: true
-  schema_output_alias: data  # Allow schema to use "output" or "data"
+  schema_output_alias: data  # 允许 schema 用 "output" 或 "data"
 
-# Test cases
+# 测试用例
 tests:
   - tests/case1.input.json -> tests/case1.expected.json
   - tests/case2.input.json -> tests/case2.expected.json
@@ -231,12 +231,12 @@ tests:
 
 ---
 
-## 2. Envelope v2.2: Unified Response Envelope
+## 2. Envelope v2.2：统一返回信封
 
-### 2.1 Design Principles
+### 2.1 设计原则
 
-**Control Plane (meta)**: Cross-module unified, minimum info for routing/policy
-**Data Plane (data)**: Business payload, module-specific
+**Control Plane（meta）**：跨模块统一，驱动路由/策略的最小信息
+**Data Plane（data）**：业务 payload，模块特定
 
 ```
 ┌─────────────────────────────────────────┐
@@ -248,14 +248,14 @@ tests:
 │  └───────────────────────────────────┘  │
 │  ┌───────────────────────────────────┐  │
 │  │  data (Data Plane)                │  │
-│  │  - Business fields                │  │
-│  │  - rationale (detailed reasoning) │  │
-│  │  - extensions (overflow insights) │  │
+│  │  - 业务字段                        │  │
+│  │  - rationale (详细推理)            │  │
+│  │  - extensions (溢出洞察)           │  │
 │  └───────────────────────────────────┘  │
 └─────────────────────────────────────────┘
 ```
 
-### 2.2 Success Response
+### 2.2 成功响应
 
 ```json
 {
@@ -280,7 +280,7 @@ tests:
 }
 ```
 
-### 2.3 Failure Response (Error Union)
+### 2.3 失败响应（Error Union）
 
 ```json
 {
@@ -302,80 +302,80 @@ tests:
 }
 ```
 
-### 2.4 meta Field Specification
+### 2.4 meta 字段规范
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `confidence` | number [0,1] | ✅ | Confidence score, unified across modules |
-| `risk` | enum | ✅ | Risk level: `"none"` \| `"low"` \| `"medium"` \| `"high"` |
-| `explain` | string | ✅ | Brief explanation, ≤280 chars, for middleware/logs/card UI |
-| `trace_id` | string | ❌ | Distributed tracing ID |
-| `model` | string | ❌ | Provider/model identifier |
-| `latency_ms` | number | ❌ | Execution latency (milliseconds) |
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `confidence` | number [0,1] | ✅ | 置信度，跨模块统一 |
+| `risk` | enum | ✅ | 风险等级：`"none"` \| `"low"` \| `"medium"` \| `"high"` |
+| `explain` | string | ✅ | 简短解释，≤280 chars，给中间件/日志/卡片 UI |
+| `trace_id` | string | ❌ | 链路追踪 ID |
+| `model` | string | ❌ | provider/model 标识 |
+| `latency_ms` | number | ❌ | 执行耗时（毫秒） |
 
-#### confidence Semantic Definition
+#### confidence 语义定义
 
 > **`meta.confidence` is the module's self-assessed confidence in meeting the declared contract, not a calibrated probability of correctness.**
 
-That is: confidence represents the module's self-assessment of "output meets contract", not a calibrated probability of "result is correct".
+即：confidence 表示模块对「输出符合契约」的自我评估，而非「结果正确」的校准概率。
 
-| Scenario | confidence | Description |
-|----------|------------|-------------|
-| Normal execution, high certainty | 0.8-1.0 | Module is confident output meets contract |
-| Normal execution, some uncertainty | 0.5-0.8 | Module has reasonable confidence |
-| Invalid input (`INVALID_INPUT`) | 0.0 | Cannot execute, `explain` must indicate caller error |
-| Execution failed | 0.0-0.5 | Module cannot complete task |
+| 场景 | confidence | 说明 |
+|------|------------|------|
+| 正常执行，高把握 | 0.8-1.0 | 模块确信输出符合契约 |
+| 正常执行，有不确定性 | 0.5-0.8 | 模块有一定把握 |
+| 输入非法 (`INVALID_INPUT`) | 0.0 | 无法执行，`explain` 必须说明是调用方错误 |
+| 执行失败 | 0.0-0.5 | 模块无法完成任务 |
 
-#### risk Aggregation Rules
+#### risk 聚合规则
 
-**Default rule**: `meta.risk = max(data.changes[*].risk)` (if changes array exists)
+**默认规则**：`meta.risk = max(data.changes[*].risk)`（如果存在 changes 数组）
 
-**Module can override**: Declare custom rules in `module.yaml`:
+**模块可覆写**：在 `module.yaml` 中声明自定义规则：
 
 ```yaml
 meta:
-  risk_rule: max_changes_risk   # default
-  # or: max_issues_risk, explicit, custom_function
+  risk_rule: max_changes_risk   # 默认
+  # 或：max_issues_risk, explicit, custom_function
 ```
 
-| risk_rule | Description |
-|-----------|-------------|
-| `max_changes_risk` | `max(data.changes[*].risk)`, default |
-| `max_issues_risk` | `max(data.issues[*].risk)`, for review modules |
-| `explicit` | Module calculates, no aggregation |
+| risk_rule | 说明 |
+|-----------|------|
+| `max_changes_risk` | `max(data.changes[*].risk)`，默认 |
+| `max_issues_risk` | `max(data.issues[*].risk)`，适用于审查类模块 |
+| `explicit` | 模块自行计算，不聚合 |
 
-If risk source field doesn't exist, default to `"medium"`
+如果 risk 来源字段不存在，默认使用 `"medium"`
 
 ### 2.5 explain vs rationale
 
-| Field | Location | Length Limit | Purpose | Consumer |
-|-------|----------|--------------|---------|----------|
-| `meta.explain` | Control plane | ≤280 chars | Brief summary | Middleware, routing, card UI, logs |
-| `data.rationale` | Data plane | Unlimited | Complete reasoning | Human review, audit, debug, archive |
+| 字段 | 位置 | 长度限制 | 用途 | 消费者 |
+|------|------|----------|------|--------|
+| `meta.explain` | 控制面 | ≤280 chars | 简短摘要 | 中间件、路由、卡片 UI、日志 |
+| `data.rationale` | 数据面 | 无限制 | 完整推理过程 | 人工审核、审计、调试、存档 |
 
-**Both must coexist**:
-- `explain` enables quick control plane decisions
-- `rationale` preserves complete audit capability
+**两者必须共存**：
+- `explain` 让控制面快速决策
+- `rationale` 保留完整审计能力
 
 ---
 
 ## 3. Schema v2.2
 
-### 3.1 schema.json File Structure
+### 3.1 schema.json 文件结构
 
 ```json
 {
   "$schema": "https://cognitive-modules.dev/schema/v2.2.json",
   "meta": { /* meta schema */ },
   "input": { /* input schema */ },
-  "data": { /* payload schema (business data) */ },
+  "data": { /* payload schema (业务数据) */ },
   "error": { /* error schema */ }
 }
 ```
 
-> **Compatibility**: If `output` field exists but no `data` field, runtime should treat `output` as alias for `data`.
+> **兼容性**：如果存在 `output` 字段但无 `data` 字段，runtime 应将 `output` 视为 `data` 的别名。
 
-### 3.2 meta Schema (Common, Reusable)
+### 3.2 meta Schema（通用，可复用）
 
 ```json
 {
@@ -415,9 +415,9 @@ If risk source field doesn't exist, default to `"medium"`
 }
 ```
 
-### 3.3 data Schema (Module-Specific)
+### 3.3 data Schema（模块特定）
 
-data schema is defined by each module, but must include:
+data schema 由各模块自行定义，但必须包含：
 
 ```json
 {
@@ -435,7 +435,7 @@ data schema is defined by each module, but must include:
 }
 ```
 
-### 3.4 extensions Schema (Recoverable Overflow)
+### 3.4 extensions Schema（可回收溢出）
 
 ```json
 {
@@ -471,11 +471,11 @@ data schema is defined by each module, but must include:
 }
 ```
 
-**Core mechanism**: `suggested_mapping` enables insights to be recovered into structure, driving schema evolution.
+**核心机制**：`suggested_mapping` 让洞察可以被回收到结构里，驱动 schema 演化。
 
 ### 3.5 Extensible Enum Pattern
 
-For enum fields that need extensibility (like `change.type`), use this pattern:
+对于需要扩展性的 enum 字段（如 `change.type`），使用以下模式：
 
 ```json
 {
@@ -506,76 +506,76 @@ For enum fields that need extensibility (like `change.type`), use this pattern:
 }
 ```
 
-**Advantages**:
-- ✅ Type safe (structure still verifiable)
-- ✅ Expressive (allows new insights)
-- ✅ Evolvable (custom can be tracked → added to enum)
+**优势**：
+- ✅ 类型安全（结构仍可验证）
+- ✅ 表达力（允许新洞察）
+- ✅ 可进化（custom 可被统计 → 纳入 enum）
 
 ---
 
-## 4. Runtime Behavior Specification
+## 4. Runtime 行为规范
 
-### 4.1 Schema Validation and Repair
+### 4.1 Schema 验证与修复
 
 ```
-LLM Output
+LLM 输出
     ↓
 [Parse JSON]
-    ↓ Fail → PARSE_ERROR
+    ↓ 失败 → PARSE_ERROR
 [Validate Schema]
-    ↓ Fail
-[Repair Pass] ← Fix format only, don't change semantics
-    ↓ Still fail → SCHEMA_VALIDATION_FAILED + partial_data
-    ↓ Success
+    ↓ 失败
+[Repair Pass] ← 只修格式，不改语义
+    ↓ 仍失败 → SCHEMA_VALIDATION_FAILED + partial_data
+    ↓ 成功
 [Return ok=true]
 ```
 
-**Repair Pass Rules**:
-1. Fill missing `meta` fields (use conservative defaults)
-2. Truncate over-length `explain` (keep first 280 chars)
-3. Trim whitespace from string fields
-4. **Do NOT modify business semantics**
+**Repair Pass 规则**：
+1. 补全缺失的 `meta` 字段（使用保守默认值）
+2. 截断超长的 `explain`（保留前 280 字符）
+3. 去除字符串字段的首尾空格
+4. **不修改业务语义**
 
-> **Repair pass MUST NOT invent new enum values.** It may only apply lossless normalization (trim whitespace). Enum value errors should be treated as validation failed, not repaired.
+> **Repair pass MUST NOT invent new enum values.** It may only apply lossless normalization (trim whitespace). Enum 值错误应视为 validation failed，不尝试修复。
 
-### 4.2 Default Value Filling
+### 4.2 默认值填充
 
-When upgrading v2.1 payload to v2.2 envelope:
+当 v2.1 payload 升级到 v2.2 envelope 时：
 
-| Field | Default Source |
-|-------|----------------|
-| `meta.confidence` | Promote from `data.confidence`; if none, `0.5` |
-| `meta.risk` | Aggregate from `data.changes[*].risk`; if none, `"medium"` |
-| `meta.explain` | Truncate first 200 chars from `data.rationale`; if none, `"No explanation provided"` |
+| 字段 | 默认值来源 |
+|------|------------|
+| `meta.confidence` | 从 `data.confidence` 提升；若无则 `0.5` |
+| `meta.risk` | 从 `data.changes[*].risk` 聚合；若无则 `"medium"` |
+| `meta.explain` | 从 `data.rationale` 截取前 200 字符；若无则 `"No explanation provided"` |
 
-### 4.3 Three-Level Strictness Behavior
+### 4.3 三档严格度行为
 
-| schema_strictness | required fields | enum strategy | overflow.max_items |
-|-------------------|-----------------|---------------|-------------------|
-| `high` | Strict, all required | strict | 0 (disabled) |
-| `medium` | Core required, auxiliary optional | extensible | 5 (default) |
-| `low` | Minimum required | extensible | 20 (relaxed) |
+| schema_strictness | required 字段 | enum 策略 | overflow.max_items |
+|-------------------|---------------|-----------|-------------------|
+| `high` | 严格，全部必填 | strict | 0（关闭） |
+| `medium` | 核心必填，辅助可选 | extensible | 5（默认） |
+| `low` | 最小必填 | extensible | 20（宽松） |
 
-> **Note**: `overflow.max_items` always has a value, there is no "unlimited". Modules can override defaults in `module.yaml`.
+> **注意**：`overflow.max_items` 永远有值，不存在"无上限"。模块可在 `module.yaml` 中覆写默认值。
 
 ---
 
-## 5. Error Code Specification
+## 5. 错误代码规范
 
-### 5.1 Standard Error Codes
+### 5.1 标准错误代码
 
-| Code | Description | Trigger Scenario |
-|------|-------------|------------------|
-| `PARSE_ERROR` | JSON parsing failed | LLM returned invalid JSON |
-| `SCHEMA_VALIDATION_FAILED` | Schema validation failed (after repair) | Output doesn't match schema |
-| `INVALID_INPUT` | Input validation failed | Input doesn't match input schema |
-| `MODULE_NOT_FOUND` | Module doesn't exist | Requested module not installed |
-| `UNSUPPORTED_LANGUAGE` | Unsupported language | code-simplifier etc. modules |
-| `NO_SIMPLIFICATION_POSSIBLE` | Cannot simplify | Code is already minimal |
-| `BEHAVIOR_CHANGE_REQUIRED` | Behavior change required | Simplification would change semantics |
-| `INTERNAL_ERROR` | Internal error | Unexpected exception |
+| Code | 说明 | 触发场景 |
+|------|------|----------|
+| `PARSE_ERROR` | JSON 解析失败 | LLM 返回非法 JSON |
+| `SCHEMA_VALIDATION_FAILED` | Schema 验证失败（repair 后仍失败） | 输出不符合 schema |
+| `INVALID_INPUT` | 输入验证失败 | 输入不符合 input schema |
+| `MODULE_NOT_FOUND` | 模块不存在 | 请求的模块未安装 |
+| `UNSUPPORTED_LANGUAGE` | 不支持的语言 | code-simplifier 等模块 |
+| `NO_SIMPLIFICATION_POSSIBLE` | 无法简化 | 代码已是最简形式 |
+| `BEHAVIOR_CHANGE_REQUIRED` | 需要行为变更 | 简化会改变语义 |
+| `INTERNAL_ERROR` | 内部错误 | 未预期的异常 |
 
-### 5.2 Error Response Must Include
+### 5.2 错误响应必须包含
 
 ```json
 {
@@ -593,61 +593,61 @@ When upgrading v2.1 payload to v2.2 envelope:
 }
 ```
 
-**Note**:
-- For `INVALID_INPUT` errors, `confidence: 0.0` means "cannot execute" not "model unreliable"
-- `explain` must clearly indicate caller error, e.g.: "Input validation failed: ..."
-- This lets upstream systems distinguish "model failure" from "call error"
+**注意**：
+- 对于 `INVALID_INPUT` 错误，`confidence: 0.0` 表示"无法执行"而非"模型不靠谱"
+- `explain` 必须明确指出是调用方错误，例如："Input validation failed: ..."
+- 这让上游系统能区分"模型失败"与"调用错误"
 
 ---
 
-## 6. Migration Strategy (v2.1 → v2.2)
+## 6. 迁移策略（v2.1 → v2.2）
 
-### 6.1 Compatibility Matrix
+### 6.1 兼容性矩阵
 
-| v2.1 Field | v2.2 Location | Migration Method |
-|------------|---------------|------------------|
-| `data.confidence` | `meta.confidence` + `data.confidence` | Promote to meta, optionally keep in data |
-| `data.rationale` | `data.rationale` | Unchanged |
-| None | `meta.explain` | New, truncate from rationale or generate |
-| None | `meta.risk` | New, aggregate from changes |
-| `output` (schema) | `data` (schema) | Alias compatible |
+| v2.1 字段 | v2.2 位置 | 迁移方式 |
+|-----------|-----------|----------|
+| `data.confidence` | `meta.confidence` + `data.confidence` | 提升到 meta，data 中可选保留 |
+| `data.rationale` | `data.rationale` | 保持不变 |
+| 无 | `meta.explain` | 新增，从 rationale 截取或生成 |
+| 无 | `meta.risk` | 新增，从 changes 聚合 |
+| `output` (schema) | `data` (schema) | 别名兼容 |
 
-### 6.2 module.yaml Compatibility Config
+### 6.2 module.yaml 兼容配置
 
 ```yaml
 compat:
-  # Accept v2.1 format payload (data contains confidence)
+  # 接受 v2.1 格式的 payload（data 内含 confidence）
   accepts_v21_payload: true
   
-  # Runtime auto-wraps v2.1 payload to v2.2 envelope
+  # runtime 自动将 v2.1 payload 包装为 v2.2 envelope
   runtime_auto_wrap: true
   
-  # "output" in schema.json treated as "data" alias
+  # schema.json 中 "output" 视为 "data" 的别名
   schema_output_alias: data
 ```
 
-### 6.3 Runtime Auto-Wrap Logic
+### 6.3 Runtime 自动包装逻辑
 
 ```python
 def wrap_v21_to_v22(v21_response: dict) -> dict:
-    """Auto-wrap v2.1 response to v2.2 envelope"""
+    """将 v2.1 响应自动包装为 v2.2 envelope"""
     
     if is_v22_envelope(v21_response):
-        return v21_response  # Already v2.2 format
+        return v21_response  # 已经是 v2.2 格式
     
-    # Extract or compute meta fields
+    # 提取或计算 meta 字段
     data = v21_response.get("data", v21_response)
     
     confidence = data.get("confidence", 0.5)
     rationale = data.get("rationale", "")
     
-    # Aggregate risk
+    # 聚合 risk
     changes = data.get("changes", [])
     risk_levels = {"none": 0, "low": 1, "medium": 2, "high": 3}
     max_risk = max((risk_levels.get(c.get("risk", "medium"), 2) for c in changes), default=2)
     risk = ["none", "low", "medium", "high"][max_risk]
     
-    # Generate explain
+    # 生成 explain
     explain = rationale[:200] if rationale else "No explanation provided"
     
     return {
@@ -661,25 +661,25 @@ def wrap_v21_to_v22(v21_response: dict) -> dict:
     }
 ```
 
-### 6.4 Progressive Migration Steps
+### 6.4 渐进式迁移步骤
 
-**Phase 1: Compatibility Mode (Recommended Immediate)**
-1. Update runtime to support auto-wrap
-2. Keep existing modules unchanged
-3. New modules use v2.2 format
+**阶段 1：兼容模式（推荐立即实施）**
+1. 更新 runtime 支持自动包装
+2. 保持现有模块不变
+3. 新模块使用 v2.2 格式
 
-**Phase 2: Gradual Upgrade**
-1. Update module.yaml to add `tier`, `overflow`, `enums`
-2. Update schema.json to add `meta` schema
-3. Update prompt.md to require `explain` output
+**阶段 2：逐步升级**
+1. 更新 module.yaml 添加 `tier`, `overflow`, `enums`
+2. 更新 schema.json 添加 `meta` schema
+3. 更新 prompt.md 要求输出 `explain`
 
-**Phase 3: Full Migration**
-1. Remove `compat` configuration
-2. All modules use native v2.2 format
+**阶段 3：完全迁移**
+1. 移除 `compat` 配置
+2. 所有模块使用原生 v2.2 格式
 
 ---
 
-## 7. Complete Example: code-simplifier v2.2
+## 7. 完整示例：code-simplifier v2.2
 
 ### 7.1 module.yaml
 
@@ -898,7 +898,7 @@ tests:
 }
 ```
 
-### 7.3 Example Output
+### 7.3 示例输出
 
 ```json
 {
@@ -950,27 +950,27 @@ tests:
 
 ---
 
-## 8. Paradigm-Level Benefits of v2.2
+## 8. v2.2 带来的范式级收益
 
-| # | Benefit | Description |
-|---|---------|-------------|
-| 1 | **Routing/fallback/review without parsing business payload** | Middleware only looks at `meta` |
-| 2 | **Insights not killed by enum** | Recoverable overflow + extensible enum |
-| 3 | **Different tiers have different strictness** | No more "one-size-fits-all schema" |
-| 4 | **Failure and repair can be standardized** | Repair pass + `SCHEMA_VALIDATION_FAILED` |
-| 5 | **Complete audit capability preserved** | `data.rationale` stores complete reasoning |
-| 6 | **Ecosystem easier to grow** | Third parties only need to implement envelope + meta |
-| 7 | **Smooth migration** | v2.1 modules don't need immediate modification |
+| # | 收益 | 说明 |
+|---|------|------|
+| 1 | **路由/降级/审核无需解析业务 payload** | 中间件只看 `meta` |
+| 2 | **洞察不会被 enum 杀死** | 可回收 overflow + extensible enum |
+| 3 | **不同 tier 模块有不同严谨度** | 不再"一刀切 schema" |
+| 4 | **失败与修复可标准化** | repair pass + `SCHEMA_VALIDATION_FAILED` |
+| 5 | **审计能力完整保留** | `data.rationale` 存储完整推理 |
+| 6 | **生态更容易长大** | 第三方只需实现 envelope + meta |
+| 7 | **平滑迁移** | v2.1 模块无需立即修改 |
 
 ---
 
-## 9. Version History
+## 9. 版本历史
 
-| Version | Date | Major Changes |
-|---------|------|---------------|
-| v0.1 | 2024 | Initial specification |
-| v2.1 | 2024 | Envelope format, Failure Contract, Tools Policy |
-| v2.2 | 2026-02 | Control/Data separation, Tier, Overflow, Extensible Enum, Migration strategy, Contract two-layer definition |
+| 版本 | 日期 | 主要变更 |
+|------|------|----------|
+| v0.1 | 2024 | 初始规范 |
+| v2.1 | 2024 | Envelope 格式、Failure Contract、Tools Policy |
+| v2.2 | 2026-02 | Control/Data 分离、Tier、Overflow、Extensible Enum、迁移策略、Contract 两层定义 |
 
 ---
 
