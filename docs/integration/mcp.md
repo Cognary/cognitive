@@ -8,15 +8,35 @@ MCP 是 Anthropic 提出的开放协议，让 AI 工具可以连接外部资源�
 
 ## 安装
 
-```bash
-pip install cognitive-modules[mcp]
-```
+=== "Node.js (npm) - 推荐"
+
+    ```bash
+    # 全局安装
+    npm install -g cogn
+
+    # 或使用 npx
+    npx cogn --help
+    ```
+
+=== "Python (pip)"
+
+    ```bash
+    pip install cognitive-modules[mcp]
+    ```
 
 ## 启动 MCP Server
 
-```bash
-cogn mcp
-```
+=== "Node.js"
+
+    ```bash
+    cog mcp
+    ```
+
+=== "Python"
+
+    ```bash
+    cogn mcp
+    ```
 
 ## 配置 Claude Desktop
 
@@ -38,19 +58,37 @@ cogn mcp
 
 添加 Cognitive Modules MCP Server：
 
-```json
-{
-  "mcpServers": {
-    "cognitive": {
-      "command": "cogn",
-      "args": ["mcp"],
-      "env": {
-        "OPENAI_API_KEY": "sk-xxx"
+=== "Node.js (推荐)"
+
+    ```json
+    {
+      "mcpServers": {
+        "cognitive": {
+          "command": "cog",
+          "args": ["mcp"],
+          "env": {
+            "OPENAI_API_KEY": "sk-xxx"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
+
+=== "Python"
+
+    ```json
+    {
+      "mcpServers": {
+        "cognitive": {
+          "command": "cogn",
+          "args": ["mcp"],
+          "env": {
+            "OPENAI_API_KEY": "sk-xxx"
+          }
+        }
+      }
+    }
+    ```
 
 重启 Claude Desktop 后，就可以使用 Cognitive Modules 了。
 
@@ -58,16 +96,31 @@ cogn mcp
 
 在 Cursor 设置中添加 MCP Server：
 
-```json
-{
-  "mcp.servers": {
-    "cognitive": {
-      "command": "cogn",
-      "args": ["mcp"]
+=== "Node.js (推荐)"
+
+    ```json
+    {
+      "mcp.servers": {
+        "cognitive": {
+          "command": "cog",
+          "args": ["mcp"]
+        }
+      }
     }
-  }
-}
-```
+    ```
+
+=== "Python"
+
+    ```json
+    {
+      "mcp.servers": {
+        "cognitive": {
+          "command": "cogn",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
 
 ## 可用的 Tools
 

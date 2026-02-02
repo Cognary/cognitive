@@ -38,7 +38,18 @@ export {
   listModules,
   getDefaultSearchPaths,
   runModule,
+  // Subagent
+  SubagentOrchestrator,
+  runWithSubagents,
+  parseCalls,
+  createContext,
 } from './modules/index.js';
+
+// Server
+export { serve as serveHttp, createServer } from './server/index.js';
+
+// MCP
+export { serve as serveMcp } from './mcp/index.js';
 
 // Commands
 export { run, list, pipe } from './commands/index.js';

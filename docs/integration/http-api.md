@@ -2,21 +2,45 @@
 
 Cognitive Modules 提供 HTTP API 服务，方便集成到工作流平台（Coze、n8n、Dify 等）。
 
-## 安装依赖
+## 安装
 
-```bash
-pip install cognitive-modules[server]
-```
+=== "Node.js (npm) - 推荐"
+
+    ```bash
+    # 全局安装
+    npm install -g cogn
+
+    # 或使用 npx
+    npx cogn --help
+    ```
+
+=== "Python (pip)"
+
+    ```bash
+    pip install cognitive-modules[server]
+    ```
 
 ## 启动服务
 
-```bash
-# 启动 API 服务
-cogn serve --port 8000
+=== "Node.js"
 
-# 或指定 host
-cogn serve --host 0.0.0.0 --port 8000
-```
+    ```bash
+    # 启动 API 服务
+    cog serve --port 8000
+
+    # 或指定 host
+    cog serve --host 0.0.0.0 --port 8000
+    ```
+
+=== "Python"
+
+    ```bash
+    # 启动 API 服务
+    cogn serve --port 8000
+
+    # 或指定 host
+    cogn serve --host 0.0.0.0 --port 8000
+    ```
 
 服务启动后，访问：
 
@@ -162,7 +186,7 @@ curl http://localhost:8000/health
 ```json
 {
   "status": "healthy",
-  "version": "0.4.0",
+  "version": "1.3.0",
   "providers": {
     "openai": true,
     "anthropic": false,

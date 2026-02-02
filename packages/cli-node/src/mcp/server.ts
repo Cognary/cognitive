@@ -30,7 +30,7 @@ import type { CognitiveModule, ModuleResult } from '../types.js';
 const server = new Server(
   {
     name: 'cognitive-modules',
-    version: '1.2.0',
+    version: '1.3.0',
   },
   {
     capabilities: {

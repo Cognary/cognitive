@@ -89,7 +89,7 @@ function verifyApiKey(req: http.IncomingMessage): boolean {
 async function handleRoot(res: http.ServerResponse): Promise<void> {
   jsonResponse(res, 200, {
     name: 'Cognitive Modules API',
-    version: '1.2.0',
+    version: '1.3.0',
     docs: '/docs',
     endpoints: {
       run: 'POST /run',
@@ -112,7 +112,7 @@ async function handleHealth(res: http.ServerResponse): Promise<void> {
   
   jsonResponse(res, 200, {
     status: 'healthy',
-    version: '1.2.0',
+    version: '1.3.0',
     providers,
   });
 }

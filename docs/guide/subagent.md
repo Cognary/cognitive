@@ -50,14 +50,13 @@ context: main  # 默认
 - 子模块共享父模块上下文
 - 子模块结果可被其他子模块访问
 
-## 运行时启用
+## 运行
+
+子代理功能自动启用。当模块 prompt 中包含 `@call:` 指令时，运行时会自动解析并执行：
 
 ```bash
-# 启用子代理模式
-cog run parent-module --args "需求" --subagent
-
-# 简写
-cog run parent-module -a "需求" -s
+# 直接运行（@call 自动处理）
+cog run parent-module --args "需求"
 ```
 
 ## 执行流程
@@ -114,7 +113,7 @@ context: fork
 运行：
 
 ```bash
-cog run product-analyzer --args "健康产品官网" --subagent --pretty
+cog run product-analyzer --args "健康产品官网" --pretty
 ```
 
 ## 限制

@@ -35,22 +35,22 @@ npx cogn --help
 
 ## 验证安装
 
+=== "Node.js (cog) - 推荐"
+
+    ```bash
+    cog --version
+    # 输出: Cognitive Runtime v1.3.0
+
+    cog doctor
+    ```
+
 === "Python (cogn)"
 
     ```bash
     cogn --version
-    # 输出: cog version 0.4.0
+    # 输出: cog version 0.5.1
 
     cogn doctor
-    ```
-
-=== "Node.js (cog)"
-
-    ```bash
-    cog --version
-    # 输出: Cognitive Runtime v1.0.1
-
-    cog doctor
     ```
 
 `cogn doctor` / `cog doctor` 会显示环境状态：
