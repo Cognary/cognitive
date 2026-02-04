@@ -54,6 +54,90 @@ export type EnumStrategy = 'strict' | 'extensible';
 export type RiskRule = 'max_changes_risk' | 'max_issues_risk' | 'explicit';
 
 // =============================================================================
+// Composition Types (v2.2)
+// =============================================================================
+
+/** Composition pattern types */
+export type CompositionPattern = 'sequential' | 'parallel' | 'conditional' | 'iterative';
+
+/** Aggregation strategy for combining multiple outputs */
+export type AggregationStrategy = 'merge' | 'array' | 'first' | 'custom';
+
+/** Semver-like version matching pattern */
+export type VersionPattern = string; // e.g., ">=1.0.0", "^1.0.0", "~1.0.0", "*"
+
+/** Dependency declaration for composition.requires */
+export interface DependencyDeclaration {
+  /** Module name */
+  name: string;
+  /** Semver version pattern */
+  version?: VersionPattern;
+  /** Whether dependency is optional */
+  optional?: boolean;
+  /** Fallback module if unavailable */
+  fallback?: string | null;
+  /** Per-module timeout (ms) */
+  timeout_ms?: number;
+}
+
+/** Dataflow mapping expression */
+export interface DataflowMapping {
+  [key: string]: string; // target_field: "$.source.path"
+}
+
+/** Dataflow step configuration */
+export interface DataflowStep {
+  /** Source of data: 'input' or 'module-name.output' */
+  from: string | string[];
+  /** Destination: module name or 'output' */
+  to: string | string[];
+  /** Field mapping expressions */
+  mapping?: DataflowMapping;
+  /** Condition for execution */
+  condition?: string;
+  /** Aggregation strategy when from is an array */
+  aggregate?: AggregationStrategy;
+  /** Custom aggregation function name */
+  aggregator?: string;
+}
+
+/** Conditional routing rule */
+export interface RoutingRule {
+  /** Condition expression */
+  condition: string;
+  /** Next module to execute (null means use current result) */
+  next: string | null;
+}
+
+/** Iteration configuration */
+export interface IterationConfig {
+  /** Maximum iterations */
+  max_iterations?: number;
+  /** Condition to continue iterating */
+  continue_condition?: string;
+  /** Condition to stop iterating */
+  stop_condition?: string;
+}
+
+/** Full composition configuration (from module.yaml) */
+export interface CompositionConfig {
+  /** Composition pattern */
+  pattern: CompositionPattern;
+  /** Required dependencies */
+  requires?: DependencyDeclaration[];
+  /** Dataflow configuration */
+  dataflow?: DataflowStep[];
+  /** Conditional routing rules */
+  routing?: RoutingRule[];
+  /** Maximum composition depth */
+  max_depth?: number;
+  /** Total timeout for composition (ms) */
+  timeout_ms?: number;
+  /** Iteration configuration */
+  iteration?: IterationConfig;
+}
+
+// =============================================================================
 // Module Configuration (v2.2)
 // =============================================================================
 
@@ -99,6 +183,9 @@ export interface CognitiveModule {
   
   // v2.2: Meta configuration (including risk_rule)
   metaConfig?: MetaConfig;
+  
+  // v2.2: Composition configuration
+  composition?: CompositionConfig;
   
   // Execution context
   context?: 'fork' | 'main';
@@ -223,9 +310,30 @@ export interface EnvelopeMeta {
   latency_ms?: number;
 }
 
+/**
+ * Enhanced error structure with retry and recovery info (v2.2.1).
+ */
+export interface EnvelopeError {
+  /** Error code (e.g., "INVALID_INPUT", "PARSE_ERROR") */
+  code: string;
+  
+  /** Human-readable error message */
+  message: string;
+  
+  /** Whether the error can be retried */
+  recoverable?: boolean;
+  
+  /** Suggested wait time before retry (in milliseconds) */
+  retry_after_ms?: number;
+  
+  /** Additional error context */
+  details?: Record<string, unknown>;
+}
+
 /** Success response in v2.2 envelope format */
 export interface EnvelopeSuccessV22<T = unknown> {
   ok: true;
+  version?: string;  // Envelope version (e.g., "2.2")
   meta: EnvelopeMeta;
   data: T;
 }
@@ -233,11 +341,9 @@ export interface EnvelopeSuccessV22<T = unknown> {
 /** Error response in v2.2 envelope format */
 export interface EnvelopeErrorV22 {
   ok: false;
+  version?: string;  // Envelope version (e.g., "2.2")
   meta: EnvelopeMeta;
-  error: {
-    code: string;
-    message: string;
-  };
+  error: EnvelopeError;
   partial_data?: unknown;
 }
 
@@ -318,12 +424,10 @@ export interface ModuleResultData {
 /** v2.2 module result with meta and data separation */
 export interface ModuleResultV22 {
   ok: boolean;
+  version?: string;  // Envelope version (e.g., "2.2")
   meta: EnvelopeMeta;
   data?: ModuleResultData;
-  error?: {
-    code: string;
-    message: string;
-  };
+  error?: EnvelopeError;
   partial_data?: unknown;
   raw?: string;
 }

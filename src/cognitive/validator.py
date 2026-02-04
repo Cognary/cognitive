@@ -543,10 +543,8 @@ def validate_v22_envelope(response: dict) -> tuple[bool, list[str]]:
     if response['ok']:
         if 'data' not in response:
             errors.append("Success response missing 'data' field")
-        else:
-            data = response['data']
-            if 'rationale' not in data:
-                errors.append("data missing 'rationale' (recommended for audit)")
+        # Note: data.rationale is recommended but not required by v2.2 envelope spec
+        # The data schema validation will enforce it if the module specifies it as required
     else:
         if 'error' not in response:
             errors.append("Error response missing 'error' field")

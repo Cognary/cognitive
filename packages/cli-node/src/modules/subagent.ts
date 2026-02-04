@@ -244,6 +244,8 @@ export class SubagentOrchestrator {
       // Run the module
       const result = await runModule(modifiedModule, this.provider, {
         input,
+        validateInput,
+        validateOutput,
         verbose: false,
         useV22: true
       });

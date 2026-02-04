@@ -1,6 +1,6 @@
 /**
  * Module Loader - Load and parse Cognitive Modules
- * Supports both v1 (MODULE.md) and v2 (module.yaml + prompt.md) formats
+ * Supports v0 (6-file), v1 (MODULE.md) and v2 (module.yaml + prompt.md) formats
  */
 
 import * as fs from 'node:fs/promises';
@@ -19,7 +19,14 @@ import type {
   CompatConfig,
   MetaConfig,
   ModuleTier,
-  SchemaStrictness
+  SchemaStrictness,
+  CompositionConfig,
+  CompositionPattern,
+  DependencyDeclaration,
+  DataflowStep,
+  RoutingRule,
+  AggregationStrategy,
+  IterationConfig
 } from '../types.js';
 
 const FRONTMATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/;
@@ -27,13 +34,26 @@ const FRONTMATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/;
 /**
  * Detect module format version
  */
-async function detectFormat(modulePath: string): Promise<'v1' | 'v2'> {
+async function detectFormat(modulePath: string): Promise<'v0' | 'v1' | 'v2'> {
   const v2Manifest = path.join(modulePath, 'module.yaml');
+  const v1Module = path.join(modulePath, 'MODULE.md');
+  const v0Module = path.join(modulePath, 'module.md');
+  
   try {
     await fs.access(v2Manifest);
     return 'v2';
   } catch {
-    return 'v1';
+    try {
+      await fs.access(v1Module);
+      return 'v1';
+    } catch {
+      try {
+        await fs.access(v0Module);
+        return 'v0';
+      } catch {
+        throw new Error(`No module.yaml, MODULE.md, or module.md found in ${modulePath}`);
+      }
+    }
   }
 }
 
@@ -144,6 +164,61 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
     risk_rule: validatedRiskRule,
   };
 
+  // Parse composition config (v2.2)
+  const compositionRaw = manifest.composition as Record<string, unknown> | undefined;
+  let composition: CompositionConfig | undefined;
+  
+  if (compositionRaw) {
+    // Parse pattern
+    const pattern = compositionRaw.pattern as CompositionPattern ?? 'sequential';
+    
+    // Parse requires (dependencies)
+    const requiresRaw = compositionRaw.requires as Array<Record<string, unknown>> | undefined;
+    const requires: DependencyDeclaration[] | undefined = requiresRaw?.map(dep => ({
+      name: dep.name as string,
+      version: dep.version as string | undefined,
+      optional: dep.optional as boolean | undefined,
+      fallback: dep.fallback as string | null | undefined,
+      timeout_ms: dep.timeout_ms as number | undefined
+    }));
+    
+    // Parse dataflow
+    const dataflowRaw = compositionRaw.dataflow as Array<Record<string, unknown>> | undefined;
+    const dataflow: DataflowStep[] | undefined = dataflowRaw?.map(step => ({
+      from: step.from as string | string[],
+      to: step.to as string | string[],
+      mapping: step.mapping as Record<string, string> | undefined,
+      condition: step.condition as string | undefined,
+      aggregate: step.aggregate as AggregationStrategy | undefined,
+      aggregator: step.aggregator as string | undefined
+    }));
+    
+    // Parse routing rules
+    const routingRaw = compositionRaw.routing as Array<Record<string, unknown>> | undefined;
+    const routing: RoutingRule[] | undefined = routingRaw?.map(rule => ({
+      condition: rule.condition as string,
+      next: rule.next as string | null
+    }));
+    
+    // Parse iteration config
+    const iterationRaw = compositionRaw.iteration as Record<string, unknown> | undefined;
+    const iteration: IterationConfig | undefined = iterationRaw ? {
+      max_iterations: iterationRaw.max_iterations as number | undefined,
+      continue_condition: iterationRaw.continue_condition as string | undefined,
+      stop_condition: iterationRaw.stop_condition as string | undefined
+    } : undefined;
+    
+    composition = {
+      pattern,
+      requires,
+      dataflow,
+      routing,
+      max_depth: compositionRaw.max_depth as number | undefined,
+      timeout_ms: compositionRaw.timeout_ms as number | undefined,
+      iteration
+    };
+  }
+
   return {
     name: manifest.name as string || path.basename(modulePath),
     version: manifest.version as string || '1.0.0',
@@ -162,6 +237,7 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
     enums,
     compat,
     metaConfig,
+    composition,
     // Context and prompt
     context: manifest.context as 'fork' | 'main' | undefined,
     prompt,
@@ -235,6 +311,73 @@ async function loadModuleV1(modulePath: string): Promise<CognitiveModule> {
 }
 
 /**
+ * Load v0 format module (6-file format - deprecated)
+ */
+async function loadModuleV0(modulePath: string): Promise<CognitiveModule> {
+  // Read module.md
+  const moduleFile = path.join(modulePath, 'module.md');
+  const moduleContent = await fs.readFile(moduleFile, 'utf-8');
+  
+  // Parse frontmatter
+  const match = moduleContent.match(FRONTMATTER_REGEX);
+  if (!match) {
+    throw new Error(`Invalid module.md: missing YAML frontmatter in ${moduleFile}`);
+  }
+
+  const metadata = yaml.load(match[1]) as Record<string, unknown>;
+  
+  // Read schemas
+  const inputSchemaFile = path.join(modulePath, 'input.schema.json');
+  const outputSchemaFile = path.join(modulePath, 'output.schema.json');
+  const constraintsFile = path.join(modulePath, 'constraints.yaml');
+  const promptFile = path.join(modulePath, 'prompt.txt');
+  
+  const inputSchemaContent = await fs.readFile(inputSchemaFile, 'utf-8');
+  const inputSchema = JSON.parse(inputSchemaContent);
+  
+  const outputSchemaContent = await fs.readFile(outputSchemaFile, 'utf-8');
+  const outputSchema = JSON.parse(outputSchemaContent);
+  
+  // Load constraints
+  const constraintsContent = await fs.readFile(constraintsFile, 'utf-8');
+  const constraintsRaw = yaml.load(constraintsContent) as Record<string, unknown>;
+  
+  // Load prompt
+  const prompt = await fs.readFile(promptFile, 'utf-8');
+  
+  // Extract constraints
+  const constraints: ModuleConstraints = {};
+  if (constraintsRaw) {
+    const operational = (constraintsRaw.operational as Record<string, boolean>) ?? {};
+    constraints.no_network = operational.no_external_network;
+    constraints.no_side_effects = operational.no_side_effects;
+    constraints.no_file_write = operational.no_file_write;
+    constraints.no_inventing_data = operational.no_inventing_data;
+  }
+
+  return {
+    name: metadata.name as string || path.basename(modulePath),
+    version: metadata.version as string || '1.0.0',
+    responsibility: metadata.responsibility as string || '',
+    excludes: (metadata.excludes as string[]) || [],
+    constraints: Object.keys(constraints).length > 0 ? constraints : undefined,
+    prompt,
+    inputSchema,
+    outputSchema,
+    dataSchema: outputSchema, // Alias for v2.2 compat
+    // v2.2 defaults for v0 modules
+    schemaStrictness: 'medium',
+    overflow: { enabled: false },
+    enums: { strategy: 'strict' },
+    compat: { accepts_v21_payload: true, runtime_auto_wrap: true },
+    // Metadata
+    location: modulePath,
+    format: 'v0',
+    formatVersion: 'v0.0',
+  };
+}
+
+/**
  * Load a Cognitive Module (auto-detects format)
  */
 export async function loadModule(modulePath: string): Promise<CognitiveModule> {
@@ -242,8 +385,10 @@ export async function loadModule(modulePath: string): Promise<CognitiveModule> {
   
   if (format === 'v2') {
     return loadModuleV2(modulePath);
-  } else {
+  } else if (format === 'v1') {
     return loadModuleV1(modulePath);
+  } else {
+    return loadModuleV0(modulePath);
   }
 }
 
@@ -253,6 +398,7 @@ export async function loadModule(modulePath: string): Promise<CognitiveModule> {
 async function isValidModule(modulePath: string): Promise<boolean> {
   const v2Manifest = path.join(modulePath, 'module.yaml');
   const v1Module = path.join(modulePath, 'MODULE.md');
+  const v0Module = path.join(modulePath, 'module.md');
   
   try {
     await fs.access(v2Manifest);
@@ -262,7 +408,12 @@ async function isValidModule(modulePath: string): Promise<boolean> {
       await fs.access(v1Module);
       return true;
     } catch {
-      return false;
+      try {
+        await fs.access(v0Module);
+        return true;
+      } catch {
+        return false;
+      }
     }
   }
 }
@@ -315,4 +466,43 @@ export function getDefaultSearchPaths(cwd: string): string[] {
     path.join(cwd, '.cognitive', 'modules'),
     path.join(home, '.cognitive', 'modules'),
   ];
+}
+
+// =============================================================================
+// Utility Functions
+// =============================================================================
+
+/**
+ * Get module tier (exec, decision, exploration).
+ */
+export function getModuleTier(module: CognitiveModule): ModuleTier | undefined {
+  return module.tier;
+}
+
+/**
+ * Get schema strictness level.
+ */
+export function getSchemaStrictness(module: CognitiveModule): SchemaStrictness {
+  return module.schemaStrictness ?? 'medium';
+}
+
+/**
+ * Check if overflow (extensions.insights) is enabled.
+ */
+export function isOverflowEnabled(module: CognitiveModule): boolean {
+  return module.overflow?.enabled ?? false;
+}
+
+/**
+ * Get enum extension strategy.
+ */
+export function getEnumStrategy(module: CognitiveModule): 'strict' | 'extensible' {
+  return module.enums?.strategy ?? 'strict';
+}
+
+/**
+ * Check if runtime should auto-wrap v2.1 to v2.2.
+ */
+export function shouldAutoWrap(module: CognitiveModule): boolean {
+  return module.compat?.runtime_auto_wrap ?? true;
 }

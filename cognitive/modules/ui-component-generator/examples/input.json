@@ -1,0 +1,54 @@
+{
+  "component_name": "Avatar",
+  "framework": "react",
+  "description": "用户头像组件，支持图片、文字、图标三种展示方式，可设置大小和形状",
+  "props": [
+    {
+      "name": "src",
+      "type": "string",
+      "required": false,
+      "description": "头像图片 URL"
+    },
+    {
+      "name": "alt",
+      "type": "string",
+      "required": false,
+      "default": "avatar",
+      "description": "图片替代文本"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "required": false,
+      "description": "用户名称，无图片时显示首字母"
+    },
+    {
+      "name": "size",
+      "type": "'xs' | 'sm' | 'md' | 'lg' | 'xl'",
+      "required": false,
+      "default": "md",
+      "description": "头像大小"
+    },
+    {
+      "name": "shape",
+      "type": "'circle' | 'square'",
+      "required": false,
+      "default": "circle",
+      "description": "头像形状"
+    },
+    {
+      "name": "fallback",
+      "type": "ReactNode",
+      "required": false,
+      "description": "自定义回退内容"
+    }
+  ],
+  "features": [
+    "图片加载失败时显示文字或图标回退",
+    "支持在线状态指示器",
+    "支持头像组堆叠展示"
+  ],
+  "styling": "tailwind",
+  "typescript": true,
+  "accessibility": true
+}

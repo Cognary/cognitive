@@ -104,9 +104,8 @@ class TestSubstituteArguments:
         text = "First: $ARGUMENTS[0], Second: $ARGUMENTS[1]"
         data = {"$ARGUMENTS": "foo bar"}
         result = substitute_arguments(text, data)
-        # The implementation replaces $ARGUMENTS first, then $ARGUMENTS[N]
-        # So we need to check what the actual behavior is
-        assert "foo" in result
+        # $ARGUMENTS[N] should be replaced with individual words
+        assert result == "First: foo, Second: bar"
 
     def test_fallback_to_query(self):
         text = "Process: $ARGUMENTS"
@@ -410,14 +409,20 @@ class TestRepairEnvelope:
 
     def test_does_not_modify_original(self):
         """Repair should not modify the original dict."""
+        import copy
         data = {
             "ok": True,
             "meta": {},
             "data": {"rationale": "test"}
         }
-        original_meta = data["meta"]
+        original_data = copy.deepcopy(data)
         repaired = repair_envelope(data)
-        assert data["meta"] is original_meta  # Original unchanged
+        # Original data should be unchanged (content, not just reference)
+        assert data == original_data
+        # Repaired should have new meta fields
+        assert "confidence" in repaired["meta"]
+        assert "risk" in repaired["meta"]
+        assert "explain" in repaired["meta"]
 
 
 class TestRepairErrorEnvelope:
@@ -499,10 +504,25 @@ class TestIsV22Envelope:
 class TestWrapV21ToV22:
     """Test wrap_v21_to_v22 conversion."""
 
-    def test_already_v22_returns_unchanged(self):
-        """Already v2.2 format should pass through."""
+    def test_already_v22_returns_with_version(self):
+        """Already v2.2 format should pass through with version added if missing."""
         data = {
             "ok": True,
+            "meta": {"confidence": 0.9, "risk": "low", "explain": "test"},
+            "data": {"rationale": "detailed"}
+        }
+        result = wrap_v21_to_v22(data)
+        # Should add version field
+        assert result["version"] == "2.2"
+        assert result["ok"] == data["ok"]
+        assert result["meta"] == data["meta"]
+        assert result["data"] == data["data"]
+    
+    def test_already_v22_with_version_unchanged(self):
+        """Already v2.2 format with version should pass through unchanged."""
+        data = {
+            "ok": True,
+            "version": "2.2",
             "meta": {"confidence": 0.9, "risk": "low", "explain": "test"},
             "data": {"rationale": "detailed"}
         }
@@ -848,3 +868,285 @@ class TestExtensibleEnumFormat:
         repaired = repair_envelope(data)
         # Unknown values should be normalized or defaulted
         assert repaired["meta"]["risk"] in ["medium", "unknown_value"]
+
+
+# =============================================================================
+# v2.2.1 Features Tests
+# =============================================================================
+
+from cognitive.runner import (
+    # v2.2.1 Error builder
+    make_error_response,
+    make_success_response,
+    ENVELOPE_VERSION,
+    ERROR_PROPERTIES,
+    # v2.2.1 Hooks
+    on_before_call,
+    on_after_call,
+    on_error,
+    register_hook,
+    unregister_hook,
+    clear_hooks,
+)
+
+
+class TestMakeErrorResponse:
+    """Test make_error_response helper function."""
+
+    def test_basic_error_response(self):
+        """Should create a valid error response."""
+        result = make_error_response(
+            code="TEST_ERROR",
+            message="Test error message"
+        )
+        assert result["ok"] is False
+        assert result["version"] == ENVELOPE_VERSION
+        assert result["error"]["code"] == "TEST_ERROR"
+        assert result["error"]["message"] == "Test error message"
+        assert "meta" in result
+
+    def test_error_with_recoverable(self):
+        """Should include recoverable flag."""
+        result = make_error_response(
+            code="PARSE_ERROR",
+            message="Parse failed"
+        )
+        # PARSE_ERROR defaults to recoverable=True
+        assert result["error"].get("recoverable") is True
+
+    def test_error_with_retry_after(self):
+        """Should include retry_after_ms when appropriate."""
+        result = make_error_response(
+            code="RATE_LIMITED",
+            message="Rate limited"
+        )
+        assert result["error"].get("retry_after_ms") == 10000
+
+    def test_error_with_details(self):
+        """Should include details when provided."""
+        result = make_error_response(
+            code="INVALID_INPUT",
+            message="Invalid",
+            details={"field": "name", "reason": "required"}
+        )
+        assert result["error"]["details"] == {"field": "name", "reason": "required"}
+
+    def test_error_with_partial_data(self):
+        """Should include partial_data when provided."""
+        result = make_error_response(
+            code="SCHEMA_VALIDATION_FAILED",
+            message="Validation failed",
+            partial_data={"some": "data"}
+        )
+        assert result["partial_data"] == {"some": "data"}
+
+    def test_custom_meta_fields(self):
+        """Should allow custom meta fields."""
+        result = make_error_response(
+            code="TEST_ERROR",
+            message="Test",
+            confidence=0.5,
+            risk="medium"
+        )
+        assert result["meta"]["confidence"] == 0.5
+        assert result["meta"]["risk"] == "medium"
+
+
+class TestMakeSuccessResponse:
+    """Test make_success_response helper function."""
+
+    def test_basic_success_response(self):
+        """Should create a valid success response."""
+        result = make_success_response(
+            data={"result": "value"},
+            confidence=0.9,
+            risk="low",
+            explain="Test succeeded"
+        )
+        assert result["ok"] is True
+        assert result["version"] == ENVELOPE_VERSION
+        assert result["data"] == {"result": "value"}
+        assert result["meta"]["confidence"] == 0.9
+        assert result["meta"]["risk"] == "low"
+
+    def test_success_with_latency(self):
+        """Should include latency_ms when provided."""
+        result = make_success_response(
+            data={},
+            confidence=0.9,
+            risk="low",
+            explain="Test",
+            latency_ms=150.5
+        )
+        assert result["meta"]["latency_ms"] == 150.5
+
+    def test_success_with_model(self):
+        """Should include model when provided."""
+        result = make_success_response(
+            data={},
+            confidence=0.9,
+            risk="low",
+            explain="Test",
+            model="gpt-4o"
+        )
+        assert result["meta"]["model"] == "gpt-4o"
+
+    def test_success_with_trace_id(self):
+        """Should include trace_id when provided."""
+        result = make_success_response(
+            data={},
+            confidence=0.9,
+            risk="low",
+            explain="Test",
+            trace_id="trace-123"
+        )
+        assert result["meta"]["trace_id"] == "trace-123"
+
+    def test_confidence_clamping(self):
+        """Should clamp confidence to [0, 1]."""
+        result = make_success_response(
+            data={},
+            confidence=1.5,
+            risk="low",
+            explain="Test"
+        )
+        assert result["meta"]["confidence"] == 1.0
+
+        result = make_success_response(
+            data={},
+            confidence=-0.5,
+            risk="low",
+            explain="Test"
+        )
+        assert result["meta"]["confidence"] == 0.0
+
+
+class TestObservabilityHooks:
+    """Test observability hooks system."""
+
+    def setup_method(self):
+        """Clear hooks before each test."""
+        clear_hooks()
+
+    def teardown_method(self):
+        """Clear hooks after each test."""
+        clear_hooks()
+
+    def test_register_before_hook(self):
+        """Should register before_call hook."""
+        calls = []
+        
+        @on_before_call
+        def my_hook(module_name, input_data, config):
+            calls.append(("before", module_name))
+        
+        # Check hook is registered
+        from cognitive.runner import _before_call_hooks
+        assert my_hook in _before_call_hooks
+
+    def test_register_after_hook(self):
+        """Should register after_call hook."""
+        calls = []
+        
+        @on_after_call
+        def my_hook(module_name, result, latency_ms):
+            calls.append(("after", module_name, latency_ms))
+        
+        from cognitive.runner import _after_call_hooks
+        assert my_hook in _after_call_hooks
+
+    def test_register_error_hook(self):
+        """Should register error hook."""
+        errors = []
+        
+        @on_error
+        def my_hook(module_name, error, partial):
+            errors.append((module_name, str(error)))
+        
+        from cognitive.runner import _error_hooks
+        assert my_hook in _error_hooks
+
+    def test_unregister_hook(self):
+        """Should unregister hooks."""
+        def my_hook(module_name, input_data, config):
+            pass
+        
+        register_hook("before_call", my_hook)
+        from cognitive.runner import _before_call_hooks
+        assert my_hook in _before_call_hooks
+        
+        result = unregister_hook("before_call", my_hook)
+        assert result is True
+        assert my_hook not in _before_call_hooks
+
+    def test_unregister_nonexistent_hook(self):
+        """Should return False when unregistering nonexistent hook."""
+        def my_hook(module_name, input_data, config):
+            pass
+        
+        result = unregister_hook("before_call", my_hook)
+        assert result is False
+
+    def test_clear_hooks(self):
+        """Should clear all hooks."""
+        @on_before_call
+        def hook1(m, i, c): pass
+        
+        @on_after_call
+        def hook2(m, r, l): pass
+        
+        @on_error
+        def hook3(m, e, p): pass
+        
+        clear_hooks()
+        
+        from cognitive.runner import _before_call_hooks, _after_call_hooks, _error_hooks
+        assert len(_before_call_hooks) == 0
+        assert len(_after_call_hooks) == 0
+        assert len(_error_hooks) == 0
+
+
+class TestEnvelopeVersion:
+    """Test envelope version field."""
+
+    def test_error_response_has_version(self):
+        """Error response should have version field."""
+        result = make_error_response(
+            code="TEST",
+            message="Test"
+        )
+        assert "version" in result
+        assert result["version"] == ENVELOPE_VERSION
+
+    def test_success_response_has_version(self):
+        """Success response should have version field."""
+        result = make_success_response(
+            data={},
+            confidence=0.9,
+            risk="low",
+            explain="Test"
+        )
+        assert "version" in result
+        assert result["version"] == ENVELOPE_VERSION
+
+
+class TestErrorProperties:
+    """Test error code properties."""
+
+    def test_known_error_codes(self):
+        """Should have properties for common error codes."""
+        assert "MODULE_NOT_FOUND" in ERROR_PROPERTIES
+        assert "INVALID_INPUT" in ERROR_PROPERTIES
+        assert "PARSE_ERROR" in ERROR_PROPERTIES
+        assert "SCHEMA_VALIDATION_FAILED" in ERROR_PROPERTIES
+
+    def test_recoverable_errors(self):
+        """Certain errors should be marked as recoverable."""
+        assert ERROR_PROPERTIES["PARSE_ERROR"]["recoverable"] is True
+        assert ERROR_PROPERTIES["RATE_LIMITED"]["recoverable"] is True
+        assert ERROR_PROPERTIES["TIMEOUT"]["recoverable"] is True
+
+    def test_non_recoverable_errors(self):
+        """Certain errors should not be recoverable."""
+        assert ERROR_PROPERTIES["MODULE_NOT_FOUND"]["recoverable"] is False
+        assert ERROR_PROPERTIES["INVALID_INPUT"]["recoverable"] is False

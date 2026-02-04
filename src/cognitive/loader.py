@@ -184,16 +184,20 @@ def load_v2_format(module_path: Path) -> dict:
         "require_suggested_mapping": overflow_raw.get("require_suggested_mapping", True)
     }
     
-    enums = manifest.get("enums", {
+    # Merge enums with defaults (ensure defaults are applied even if partial config exists)
+    enums_defaults = {
         "strategy": "extensible" if tier in ("decision", "exploration") else "strict",
         "unknown_tag": "custom"
-    })
+    }
+    enums = {**enums_defaults, **manifest.get("enums", {})}
     
-    compat = manifest.get("compat", {
+    # Merge compat with defaults (ensure defaults are applied even if partial config exists)
+    compat_defaults = {
         "accepts_v21_payload": True,
         "runtime_auto_wrap": True,
         "schema_output_alias": "data"
-    })
+    }
+    compat = {**compat_defaults, **manifest.get("compat", {})}
     
     io_config = manifest.get("io", {})
     tests = manifest.get("tests", [])

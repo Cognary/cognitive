@@ -16,7 +16,7 @@
 
 import { parseArgs } from 'node:util';
 import { getProvider, listProviders } from './providers/index.js';
-import { run, list, pipe, init, add, update, remove, versions } from './commands/index.js';
+import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo } from './commands/index.js';
 import type { CommandContext } from './types.js';
 
 const VERSION = '1.3.0';
@@ -55,6 +55,10 @@ async function main() {
       // Server options
       host: { type: 'string', short: 'H' },
       port: { type: 'string', short: 'P' },
+      // Compose options
+      'max-depth': { type: 'string', short: 'd' },
+      timeout: { type: 'string', short: 'T' },
+      trace: { type: 'boolean', default: false },
     },
     allowPositionals: true,
   });
@@ -291,6 +295,53 @@ async function main() {
         break;
       }
 
+      case 'compose': {
+        const moduleName = args[1];
+        if (!moduleName || moduleName.startsWith('-')) {
+          console.error('Usage: cog compose <module> [--args "..."] [--timeout <ms>] [--max-depth <n>]');
+          process.exit(1);
+        }
+        
+        const result = await compose(moduleName, ctx, {
+          args: values.args,
+          input: values.input,
+          maxDepth: values['max-depth'] ? parseInt(values['max-depth'] as string, 10) : undefined,
+          timeout: values.timeout ? parseInt(values.timeout as string, 10) : undefined,
+          trace: values.trace,
+          pretty: values.pretty,
+          verbose: values.verbose,
+        });
+        
+        if (!result.success) {
+          console.error(`Error: ${result.error}`);
+          if (result.data) {
+            console.error('Partial results:', JSON.stringify(result.data, null, 2));
+          }
+          process.exit(1);
+        }
+        
+        console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+        break;
+      }
+
+      case 'compose-info': {
+        const moduleName = args[1];
+        if (!moduleName || moduleName.startsWith('-')) {
+          console.error('Usage: cog compose-info <module>');
+          process.exit(1);
+        }
+        
+        const result = await composeInfo(moduleName, ctx);
+        
+        if (!result.success) {
+          console.error(`Error: ${result.error}`);
+          process.exit(1);
+        }
+        
+        console.log(JSON.stringify(result.data, null, 2));
+        break;
+      }
+
       case 'serve': {
         const { serve } = await import('./server/http.js');
         const port = values.port ? parseInt(values.port as string, 10) : 8000;
@@ -338,17 +389,19 @@ USAGE:
   cog <command> [options]
 
 COMMANDS:
-  run <module>      Run a Cognitive Module
-  list              List available modules
-  add <url>         Add module from GitHub
-  update <module>   Update module to latest version
-  remove <module>   Remove installed module
-  versions <url>    List available versions
-  pipe              Pipe mode (stdin/stdout)
-  init [name]       Initialize project or create module
-  serve             Start HTTP API server
-  mcp               Start MCP server (for Claude Code, Cursor)
-  doctor            Check configuration
+  run <module>        Run a Cognitive Module
+  compose <module>    Execute a composed module workflow
+  compose-info <mod>  Show composition configuration
+  list                List available modules
+  add <url>           Add module from GitHub
+  update <module>     Update module to latest version
+  remove <module>     Remove installed module
+  versions <url>      List available versions
+  pipe                Pipe mode (stdin/stdout)
+  init [name]         Initialize project or create module
+  serve               Start HTTP API server
+  mcp                 Start MCP server (for Claude Code, Cursor)
+  doctor              Check configuration
 
 OPTIONS:
   -a, --args <str>      Arguments to pass to module
@@ -364,6 +417,9 @@ OPTIONS:
   --no-validate         Skip schema validation
   -H, --host <host>     Server host (default: 0.0.0.0)
   -P, --port <port>     Server port (default: 8000)
+  -d, --max-depth <n>   Max composition depth (default: 5)
+  -T, --timeout <ms>    Composition timeout in milliseconds
+  --trace               Include execution trace (for compose)
   -v, --version         Show version
   -h, --help            Show this help
 
@@ -381,6 +437,11 @@ EXAMPLES:
   cog run code-reviewer --args "def foo(): pass"
   cog run code-reviewer --provider openai --model gpt-4o --args "..."
   cog list
+
+  # Compose modules (multi-step workflows)
+  cog compose code-review-pipeline --args "code to review"
+  cog compose smart-processor --args "input" --timeout 60000 --verbose
+  cog compose-info code-review-pipeline
 
   # Servers
   cog serve --port 8080

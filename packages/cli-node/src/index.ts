@@ -19,6 +19,15 @@ export type {
   FailureContract,
   CommandContext,
   CommandResult,
+  // v2.2 Composition Types
+  CompositionConfig,
+  CompositionPattern,
+  DependencyDeclaration,
+  DataflowStep,
+  DataflowMapping,
+  RoutingRule,
+  AggregationStrategy,
+  IterationConfig,
 } from './types.js';
 
 // Providers
@@ -43,6 +52,32 @@ export {
   runWithSubagents,
   parseCalls,
   createContext,
+  // Composition
+  CompositionOrchestrator,
+  executeComposition,
+  validateCompositionConfig,
+  evaluateJsonPath,
+  evaluateCondition,
+  applyMapping,
+  aggregateResults,
+  versionMatches,
+  resolveDependency,
+  COMPOSITION_ERRORS,
+  // Policy Enforcement
+  checkToolPolicy,
+  checkPolicy,
+  checkToolAllowed,
+  validateToolsAllowed,
+  getDeniedActions,
+  getDeniedTools,
+  getAllowedTools,
+  ToolCallInterceptor,
+  createPolicyAwareExecutor,
+  type PolicyAction,
+  type PolicyCheckResult,
+  type ToolCallRequest,
+  type ToolCallResult,
+  type ToolExecutor,
 } from './modules/index.js';
 
 // Server

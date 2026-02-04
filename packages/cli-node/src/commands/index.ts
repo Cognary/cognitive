@@ -10,3 +10,4 @@ export * from './add.js';
 export * from './update.js';
 export * from './remove.js';
 export * from './versions.js';
+export * from './compose.js';

@@ -1,11 +1,15 @@
 """
 LLM Providers - Unified interface for calling different LLM backends.
+
+Supports both synchronous and streaming modes:
+- call_llm(): Synchronous, returns complete response
+- call_llm_stream(): Streaming, yields response chunks
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterator
 
 
 def call_llm(prompt: str, model: Optional[str] = None) -> str:
@@ -36,6 +40,153 @@ def call_llm(prompt: str, model: Optional[str] = None) -> str:
         return _call_minimax(prompt, model)
     else:
         return _call_stub(prompt)
+
+
+def call_llm_stream(prompt: str, model: Optional[str] = None) -> Iterator[str]:
+    """
+    Call the configured LLM with streaming output.
+    
+    Yields chunks of the response as they are generated.
+    
+    Args:
+        prompt: The prompt to send
+        model: Optional model override
+    
+    Yields:
+        String chunks of the LLM's response
+    """
+    provider = os.environ.get("LLM_PROVIDER", "stub").lower()
+    
+    if provider == "openai":
+        yield from _stream_openai(prompt, model)
+    elif provider == "anthropic":
+        yield from _stream_anthropic(prompt, model)
+    elif provider == "ollama":
+        yield from _stream_ollama(prompt, model)
+    elif provider == "minimax":
+        yield from _stream_minimax(prompt, model)
+    else:
+        # Stub doesn't support streaming, return full response
+        yield _call_stub(prompt)
+
+
+def _stream_openai(prompt: str, model: Optional[str] = None) -> Iterator[str]:
+    """Stream from OpenAI API."""
+    try:
+        from openai import OpenAI
+    except ImportError:
+        raise ImportError("OpenAI not installed. Run: pip install cognitive[openai]")
+    
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY environment variable not set")
+    
+    client = OpenAI(api_key=api_key)
+    model = model or os.environ.get("LLM_MODEL", "gpt-4o")
+    
+    stream = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You output only valid JSON matching the required schema."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2,
+        stream=True
+    )
+    
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
+
+
+def _stream_anthropic(prompt: str, model: Optional[str] = None) -> Iterator[str]:
+    """Stream from Anthropic Claude API."""
+    try:
+        import anthropic
+    except ImportError:
+        raise ImportError("Anthropic not installed. Run: pip install cognitive[anthropic]")
+    
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+    
+    client = anthropic.Anthropic(api_key=api_key)
+    model = model or os.environ.get("LLM_MODEL", "claude-sonnet-4-20250514")
+    
+    with client.messages.stream(
+        model=model,
+        max_tokens=8192,
+        system="You output only valid JSON matching the required schema.",
+        messages=[{"role": "user", "content": prompt}]
+    ) as stream:
+        for text in stream.text_stream:
+            yield text
+
+
+def _stream_minimax(prompt: str, model: Optional[str] = None) -> Iterator[str]:
+    """Stream from MiniMax API (OpenAI-compatible)."""
+    try:
+        from openai import OpenAI
+    except ImportError:
+        raise ImportError("OpenAI SDK not installed. Run: pip install openai")
+    
+    api_key = os.environ.get("MINIMAX_API_KEY")
+    if not api_key:
+        raise ValueError("MINIMAX_API_KEY environment variable not set")
+    
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.minimax.chat/v1"
+    )
+    model = model or os.environ.get("LLM_MODEL", "MiniMax-Text-01")
+    
+    stream = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You output only valid JSON matching the required schema."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2,
+        stream=True
+    )
+    
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield chunk.choices[0].delta.content
+
+
+def _stream_ollama(prompt: str, model: Optional[str] = None) -> Iterator[str]:
+    """Stream from local Ollama instance."""
+    try:
+        import requests
+    except ImportError:
+        raise ImportError("Requests not installed. Run: pip install cognitive[ollama]")
+    
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    model = model or os.environ.get("LLM_MODEL", "llama3.1")
+    
+    response = requests.post(
+        f"{host}/api/generate",
+        json={
+            "model": model,
+            "prompt": prompt,
+            "stream": True,
+            "format": "json",
+            "options": {"temperature": 0.2}
+        },
+        stream=True
+    )
+    response.raise_for_status()
+    
+    for line in response.iter_lines():
+        if line:
+            try:
+                data = json.loads(line)
+                if "response" in data:
+                    yield data["response"]
+            except json.JSONDecodeError:
+                # Skip malformed JSON lines
+                continue
 
 
 def _call_openai(prompt: str, model: Optional[str] = None) -> str:

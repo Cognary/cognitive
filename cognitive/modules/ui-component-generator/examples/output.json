@@ -1,0 +1,102 @@
+{
+  "ok": true,
+  "meta": {
+    "confidence": 0.92,
+    "risk": "low",
+    "explain": "生成了完整的 Avatar 组件，包含图片/文字/图标三种模式、5 种尺寸、在线状态指示器和头像组功能。"
+  },
+  "data": {
+    "component": {
+      "name": "Avatar",
+      "framework": "react",
+      "files": [
+        {
+          "filename": "Avatar.tsx",
+          "language": "typescript",
+          "content": "import { forwardRef, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react';\nimport { clsx } from 'clsx';\n\nexport type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';\nexport type AvatarShape = 'circle' | 'square';\n\nexport interface AvatarProps extends Omit<ComponentPropsWithoutRef<'span'>, 'children'> {\n  /** 头像图片 URL */\n  src?: string;\n  /** 图片替代文本 */\n  alt?: string;\n  /** 用户名称，无图片时显示首字母 */\n  name?: string;\n  /** 头像大小 */\n  size?: AvatarSize;\n  /** 头像形状 */\n  shape?: AvatarShape;\n  /** 自定义回退内容 */\n  fallback?: ReactNode;\n  /** 在线状态 */\n  status?: 'online' | 'offline' | 'busy' | 'away';\n}\n\nconst sizeClasses: Record<AvatarSize, string> = {\n  xs: 'h-6 w-6 text-xs',\n  sm: 'h-8 w-8 text-sm',\n  md: 'h-10 w-10 text-base',\n  lg: 'h-12 w-12 text-lg',\n  xl: 'h-16 w-16 text-xl',\n};\n\nconst statusClasses: Record<string, string> = {\n  online: 'bg-green-500',\n  offline: 'bg-gray-400',\n  busy: 'bg-red-500',\n  away: 'bg-yellow-500',\n};\n\nfunction getInitials(name: string): string {\n  return name\n    .split(' ')\n    .map((word) => word[0])\n    .join('')\n    .toUpperCase()\n    .slice(0, 2);\n}\n\nexport const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(\n  (\n    {\n      src,\n      alt = 'avatar',\n      name,\n      size = 'md',\n      shape = 'circle',\n      fallback,\n      status,\n      className,\n      ...props\n    },\n    ref\n  ) => {\n    const [imgError, setImgError] = useState(false);\n\n    const showImage = src && !imgError;\n    const initials = name ? getInitials(name) : null;\n\n    return (\n      <span\n        ref={ref}\n        className={clsx(\n          'relative inline-flex items-center justify-center overflow-hidden bg-gray-200 text-gray-600 font-medium',\n          sizeClasses[size],\n          shape === 'circle' ? 'rounded-full' : 'rounded-md',\n          className\n        )}\n        role=\"img\"\n        aria-label={alt}\n        {...props}\n      >\n        {showImage ? (\n          <img\n            src={src}\n            alt={alt}\n            className=\"h-full w-full object-cover\"\n            onError={() => setImgError(true)}\n          />\n        ) : fallback ? (\n          fallback\n        ) : initials ? (\n          <span>{initials}</span>\n        ) : (\n          <svg\n            className=\"h-1/2 w-1/2\"\n            fill=\"currentColor\"\n            viewBox=\"0 0 24 24\"\n            aria-hidden=\"true\"\n          >\n            <path d=\"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\" />\n          </svg>\n        )}\n\n        {status && (\n          <span\n            className={clsx(\n              'absolute bottom-0 right-0 block rounded-full ring-2 ring-white',\n              size === 'xs' || size === 'sm' ? 'h-2 w-2' : 'h-3 w-3',\n              statusClasses[status]\n            )}\n            aria-label={`Status: ${status}`}\n          />\n        )}\n      </span>\n    );\n  }\n);\n\nAvatar.displayName = 'Avatar';\n"
+        },
+        {
+          "filename": "AvatarGroup.tsx",
+          "language": "typescript",
+          "content": "import { Children, type ReactNode } from 'react';\nimport { clsx } from 'clsx';\nimport type { AvatarSize } from './Avatar';\n\nexport interface AvatarGroupProps {\n  /** 子元素 (Avatar 组件) */\n  children: ReactNode;\n  /** 最大显示数量 */\n  max?: number;\n  /** 头像大小 */\n  size?: AvatarSize;\n  /** 自定义类名 */\n  className?: string;\n}\n\nconst spacingClasses: Record<AvatarSize, string> = {\n  xs: '-space-x-2',\n  sm: '-space-x-2',\n  md: '-space-x-3',\n  lg: '-space-x-4',\n  xl: '-space-x-5',\n};\n\nexport function AvatarGroup({\n  children,\n  max,\n  size = 'md',\n  className,\n}: AvatarGroupProps) {\n  const childArray = Children.toArray(children);\n  const visibleChildren = max ? childArray.slice(0, max) : childArray;\n  const remainingCount = max ? Math.max(0, childArray.length - max) : 0;\n\n  return (\n    <div\n      className={clsx('flex items-center', spacingClasses[size], className)}\n      role=\"group\"\n      aria-label=\"Avatar group\"\n    >\n      {visibleChildren.map((child, index) => (\n        <div key={index} className=\"relative ring-2 ring-white rounded-full\">\n          {child}\n        </div>\n      ))}\n\n      {remainingCount > 0 && (\n        <div\n          className={clsx(\n            'relative flex items-center justify-center rounded-full bg-gray-300 text-gray-600 font-medium ring-2 ring-white',\n            size === 'xs' && 'h-6 w-6 text-xs',\n            size === 'sm' && 'h-8 w-8 text-xs',\n            size === 'md' && 'h-10 w-10 text-sm',\n            size === 'lg' && 'h-12 w-12 text-base',\n            size === 'xl' && 'h-16 w-16 text-lg'\n          )}\n        >\n          +{remainingCount}\n        </div>\n      )}\n    </div>\n  );\n}\n"
+        },
+        {
+          "filename": "index.ts",
+          "language": "typescript",
+          "content": "export { Avatar, type AvatarProps, type AvatarSize, type AvatarShape } from './Avatar';\nexport { AvatarGroup, type AvatarGroupProps } from './AvatarGroup';\n"
+        }
+      ],
+      "dependencies": ["react", "clsx"],
+      "peer_dependencies": ["react", "react-dom"],
+      "usage_example": "import { Avatar, AvatarGroup } from './Avatar';\n\n// 基础用法\n<Avatar src=\"/avatar.jpg\" alt=\"John Doe\" />\n\n// 文字回退\n<Avatar name=\"John Doe\" />\n\n// 带在线状态\n<Avatar src=\"/avatar.jpg\" status=\"online\" />\n\n// 不同大小\n<Avatar name=\"JD\" size=\"xs\" />\n<Avatar name=\"JD\" size=\"lg\" />\n\n// 方形头像\n<Avatar src=\"/avatar.jpg\" shape=\"square\" />\n\n// 头像组\n<AvatarGroup max={3}>\n  <Avatar name=\"Alice\" />\n  <Avatar name=\"Bob\" />\n  <Avatar name=\"Charlie\" />\n  <Avatar name=\"David\" />\n</AvatarGroup>",
+      "props_documentation": [
+        {
+          "name": "src",
+          "type": "string",
+          "required": false,
+          "default": "-",
+          "description": "头像图片 URL"
+        },
+        {
+          "name": "alt",
+          "type": "string",
+          "required": false,
+          "default": "\"avatar\"",
+          "description": "图片替代文本"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "-",
+          "description": "用户名称，无图片时显示首字母"
+        },
+        {
+          "name": "size",
+          "type": "'xs' | 'sm' | 'md' | 'lg' | 'xl'",
+          "required": false,
+          "default": "\"md\"",
+          "description": "头像大小"
+        },
+        {
+          "name": "shape",
+          "type": "'circle' | 'square'",
+          "required": false,
+          "default": "\"circle\"",
+          "description": "头像形状"
+        },
+        {
+          "name": "fallback",
+          "type": "ReactNode",
+          "required": false,
+          "default": "-",
+          "description": "自定义回退内容"
+        },
+        {
+          "name": "status",
+          "type": "'online' | 'offline' | 'busy' | 'away'",
+          "required": false,
+          "default": "-",
+          "description": "在线状态指示器"
+        }
+      ]
+    },
+    "rationale": "设计决策说明：\n\n1. **组件结构**：使用 forwardRef 支持 ref 转发，继承 span 的原生属性提供最大灵活性。\n\n2. **回退策略**：采用三级回退机制：图片 → 自定义 fallback → 名字首字母 → 默认图标。使用 useState 跟踪图片加载错误状态。\n\n3. **尺寸系统**：提供 5 种预设尺寸 (xs/sm/md/lg/xl)，使用 Record 类型确保类型安全和一致性。\n\n4. **状态指示器**：作为绝对定位的子元素实现，支持 4 种状态，根据头像大小自动调整指示器尺寸。\n\n5. **无障碍支持**：添加 role=\"img\" 和 aria-label，状态指示器也有独立的 aria-label。\n\n6. **AvatarGroup**：独立组件实现堆叠效果，使用负 margin 和 ring 实现重叠边框，支持 max 属性显示剩余数量。\n\n7. **样式方案**：使用 Tailwind CSS + clsx 实现条件样式，保持代码简洁且易于定制。",
+    "behavior_equivalence": true,
+    "warnings": [],
+    "extensions": {
+      "insights": [
+        {
+          "text": "可以添加 Skeleton 加载状态，在图片加载时显示骨架屏",
+          "suggested_mapping": "props.loading",
+          "evidence": "当前实现在图片加载前会短暂显示回退内容"
+        },
+        {
+          "text": "考虑支持图片懒加载以优化性能",
+          "suggested_mapping": "props.lazy",
+          "evidence": "页面有大量头像时可能影响首屏加载"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,86 @@
+# Cognitive Module Manifest v2.2
+name: ui-component-generator
+version: 2.2.0
+responsibility: 根据需求描述生成可用的 React/Vue 组件代码
+
+# 模块分级 - exec 因为要生成可执行代码
+tier: exec
+schema_strictness: high
+
+# 明确排除项 - 模块不会做什么
+excludes:
+  - 生成后端代码
+  - 创建数据库操作
+  - 发起网络请求
+  - 读写文件系统
+  - 编造未提供的业务逻辑
+  - 生成不安全的代码（如 eval、dangerouslySetInnerHTML 无过滤）
+
+# 运行时策略
+policies:
+  network: deny
+  filesystem_write: deny
+  side_effects: deny
+  code_execution: deny
+
+# 工具策略
+tools:
+  policy: deny_by_default
+  allowed: []
+  denied:
+    - write_file
+    - shell
+    - network
+    - code_interpreter
+
+# 溢出策略 - exec 模块限制较严
+overflow:
+  enabled: true
+  recoverable: true
+  max_items: 5
+  require_suggested_mapping: true
+
+# Enum 策略 - exec 模块使用严格枚举
+enums:
+  strategy: strict
+
+# 失败契约
+failure:
+  contract: error_union
+  partial_allowed: true
+  must_return_error_schema: true
+
+# 运行时要求
+runtime_requirements:
+  structured_output: true
+  max_input_tokens: 8000
+  preferred_capabilities:
+    - json_mode
+    - code_generation
+
+# 调用控制
+invocation:
+  user_invocable: true
+  agent_invocable: true
+
+# IO Schemas
+io:
+  input: ./schema.json#/input
+  data: ./schema.json#/data
+  meta: ./schema.json#/meta
+  error: ./schema.json#/error
+
+# 兼容性配置
+compat:
+  accepts_v21_payload: true
+  runtime_auto_wrap: true
+  schema_output_alias: data
+
+# 约束（向后兼容）
+constraints:
+  no_network: true
+  no_side_effects: true
+  no_inventing_data: true
+  require_confidence: true
+  require_rationale: true
+  behavior_equivalence_false_max_confidence: 0.7
