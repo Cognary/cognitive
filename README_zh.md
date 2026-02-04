@@ -32,30 +32,44 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 - **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
 - **公共注册表** - `cogn install registry:module-name`
 
+## 版本选择
+
+| 版本 | 规范 | npm | PyPI | 状态 |
+|------|------|-----|------|------|
+| **v2.2** | v2.2 | `2.2.0` | `2.2.0` | ✅ 稳定版 (推荐) |
+| **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 测试版 (流式 + 多模态) |
+
+```bash
+# 安装稳定版 v2.2
+npm install cognitive-modules-cli@2.2.0
+pip install cognitive-modules==2.2.0
+
+# 安装测试版 v2.5 (流式 + 多模态)
+npm install cognitive-modules-cli@beta
+pip install cognitive-modules==2.5.0b1
+```
+
 ## 安装
 
 ### Node.js (npm) - 推荐
 
 ```bash
 # 零安装快速体验（推荐）
-npx cogn run code-reviewer --args "your code"
+npx cognitive-modules-cli@2.2.0 run code-reviewer --args "your code"
 
 # 全局安装
-npm install -g cogn
-
-# 或安装完整包名
-npm install -g cognitive-modules-cli
+npm install -g cognitive-modules-cli@2.2.0
 ```
 
 ### Python (pip)
 
 ```bash
-pip install cognitive-modules
+pip install cognitive-modules==2.2.0
 
 # 带 LLM 支持
-pip install cognitive-modules[openai]      # OpenAI
-pip install cognitive-modules[anthropic]   # Claude
-pip install cognitive-modules[all]         # 全部
+pip install "cognitive-modules[openai]==2.2.0"      # OpenAI
+pip install "cognitive-modules[anthropic]==2.2.0"   # Claude
+pip install "cognitive-modules[all]==2.2.0"         # 全部
 ```
 
 | 平台 | 包名 | 命令 | 特性 |

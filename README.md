@@ -32,30 +32,44 @@ Cognitive Modules is an AI task definition specification designed for generation
 - **Multi-LLM Support** - OpenAI / Anthropic / MiniMax / Ollama
 - **Public Registry** - `cogn install registry:module-name`
 
+## Version Selection
+
+| Version | Spec | npm | PyPI | Status |
+|---------|------|-----|------|--------|
+| **v2.2** | v2.2 | `2.2.0` | `2.2.0` | ✅ Stable (recommended) |
+| **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 Beta (streaming + multimodal) |
+
+```bash
+# Install stable v2.2
+npm install cognitive-modules-cli@2.2.0
+pip install cognitive-modules==2.2.0
+
+# Install beta v2.5 (streaming + multimodal)
+npm install cognitive-modules-cli@beta
+pip install cognitive-modules==2.5.0b1
+```
+
 ## Installation
 
 ### Node.js (npm) - Recommended
 
 ```bash
 # Zero-install quick start (recommended)
-npx cogn run code-reviewer --args "your code"
+npx cognitive-modules-cli@2.2.0 run code-reviewer --args "your code"
 
 # Global installation
-npm install -g cogn
-
-# Or install with full package name
-npm install -g cognitive-modules-cli
+npm install -g cognitive-modules-cli@2.2.0
 ```
 
 ### Python (pip)
 
 ```bash
-pip install cognitive-modules
+pip install cognitive-modules==2.2.0
 
 # With LLM support
-pip install cognitive-modules[openai]      # OpenAI
-pip install cognitive-modules[anthropic]   # Claude
-pip install cognitive-modules[all]         # All providers
+pip install "cognitive-modules[openai]==2.2.0"      # OpenAI
+pip install "cognitive-modules[anthropic]==2.2.0"   # Claude
+pip install "cognitive-modules[all]==2.2.0"         # All providers
 ```
 
 | Platform | Package | Command | Features |
