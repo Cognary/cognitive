@@ -1,0 +1,20 @@
+{
+  "$test": {
+    "name": "invalid-risk-enum",
+    "description": "Risk field uses invalid enum value",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.85,
+      "risk": "critical",
+      "explain": "Risk must be one of: none, low, medium, high"
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    }
+  }
+}

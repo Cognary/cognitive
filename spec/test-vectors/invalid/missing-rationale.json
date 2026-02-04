@@ -1,0 +1,20 @@
+{
+  "$test": {
+    "name": "missing-rationale",
+    "description": "Data object missing required 'rationale' field",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.85,
+      "risk": "low",
+      "explain": "Data is missing rationale."
+    },
+    "data": {
+      "result": "some result without rationale"
+    }
+  }
+}

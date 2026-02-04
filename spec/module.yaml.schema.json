@@ -1,0 +1,536 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/schema/v2.2/module.yaml.json",
+  "title": "Cognitive Module Manifest v2.2",
+  "description": "Schema for module.yaml - the machine-readable configuration for Cognitive Modules.",
+  "type": "object",
+  
+  "required": ["name", "version", "responsibility", "tier"],
+  
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Module name. MUST be lowercase with hyphens. Example: 'code-simplifier'"
+    },
+    
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version. Example: '2.2.0'"
+    },
+    
+    "responsibility": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "One-line description of what this module does."
+    },
+
+    "tier": {
+      "type": "string",
+      "enum": ["exec", "decision", "exploration"],
+      "description": "Module tier determines schema strictness and overflow policy. 'exec' for auto-execution, 'decision' for judgment tasks, 'exploration' for research/inspiration."
+    },
+
+    "schema_strictness": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Schema validation strictness. Defaults based on tier: exec=high, decision=medium, exploration=low."
+    },
+
+    "excludes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicit list of behaviors this module MUST NOT perform. Critical for safety."
+    },
+
+    "policies": {
+      "type": "object",
+      "description": "Runtime security policies.",
+      "properties": {
+        "network": {
+          "type": "string",
+          "enum": ["allow", "deny"],
+          "default": "deny"
+        },
+        "filesystem_write": {
+          "type": "string",
+          "enum": ["allow", "deny"],
+          "default": "deny"
+        },
+        "side_effects": {
+          "type": "string",
+          "enum": ["allow", "deny"],
+          "default": "deny"
+        },
+        "code_execution": {
+          "type": "string",
+          "enum": ["allow", "deny"],
+          "default": "deny"
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["allow", "deny"]
+      }
+    },
+
+    "tools": {
+      "type": "object",
+      "description": "Tool access control configuration.",
+      "properties": {
+        "policy": {
+          "type": "string",
+          "enum": ["allow_by_default", "deny_by_default"],
+          "default": "deny_by_default"
+        },
+        "allowed": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicitly allowed tools."
+        },
+        "denied": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicitly denied tools."
+        }
+      }
+    },
+
+    "overflow": {
+      "type": "object",
+      "description": "Overflow policy for extensions.insights.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to allow extensions.insights."
+        },
+        "recoverable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether insights MUST have suggested_mapping."
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "default": 5,
+          "description": "Maximum number of insights allowed."
+        },
+        "require_suggested_mapping": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to require mapping suggestions for recoverability."
+        }
+      }
+    },
+
+    "enums": {
+      "type": "object",
+      "description": "Enum extension strategy.",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["strict", "extensible"],
+          "description": "'strict' only allows predefined values. 'extensible' allows {custom, reason} objects."
+        },
+        "unknown_tag": {
+          "type": "string",
+          "default": "custom",
+          "description": "Tag for unknown enum values when strategy is extensible."
+        }
+      }
+    },
+
+    "failure": {
+      "type": "object",
+      "description": "Failure handling configuration.",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "enum": ["error_union", "throw"],
+          "default": "error_union",
+          "description": "'error_union' returns structured error in envelope. 'throw' raises exception."
+        },
+        "partial_allowed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether partial_data MAY be returned on failure."
+        },
+        "must_return_error_schema": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether error MUST conform to schema.json#/error."
+        }
+      }
+    },
+
+    "runtime_requirements": {
+      "type": "object",
+      "description": "Requirements for LLM runtime.",
+      "properties": {
+        "structured_output": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the runtime MUST support structured/JSON output."
+        },
+        "max_input_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum input tokens this module accepts."
+        },
+        "preferred_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["json_mode", "long_context", "function_calling", "vision"]
+          },
+          "description": "Preferred LLM capabilities."
+        }
+      }
+    },
+
+    "io": {
+      "type": "object",
+      "description": "References to schema.json sections.",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "JSON Pointer to input schema. Example: './schema.json#/input'"
+        },
+        "data": {
+          "type": "string",
+          "description": "JSON Pointer to data schema. Example: './schema.json#/data'"
+        },
+        "meta": {
+          "type": "string",
+          "description": "JSON Pointer to meta schema. Example: './schema.json#/meta'"
+        },
+        "error": {
+          "type": "string",
+          "description": "JSON Pointer to error schema. Example: './schema.json#/error'"
+        }
+      }
+    },
+
+    "compat": {
+      "type": "object",
+      "description": "Backward compatibility configuration.",
+      "properties": {
+        "accepts_v21_payload": {
+          "type": "boolean",
+          "default": false,
+          "description": "Accept v2.1 format (data contains confidence directly)."
+        },
+        "runtime_auto_wrap": {
+          "type": "boolean",
+          "default": false,
+          "description": "Runtime auto-wraps v2.1 payload to v2.2 envelope."
+        },
+        "schema_output_alias": {
+          "type": "string",
+          "enum": ["data", "output"],
+          "default": "data",
+          "description": "Treat 'output' in schema.json as alias for 'data'."
+        }
+      }
+    },
+
+    "meta": {
+      "type": "object",
+      "description": "Meta field aggregation rules.",
+      "properties": {
+        "risk_rule": {
+          "type": "string",
+          "enum": ["max_changes_risk", "max_issues_risk", "explicit", "custom_function"],
+          "default": "max_changes_risk",
+          "description": "How to aggregate meta.risk from data fields."
+        }
+      }
+    },
+
+    "tests": {
+      "type": "array",
+      "description": "Test case definitions.",
+      "items": {
+        "type": "string",
+        "pattern": "^.+\\.input\\.json\\s*->\\s*.+\\.expected\\.json$",
+        "description": "Test case mapping. Format: 'tests/case1.input.json -> tests/case1.expected.json'"
+      }
+    },
+
+    "context": {
+      "type": "object",
+      "description": "Context protocol configuration. See CONTEXT-PROTOCOL.md for details.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["fork", "main"],
+          "default": "main",
+          "description": "Context mode. 'fork' for isolated execution, 'main' for shared context."
+        },
+        "accepts": {
+          "type": "array",
+          "description": "Context types this module accepts.",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Context type name. Standard types: conversation_history, user_profile, session_state, previous_result."
+              },
+              "required": {
+                "type": "boolean",
+                "default": false
+              },
+              "max_turns": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "For conversation_history: maximum turns to include."
+              },
+              "fields": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "For user_profile: specific fields to accept."
+              },
+              "schema": {
+                "type": "string",
+                "description": "Path to JSON Schema file for validation."
+              },
+              "ttl": {
+                "type": "integer",
+                "minimum": -1,
+                "description": "Time-to-live in seconds. -1 for persistent."
+              },
+              "from_module": {
+                "type": "string",
+                "description": "For previous_result: source module name."
+              }
+            }
+          }
+        },
+        "emits": {
+          "type": "array",
+          "description": "Context types this module produces.",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer",
+                "minimum": -1,
+                "description": "Time-to-live in seconds. -1 for persistent."
+              },
+              "key_pattern": {
+                "type": "string",
+                "description": "Cache key pattern. Variables: ${module}, ${input_hash}, ${user_id}, ${session_id}."
+              },
+              "schema": {
+                "type": "string",
+                "description": "Path to JSON Schema file for validation."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "composition": {
+      "type": "object",
+      "description": "Module composition configuration. See COMPOSITION.md for details.",
+      "properties": {
+        "requires": {
+          "type": "array",
+          "description": "Module dependencies.",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Dependent module name."
+              },
+              "version": {
+                "type": "string",
+                "description": "Semver version range. Example: '>=1.0.0', '^2.0.0'."
+              },
+              "optional": {
+                "type": "boolean",
+                "default": false
+              },
+              "fallback": {
+                "type": ["string", "null"],
+                "description": "Alternative module if unavailable."
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Per-module timeout in milliseconds."
+              }
+            }
+          }
+        },
+        "pattern": {
+          "type": "string",
+          "enum": ["sequential", "parallel", "conditional"],
+          "default": "sequential",
+          "description": "Composition execution pattern."
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Maximum composition nesting depth."
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 60000,
+          "description": "Total composition timeout in milliseconds."
+        },
+        "dataflow": {
+          "type": "array",
+          "description": "Data flow between modules.",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "properties": {
+              "from": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "array", "items": { "type": "string" } }
+                ],
+                "description": "Source module(s). Use 'input' for original input."
+              },
+              "to": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "array", "items": { "type": "string" } }
+                ],
+                "description": "Target module(s). Use 'output' for final output."
+              },
+              "mapping": {
+                "type": "object",
+                "additionalProperties": { "type": "string" },
+                "description": "Field mapping using JSONPath expressions."
+              },
+              "condition": {
+                "type": "string",
+                "description": "Condition expression for conditional execution."
+              },
+              "aggregate": {
+                "type": "string",
+                "enum": ["merge", "array", "first", "custom"],
+                "description": "Aggregation strategy for multiple sources."
+              }
+            }
+          }
+        },
+        "routing": {
+          "type": "array",
+          "description": "Routing rules for conditional pattern.",
+          "items": {
+            "type": "object",
+            "required": ["condition"],
+            "properties": {
+              "condition": {
+                "type": "string",
+                "description": "Condition expression."
+              },
+              "next": {
+                "type": ["string", "null"],
+                "description": "Next module to execute, or null to use current result."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "invocation": {
+      "type": "object",
+      "description": "Invocation control.",
+      "properties": {
+        "user_invocable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether users can directly invoke this module."
+        },
+        "agent_invocable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether agents can automatically invoke this module."
+        }
+      }
+    }
+  },
+
+  "allOf": [
+    {
+      "if": {
+        "properties": { "tier": { "const": "exec" } }
+      },
+      "then": {
+        "properties": {
+          "schema_strictness": { "default": "high" },
+          "overflow": {
+            "properties": {
+              "enabled": { "default": false },
+              "max_items": { "default": 0 }
+            }
+          },
+          "enums": {
+            "properties": {
+              "strategy": { "default": "strict" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "tier": { "const": "decision" } }
+      },
+      "then": {
+        "properties": {
+          "schema_strictness": { "default": "medium" },
+          "overflow": {
+            "properties": {
+              "max_items": { "default": 5 }
+            }
+          },
+          "enums": {
+            "properties": {
+              "strategy": { "default": "extensible" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "tier": { "const": "exploration" } }
+      },
+      "then": {
+        "properties": {
+          "schema_strictness": { "default": "low" },
+          "overflow": {
+            "properties": {
+              "max_items": { "default": 20 }
+            }
+          },
+          "enums": {
+            "properties": {
+              "strategy": { "default": "extensible" }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

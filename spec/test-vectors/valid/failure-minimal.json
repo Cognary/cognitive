@@ -1,0 +1,20 @@
+{
+  "$test": {
+    "name": "minimal-failure-envelope",
+    "description": "Minimal valid failure response",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "envelope": {
+    "ok": false,
+    "meta": {
+      "confidence": 0.0,
+      "risk": "high",
+      "explain": "Input validation failed: missing required field 'code'"
+    },
+    "error": {
+      "code": "INVALID_INPUT",
+      "message": "Required field 'code' is missing from input."
+    }
+  }
+}

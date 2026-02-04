@@ -1,0 +1,20 @@
+{
+  "$test": {
+    "name": "confidence-boundary-values",
+    "description": "Valid confidence values at boundaries (0 and 1)",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 1.0,
+      "risk": "none",
+      "explain": "Perfect confidence - deterministic transformation."
+    },
+    "data": {
+      "result": "transformed",
+      "rationale": "Transformation is purely mechanical with no ambiguity."
+    }
+  }
+}

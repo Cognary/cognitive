@@ -1,0 +1,32 @@
+{
+  "$test": {
+    "name": "extensible-enum-custom-value",
+    "description": "Valid use of extensible enum with custom value object",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.88,
+      "risk": "low",
+      "explain": "Code simplified with custom optimization pattern."
+    },
+    "data": {
+      "simplified_code": "const memoized = useMemo(() => compute(x), [x]);",
+      "changes": [
+        {
+          "type": {
+            "custom": "add_memoization",
+            "reason": "React-specific optimization pattern not in predefined enum"
+          },
+          "description": "Added useMemo to prevent unnecessary recomputation",
+          "scope": "function",
+          "risk": "low"
+        }
+      ],
+      "behavior_equivalence": true,
+      "rationale": "The expensive computation was being called on every render. Adding useMemo caches the result and only recomputes when dependencies change."
+    }
+  }
+}

@@ -18,6 +18,59 @@
 
 ---
 
+## 0.0.1 关键词
+
+本文档中的 "MUST"、"MUST NOT"、"REQUIRED"、"SHALL"、"SHALL NOT"、"SHOULD"、"SHOULD NOT"、"RECOMMENDED"、"MAY" 和 "OPTIONAL" 应按照 [RFC 2119](https://tools.ietf.org/html/rfc2119) 的定义来解释。
+
+## 0.0.2 版本策略
+
+Cognitive Modules 遵循[语义化版本控制](https://semver.org/)：
+
+| 版本类型 | 示例 | 说明 | 弃用通知期 |
+|----------|------|------|-----------|
+| **主版本** | 3.0.0 | 信封或核心契约的破坏性变更 | 12 个月 |
+| **次版本** | 2.3.0 | 新功能，向后兼容 | - |
+| **补丁版本** | 2.2.1 | 仅 Bug 修复和澄清 | - |
+
+### 兼容性保证
+
+1. **次版本** 必须与同一主版本的先前次版本向后兼容
+2. **补丁版本** 不得引入任何行为变更
+3. **已弃用功能** 必须在声明的弃用期内继续工作
+4. **破坏性变更** 必须在迁移指南中记录
+
+## 0.0.3 兼容性矩阵
+
+| 规范版本 | 最低运行时 | 状态 | 弃用日期 | 迁移指南 |
+|----------|-----------|------|----------|----------|
+| v2.2 | 0.5.0 | ✅ 当前版本 | - | - |
+| v2.1 | 0.4.0 | 🔄 建议迁移 | 2026-06-01 | [v2.1 → v2.2](#6-迁移策略-v21--v22) |
+| v1.0 | 0.1.0 | ⚠️ 遗留版本 | 2025-12-01 | 参见 v1 文档 |
+
+### 运行时兼容性
+
+运行时应声明支持的规范版本：
+
+```yaml
+# runtime config
+cognitive:
+  spec_versions:
+    - "2.2"    # 完整支持
+    - "2.1"    # 兼容模式
+```
+
+## 0.0.4 相关文档
+
+| 文档 | 说明 |
+|------|------|
+| [CONFORMANCE.md](CONFORMANCE.md) | 实现的合规等级（Level 1/2/3） |
+| [ERROR-CODES.md](ERROR-CODES.md) | 标准错误码分类（E1xxx-E4xxx） |
+| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | 响应验证的 JSON Schema |
+| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | module.yaml 的 JSON Schema |
+| [spec/test-vectors/](spec/test-vectors/) | 官方合规测试向量 |
+
+---
+
 ## 0.1 核心概念
 
 ### Module（模块）
@@ -49,9 +102,25 @@ Contract 是模块与调用者之间的可验证承诺，分为两层：
 | **Data Schema** | 业务数据结构 | `schema.json#/data` |
 | **Error Schema** | 错误数据结构 | `schema.json#/error` |
 
-#### Envelope Contract（信封契约）
+#### Envelope Contract（信封契约，规范性）
 
-定义响应的**固定包装格式**，与具体模块无关：
+定义响应的**固定包装格式**，与具体模块无关。
+
+**成功信封要求：**
+
+1. 成功信封 MUST 将 `ok` 设置为 `true`
+2. 成功信封 MUST 包含 `meta` 对象
+3. 成功信封 MUST 包含 `data` 对象
+4. 成功信封 MUST NOT 包含 `error` 字段
+5. 成功信封 MUST NOT 包含 `partial_data` 字段
+
+**失败信封要求：**
+
+1. 失败信封 MUST 将 `ok` 设置为 `false`
+2. 失败信封 MUST 包含 `meta` 对象
+3. 失败信封 MUST 包含 `error` 对象
+4. 失败信封 MUST NOT 包含 `data` 字段
+5. 如果 module.yaml 中 `failure.partial_allowed: true`，失败信封 MAY 包含 `partial_data`
 
 ```json
 // 成功响应
@@ -63,11 +132,11 @@ Contract 是模块与调用者之间的可验证承诺，分为两层：
 
 | 字段 | 类型 | 成功时 | 失败时 |
 |------|------|--------|--------|
-| `ok` | boolean | `true` | `false` |
-| `meta` | object | ✅ 必填 | ✅ 必填 |
-| `data` | object | ✅ 必填 | ❌ 无 |
-| `error` | object | ❌ 无 | ✅ 必填 |
-| `partial_data` | object | ❌ 无 | ❌ 可选 |
+| `ok` | boolean | MUST 为 `true` | MUST 为 `false` |
+| `meta` | object | MUST 存在 | MUST 存在 |
+| `data` | object | MUST 存在 | MUST NOT 存在 |
+| `error` | object | MUST NOT 存在 | MUST 存在 |
+| `partial_data` | object | MUST NOT 存在 | MAY 存在 |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -971,6 +1040,17 @@ tests:
 | v0.1 | 2024 | 初始规范 |
 | v2.1 | 2024 | Envelope 格式、Failure Contract、Tools Policy |
 | v2.2 | 2026-02 | Control/Data 分离、Tier、Overflow、Extensible Enum、迁移策略、Contract 两层定义 |
+| v2.2.1 | 2026-02 | 新增：版本策略、兼容性矩阵、合规等级、错误码分类、JSON Schema、测试向量 |
+
+---
+
+## 10. 规范性参考
+
+| 参考 | 说明 |
+|------|------|
+| [RFC 2119](https://tools.ietf.org/html/rfc2119) | RFC 中关键词的使用 |
+| [JSON Schema Draft-07](https://json-schema.org/draft-07/json-schema-release-notes.html) | Schema 验证 |
+| [语义化版本 2.0](https://semver.org/lang/zh-CN/) | 版本号命名规范 |
 
 ---
 

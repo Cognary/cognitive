@@ -1,0 +1,20 @@
+{
+  "$test": {
+    "name": "explain-exceeds-max-length",
+    "description": "Explain field exceeds 280 character limit",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.85,
+      "risk": "low",
+      "explain": "This is an extremely long explanation that goes well beyond the 280 character limit that is specified in the Cognitive Modules v2.2 specification. The explain field is meant to be a brief summary for control plane consumers like middleware, UI cards, and logging systems. It should be concise and to the point, not a detailed rationale. That detailed information belongs in the data.rationale field which has no length limit. This explain field is approximately 500 characters long which clearly violates the constraint."
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$test": {
+    "name": "failure-with-partial-data",
+    "description": "Valid failure response with partial_data included",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "envelope": {
+    "ok": false,
+    "meta": {
+      "confidence": 0.62,
+      "risk": "medium",
+      "explain": "Behavior equivalence cannot be guaranteed without type information.",
+      "trace_id": "req-fail-789"
+    },
+    "error": {
+      "code": "E2001",
+      "message": "Confidence 0.62 below threshold 0.7 for exec tier.",
+      "recoverable": true,
+      "suggestion": "Provide type annotations or use decision tier instead."
+    },
+    "partial_data": {
+      "simplified_code": "def calc(x): return x * 2 if x else 0",
+      "changes": [
+        {
+          "type": "simplify_logic",
+          "description": "Simplified conditional",
+          "scope": "function",
+          "risk": "medium"
+        }
+      ],
+      "rationale": "Simplification applied but behavior depends on input types."
+    }
+  }
+}

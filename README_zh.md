@@ -392,9 +392,60 @@ cognitive-modules/
 
 ## 文档
 
-- [SPEC-v2.2.md](SPEC-v2.2_zh.md) - v2.2 完整规范（Control/Data 分离、Tier、Overflow）
-- [SPEC.md](SPEC.md) - v0.1 规范（含上下文哲学）
-- [INTEGRATION.md](INTEGRATION.md) - Agent 工具集成指南
+### 规范
+
+| 文档 | 说明 |
+|------|------|
+| [SPEC-v2.2_zh.md](SPEC-v2.2_zh.md) | v2.2 完整规范（Control/Data 分离、Tier、Overflow） |
+| [SPEC-v2.2.md](SPEC-v2.2.md) | v2.2 specification (English) |
+| [SPEC.md](SPEC.md) | v0.1 规范（含上下文哲学） |
+
+### 实现者指南
+
+| 文档 | 说明 |
+|------|------|
+| [IMPLEMENTERS-GUIDE.md](IMPLEMENTERS-GUIDE.md) | 第三方运行时实现指南 |
+| [CONFORMANCE.md](CONFORMANCE.md) | 合规等级（Level 1/2/3） |
+| [ERROR-CODES.md](ERROR-CODES.md) | 标准错误码分类（E1xxx-E4xxx） |
+| [templates/runtime-starter/](templates/runtime-starter/) | 新实现起步模板 |
+
+### 高级功能
+
+| 文档 | 说明 |
+|------|------|
+| [COMPOSITION.md](COMPOSITION.md) | 模块组合与数据流规范 |
+| [CONTEXT-PROTOCOL.md](CONTEXT-PROTOCOL.md) | 有状态工作流的上下文协议 |
+
+### Schema 与测试向量
+
+| 资源 | 说明 |
+|------|------|
+| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | v2.2 信封验证 JSON Schema |
+| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | module.yaml JSON Schema |
+| [spec/test-vectors/](spec/test-vectors/) | 官方合规测试向量 |
+
+### 注册表与分发
+
+| 资源 | 说明 |
+|------|------|
+| [REGISTRY-PROTOCOL.md](REGISTRY-PROTOCOL.md) | 注册表协议规范 |
+| [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | 注册表条目 JSON Schema |
+| [cognitive-registry.json](cognitive-registry.json) | 当前公共注册表 |
+| [CERTIFICATION.md](CERTIFICATION.md) | 认证体系（徽章、验证流程） |
+
+### 治理
+
+| 文档 | 说明 |
+|------|------|
+| [GOVERNANCE.md](GOVERNANCE.md) | 项目治理结构 |
+| [CMEP-PROCESS.md](CMEP-PROCESS.md) | 增强提案流程 |
+
+### 集成
+
+| 文档 | 说明 |
+|------|------|
+| [INTEGRATION.md](INTEGRATION.md) | Agent 工具集成指南 |
+| [COGNITIVE-PROTOCOL.md](COGNITIVE-PROTOCOL.md) | 协议详情 |
 
 ## License
 

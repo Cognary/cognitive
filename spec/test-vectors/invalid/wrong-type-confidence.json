@@ -1,0 +1,20 @@
+{
+  "$test": {
+    "name": "wrong-type-confidence",
+    "description": "Confidence is string instead of number",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": "high",
+      "risk": "low",
+      "explain": "Confidence should be a number, not a string."
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    }
+  }
+}

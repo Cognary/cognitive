@@ -7,6 +7,46 @@ on:
     branches: [main]
 
 jobs:
+  # Validate JSON Schemas and Test Vectors
+  validate-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate response-envelope.schema.json
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          with open('spec/response-envelope.schema.json') as f:
+              schema = json.load(f)
+          jsonschema.Draft7Validator.check_schema(schema)
+          print('✅ response-envelope.schema.json is valid')
+          "
+
+      - name: Validate module.yaml.schema.json
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          with open('spec/module.yaml.schema.json') as f:
+              schema = json.load(f)
+          jsonschema.Draft7Validator.check_schema(schema)
+          print('✅ module.yaml.schema.json is valid')
+          "
+
+      - name: Run test vector validation
+        run: |
+          python scripts/validate-test-vectors.py --level 3 --verbose
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:

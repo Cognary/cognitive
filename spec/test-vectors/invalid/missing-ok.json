@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "missing-ok-field",
+    "description": "Envelope missing required 'ok' field",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "meta": {
+      "confidence": 0.85,
+      "risk": "low",
+      "explain": "This envelope is missing the ok field."
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    }
+  }
+}

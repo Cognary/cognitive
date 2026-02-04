@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "missing-confidence",
+    "description": "Meta object missing required 'confidence' field",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "risk": "low",
+      "explain": "Missing confidence field in meta."
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    }
+  }
+}

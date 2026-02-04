@@ -1,0 +1,24 @@
+{
+  "$test": {
+    "name": "failure-with-data-field",
+    "description": "Failure envelope (ok=false) should not have data field (use partial_data instead)",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": false,
+    "meta": {
+      "confidence": 0.0,
+      "risk": "high",
+      "explain": "Failure should use partial_data, not data."
+    },
+    "error": {
+      "code": "SOME_ERROR",
+      "message": "An error occurred"
+    },
+    "data": {
+      "rationale": "This should be partial_data not data"
+    }
+  }
+}

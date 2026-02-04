@@ -392,9 +392,60 @@ Both versions share the same module format and v2.2 specification.
 
 ## Documentation
 
-- [SPEC-v2.2.md](SPEC-v2.2.md) - v2.2 full specification (Control/Data separation, Tier, Overflow)
-- [SPEC.md](SPEC.md) - v0.1 specification (with context philosophy)
-- [INTEGRATION.md](INTEGRATION.md) - Agent tool integration guide
+### Specification
+
+| Document | Description |
+|----------|-------------|
+| [SPEC-v2.2.md](SPEC-v2.2.md) | v2.2 full specification (Control/Data separation, Tier, Overflow) |
+| [SPEC-v2.2_zh.md](SPEC-v2.2_zh.md) | v2.2 规范中文版 |
+| [SPEC.md](SPEC.md) | v0.1 specification (context philosophy) |
+
+### For Implementers
+
+| Document | Description |
+|----------|-------------|
+| [IMPLEMENTERS-GUIDE.md](IMPLEMENTERS-GUIDE.md) | Step-by-step guide for building a runtime |
+| [CONFORMANCE.md](CONFORMANCE.md) | Conformance levels (Level 1/2/3) |
+| [ERROR-CODES.md](ERROR-CODES.md) | Standard error code taxonomy (E1xxx-E4xxx) |
+| [templates/runtime-starter/](templates/runtime-starter/) | Starter template for new implementations |
+
+### Advanced Features
+
+| Document | Description |
+|----------|-------------|
+| [COMPOSITION.md](COMPOSITION.md) | Module composition and dataflow specification |
+| [CONTEXT-PROTOCOL.md](CONTEXT-PROTOCOL.md) | Context protocol for stateful workflows |
+
+### Schemas & Test Vectors
+
+| Resource | Description |
+|----------|-------------|
+| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | JSON Schema for v2.2 envelope validation |
+| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | JSON Schema for module.yaml |
+| [spec/test-vectors/](spec/test-vectors/) | Official test vectors for compliance |
+
+### Registry & Distribution
+
+| Resource | Description |
+|----------|-------------|
+| [REGISTRY-PROTOCOL.md](REGISTRY-PROTOCOL.md) | Registry protocol specification |
+| [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | Registry entry JSON Schema |
+| [cognitive-registry.json](cognitive-registry.json) | Current public registry |
+| [CERTIFICATION.md](CERTIFICATION.md) | Certification program (badges, verification) |
+
+### Governance
+
+| Document | Description |
+|----------|-------------|
+| [GOVERNANCE.md](GOVERNANCE.md) | Project governance structure |
+| [CMEP-PROCESS.md](CMEP-PROCESS.md) | Enhancement proposal process |
+
+### Integration
+
+| Document | Description |
+|----------|-------------|
+| [INTEGRATION.md](INTEGRATION.md) | Agent tool integration guide |
+| [COGNITIVE-PROTOCOL.md](COGNITIVE-PROTOCOL.md) | Protocol details |
 
 ## License
 

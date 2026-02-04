@@ -1,0 +1,49 @@
+{
+  "$test": {
+    "name": "full-featured-envelope",
+    "description": "Complete envelope with all optional fields populated",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.92,
+      "risk": "low",
+      "explain": "Code simplified successfully. Behavior equivalence guaranteed.",
+      "trace_id": "req-abc-123-def-456",
+      "model": "gpt-4o",
+      "latency_ms": 1847
+    },
+    "data": {
+      "simplified_code": "def process(x):\n    return x * 2 if x > 0 else 0",
+      "changes": [
+        {
+          "type": "remove_redundancy",
+          "description": "Removed unnecessary intermediate variable",
+          "scope": "local",
+          "risk": "none"
+        },
+        {
+          "type": "simplify_logic",
+          "description": "Converted if-else to ternary expression",
+          "scope": "function",
+          "risk": "low"
+        }
+      ],
+      "behavior_equivalence": true,
+      "complexity_reduction": 35,
+      "summary": "Simplified function from 5 lines to 2 lines.",
+      "rationale": "The original function used an unnecessary intermediate variable that was immediately returned. The if-else block was converted to a ternary expression since both branches are simple single-expression returns.",
+      "extensions": {
+        "insights": [
+          {
+            "text": "Function could benefit from type hints for better IDE support",
+            "suggested_mapping": "changes.type.add_type_hints",
+            "evidence": "No type annotations present on function parameters or return value"
+          }
+        ]
+      }
+    }
+  }
+}

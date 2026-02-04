@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/schema/v2.2/response-envelope.json",
+  "title": "Cognitive Modules Response Envelope v2.2",
+  "description": "Standard response envelope format for all Cognitive Module outputs. Separates control plane (meta) from data plane (data).",
+  
+  "oneOf": [
+    { "$ref": "#/definitions/SuccessEnvelope" },
+    { "$ref": "#/definitions/FailureEnvelope" }
+  ],
+
+  "definitions": {
+    "SuccessEnvelope": {
+      "type": "object",
+      "description": "Success response envelope. MUST be returned when module execution succeeds.",
+      "required": ["ok", "meta", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "ok": {
+          "const": true,
+          "description": "MUST be true for success responses."
+        },
+        "meta": { "$ref": "#/definitions/Meta" },
+        "data": { "$ref": "#/definitions/Data" }
+      }
+    },
+
+    "FailureEnvelope": {
+      "type": "object",
+      "description": "Failure response envelope. MUST be returned when module execution fails.",
+      "required": ["ok", "meta", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "ok": {
+          "const": false,
+          "description": "MUST be false for failure responses."
+        },
+        "meta": { "$ref": "#/definitions/Meta" },
+        "error": { "$ref": "#/definitions/Error" },
+        "partial_data": {
+          "type": "object",
+          "description": "MAY contain partial results if failure.partial_allowed is true in module.yaml."
+        }
+      }
+    },
+
+    "Meta": {
+      "type": "object",
+      "description": "Control plane metadata. Used for routing, logging, and policy decisions without parsing business payload.",
+      "required": ["confidence", "risk", "explain"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Module's self-assessed confidence in meeting the declared contract. MUST be between 0 and 1 inclusive. 0.0 indicates inability to execute (e.g., invalid input)."
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"],
+          "description": "Aggregated risk level. Default rule: max(data.changes[*].risk). Modules MAY override via risk_rule in module.yaml."
+        },
+        "explain": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "Brief explanation for control plane consumers (middleware, UI cards, logs). SHOULD NOT exceed 280 characters."
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing identifier. OPTIONAL."
+        },
+        "model": {
+          "type": "string",
+          "description": "Provider and model identifier (e.g., 'gpt-4o', 'claude-3-opus'). OPTIONAL."
+        },
+        "latency_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Execution latency in milliseconds. OPTIONAL."
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "Data": {
+      "type": "object",
+      "description": "Data plane payload. Contains business-specific fields defined by each module's schema.json.",
+      "required": ["rationale"],
+      "properties": {
+        "rationale": {
+          "type": "string",
+          "description": "Detailed reasoning for audit and human review. MUST be present. No length limit."
+        },
+        "extensions": { "$ref": "#/definitions/Extensions" }
+      },
+      "additionalProperties": true
+    },
+
+    "Extensions": {
+      "type": "object",
+      "description": "Recoverable overflow container. Allows 'brilliant insights' that don't fit schema but can be mapped back.",
+      "properties": {
+        "insights": {
+          "type": "array",
+          "maxItems": 20,
+          "description": "Array of overflow insights. max_items controlled by module.yaml overflow.max_items.",
+          "items": { "$ref": "#/definitions/Insight" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Insight": {
+      "type": "object",
+      "description": "A single overflow insight with suggested schema mapping for recoverability.",
+      "required": ["text", "suggested_mapping"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The insight or observation content."
+        },
+        "suggested_mapping": {
+          "type": "string",
+          "description": "Suggested field or enum to add to schema. Enables insight recovery into structure."
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Supporting evidence for this insight. OPTIONAL."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Error": {
+      "type": "object",
+      "description": "Error information for failure responses.",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code. SHOULD use standard codes defined in ERROR-CODES.md.",
+          "examples": [
+            "E1001", "E1002", "E2001", "E3001",
+            "PARSE_ERROR", "INVALID_INPUT", "SCHEMA_VALIDATION_FAILED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error description."
+        },
+        "recoverable": {
+          "type": "boolean",
+          "description": "Whether the error is recoverable (e.g., by providing more context). OPTIONAL."
+        },
+        "suggestion": {
+          "type": "string",
+          "description": "Suggested action to resolve the error. OPTIONAL."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

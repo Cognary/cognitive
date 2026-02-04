@@ -13,22 +13,22 @@ theme:
   custom_dir: docs/overrides
   
   palette:
-    # Light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: white
-      accent: light blue
-      toggle:
-        icon: material/brightness-7
-        name: 切换到深色模式
-    # Dark mode
+    # Dark mode (默认)
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: black
-      accent: light blue
+      accent: blue
       toggle:
         icon: material/brightness-4
         name: 切换到浅色模式
+    # Light mode (也使用深色风格)
+    - media: "(prefers-color-scheme: light)"
+      scheme: slate
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
 
   font:
     text: Inter

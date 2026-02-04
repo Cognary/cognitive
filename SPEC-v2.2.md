@@ -18,6 +18,59 @@ English | [中文](SPEC-v2.2_zh.md)
 
 ---
 
+## 0.0.1 Key Words
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
+
+## 0.0.2 Versioning Policy
+
+Cognitive Modules follows [Semantic Versioning](https://semver.org/):
+
+| Version Type | Example | Description | Deprecation Notice |
+|--------------|---------|-------------|-------------------|
+| **Major** | 3.0.0 | Breaking changes to envelope or core contracts | 12 months |
+| **Minor** | 2.3.0 | New features, backward compatible | - |
+| **Patch** | 2.2.1 | Bug fixes, clarifications only | - |
+
+### Compatibility Guarantees
+
+1. **Minor versions** MUST be backward compatible with previous minor versions of the same major
+2. **Patch versions** MUST NOT introduce any behavioral changes
+3. **Deprecated features** MUST continue to work for the stated deprecation period
+4. **Breaking changes** MUST be documented in migration guides
+
+## 0.0.3 Compatibility Matrix
+
+| Spec Version | Min Runtime | Status | Deprecation Date | Migration Guide |
+|--------------|-------------|--------|------------------|-----------------|
+| v2.2 | 0.5.0 | ✅ Current | - | - |
+| v2.1 | 0.4.0 | 🔄 Migrate | 2026-06-01 | [v2.1 → v2.2](#6-migration-strategy-v21--v22) |
+| v1.0 | 0.1.0 | ⚠️ Legacy | 2025-12-01 | See v1 docs |
+
+### Runtime Compatibility
+
+Runtimes SHOULD declare which spec versions they support:
+
+```yaml
+# runtime config
+cognitive:
+  spec_versions:
+    - "2.2"    # Full support
+    - "2.1"    # Compatibility mode
+```
+
+## 0.0.4 Related Documents
+
+| Document | Description |
+|----------|-------------|
+| [CONFORMANCE.md](CONFORMANCE.md) | Conformance levels (Level 1/2/3) for implementations |
+| [ERROR-CODES.md](ERROR-CODES.md) | Standard error code taxonomy (E1xxx-E4xxx) |
+| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | JSON Schema for response validation |
+| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | JSON Schema for module.yaml |
+| [spec/test-vectors/](spec/test-vectors/) | Official test vectors for compliance |
+
+---
+
 ## 0.1 Core Concepts
 
 ### Module
@@ -49,9 +102,25 @@ Defined in `schema.json`, describes the **structure** of data:
 | **Data Schema** | Business data structure | `schema.json#/data` |
 | **Error Schema** | Error data structure | `schema.json#/error` |
 
-#### Envelope Contract
+#### Envelope Contract (Normative)
 
-Defines the **fixed wrapper format** for responses, independent of specific modules:
+Defines the **fixed wrapper format** for responses, independent of specific modules.
+
+**Success Envelope Requirements:**
+
+1. A success envelope MUST have `ok` set to `true`
+2. A success envelope MUST include the `meta` object
+3. A success envelope MUST include the `data` object
+4. A success envelope MUST NOT include the `error` field
+5. A success envelope MUST NOT include the `partial_data` field
+
+**Failure Envelope Requirements:**
+
+1. A failure envelope MUST have `ok` set to `false`
+2. A failure envelope MUST include the `meta` object
+3. A failure envelope MUST include the `error` object
+4. A failure envelope MUST NOT include the `data` field
+5. A failure envelope MAY include `partial_data` if `failure.partial_allowed: true` in module.yaml
 
 ```json
 // Success response
@@ -63,11 +132,11 @@ Defines the **fixed wrapper format** for responses, independent of specific modu
 
 | Field | Type | On Success | On Failure |
 |-------|------|------------|------------|
-| `ok` | boolean | `true` | `false` |
-| `meta` | object | ✅ Required | ✅ Required |
-| `data` | object | ✅ Required | ❌ None |
-| `error` | object | ❌ None | ✅ Required |
-| `partial_data` | object | ❌ None | ❌ Optional |
+| `ok` | boolean | MUST be `true` | MUST be `false` |
+| `meta` | object | MUST be present | MUST be present |
+| `data` | object | MUST be present | MUST NOT be present |
+| `error` | object | MUST NOT be present | MUST be present |
+| `partial_data` | object | MUST NOT be present | MAY be present |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -302,16 +371,52 @@ tests:
 }
 ```
 
-### 2.4 meta Field Specification
+### 2.4 meta Field Specification (Normative)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `confidence` | number [0,1] | ✅ | Confidence score, unified across modules |
-| `risk` | enum | ✅ | Risk level: `"none"` \| `"low"` \| `"medium"` \| `"high"` |
-| `explain` | string | ✅ | Brief explanation, ≤280 chars, for middleware/logs/card UI |
-| `trace_id` | string | ❌ | Distributed tracing ID |
-| `model` | string | ❌ | Provider/model identifier |
-| `latency_ms` | number | ❌ | Execution latency (milliseconds) |
+A conforming response envelope MUST include the `meta` object. The following requirements apply:
+
+#### Required Fields
+
+1. **confidence** (number)
+   - MUST be present in all responses
+   - MUST be a number in the range [0, 1] inclusive
+   - MUST represent the module's self-assessed confidence in meeting the declared contract
+   - MUST NOT be interpreted as a calibrated probability of correctness
+
+2. **risk** (string)
+   - MUST be present in all responses
+   - MUST be one of: `"none"`, `"low"`, `"medium"`, `"high"`
+   - SHOULD be computed using the aggregation rule specified in module.yaml
+   - If no rule is specified, implementations SHOULD use `max(data.changes[*].risk)`
+
+3. **explain** (string)
+   - MUST be present in all responses
+   - SHOULD NOT exceed 280 characters
+   - Implementations MAY truncate to 280 characters during repair pass
+   - MUST provide sufficient context for routing decisions
+
+#### Optional Fields
+
+4. **trace_id** (string)
+   - MAY be included for distributed tracing
+   - If present, SHOULD be a unique identifier for the request
+
+5. **model** (string)
+   - MAY be included to identify the LLM provider/model
+   - If present, SHOULD follow the format `provider/model-name`
+
+6. **latency_ms** (number)
+   - MAY be included to report execution latency
+   - If present, MUST be a non-negative number representing milliseconds
+
+| Field | Type | Requirement | Description |
+|-------|------|-------------|-------------|
+| `confidence` | number [0,1] | MUST | Module's confidence in meeting contract |
+| `risk` | enum | MUST | Aggregated risk: `"none"` \| `"low"` \| `"medium"` \| `"high"` |
+| `explain` | string (≤280) | MUST | Brief explanation for control plane |
+| `trace_id` | string | MAY | Distributed tracing ID |
+| `model` | string | MAY | Provider/model identifier |
+| `latency_ms` | number | MAY | Execution latency (milliseconds) |
 
 #### confidence Semantic Definition
 
@@ -346,16 +451,24 @@ meta:
 
 If risk source field doesn't exist, default to `"medium"`
 
-### 2.5 explain vs rationale
+### 2.5 explain vs rationale (Normative)
 
 | Field | Location | Length Limit | Purpose | Consumer |
 |-------|----------|--------------|---------|----------|
 | `meta.explain` | Control plane | ≤280 chars | Brief summary | Middleware, routing, card UI, logs |
 | `data.rationale` | Data plane | Unlimited | Complete reasoning | Human review, audit, debug, archive |
 
-**Both must coexist**:
-- `explain` enables quick control plane decisions
-- `rationale` preserves complete audit capability
+**Requirements:**
+
+1. A conforming success response MUST include both `meta.explain` AND `data.rationale`
+2. `meta.explain` SHOULD NOT exceed 280 characters
+3. `data.rationale` MUST provide complete reasoning sufficient for audit
+4. Implementations SHOULD NOT truncate `data.rationale`
+5. If `meta.explain` is missing, implementations MAY generate it from the first 200 characters of `data.rationale`
+
+**Rationale for dual fields:**
+- `explain` enables quick control plane decisions without parsing business data
+- `rationale` preserves complete audit capability for compliance and debugging
 
 ---
 
@@ -415,9 +528,21 @@ If risk source field doesn't exist, default to `"medium"`
 }
 ```
 
-### 3.3 data Schema (Module-Specific)
+### 3.3 data Schema (Module-Specific, Normative)
 
-data schema is defined by each module, but must include:
+The data schema is defined by each module, with the following requirements:
+
+**Required Properties:**
+
+1. Every data schema MUST declare `rationale` as a required property
+2. The `rationale` property MUST be of type `string`
+3. The `rationale` value MUST NOT be empty for success responses
+
+**Optional Properties:**
+
+4. Data schemas SHOULD include an `extensions` property for overflow handling
+5. Module-specific business fields MAY be added as needed
+6. Implementations MUST validate data against the module's declared schema
 
 ```json
 {
@@ -426,7 +551,8 @@ data schema is defined by each module, but must include:
   "properties": {
     "rationale": {
       "type": "string",
-      "description": "Detailed reasoning for audit and human review"
+      "minLength": 1,
+      "description": "Detailed reasoning for audit and human review. MUST NOT be empty."
     },
     "extensions": {
       "$ref": "#/$defs/extensions"
@@ -513,7 +639,7 @@ For enum fields that need extensibility (like `change.type`), use this pattern:
 
 ---
 
-## 4. Runtime Behavior Specification
+## 4. Runtime Behavior Specification (Normative)
 
 ### 4.1 Schema Validation and Repair
 
@@ -521,22 +647,28 @@ For enum fields that need extensibility (like `change.type`), use this pattern:
 LLM Output
     ↓
 [Parse JSON]
-    ↓ Fail → PARSE_ERROR
+    ↓ Fail → PARSE_ERROR (E1000)
 [Validate Schema]
     ↓ Fail
 [Repair Pass] ← Fix format only, don't change semantics
-    ↓ Still fail → SCHEMA_VALIDATION_FAILED + partial_data
+    ↓ Still fail → SCHEMA_VALIDATION_FAILED (E3001) + partial_data
     ↓ Success
 [Return ok=true]
 ```
 
-**Repair Pass Rules**:
-1. Fill missing `meta` fields (use conservative defaults)
-2. Truncate over-length `explain` (keep first 280 chars)
-3. Trim whitespace from string fields
-4. **Do NOT modify business semantics**
+**Repair Pass Requirements:**
 
-> **Repair pass MUST NOT invent new enum values.** It may only apply lossless normalization (trim whitespace). Enum value errors should be treated as validation failed, not repaired.
+Implementations SHOULD implement a repair pass. When implemented, the following rules apply:
+
+1. Implementations MAY fill missing `meta` fields with conservative defaults
+2. Implementations MAY truncate `meta.explain` to 280 characters
+3. Implementations MAY trim leading/trailing whitespace from string fields
+4. Implementations MUST NOT modify business data semantics
+5. Implementations MUST NOT invent new enum values
+6. Implementations MUST NOT change field types
+7. Implementations MUST NOT add fields that don't exist in the schema
+
+If repair fails, implementations MUST return `E3001` (SCHEMA_VALIDATION_FAILED) with `partial_data` containing the original response.
 
 ### 4.2 Default Value Filling
 
@@ -560,22 +692,39 @@ When upgrading v2.1 payload to v2.2 envelope:
 
 ---
 
-## 5. Error Code Specification
+## 5. Error Code Specification (Normative)
+
+For the complete error taxonomy with categories E1xxx-E4xxx, see [ERROR-CODES.md](ERROR-CODES.md).
 
 ### 5.1 Standard Error Codes
 
+Implementations MUST recognize the following standard error codes:
+
 | Code | Description | Trigger Scenario |
 |------|-------------|------------------|
-| `PARSE_ERROR` | JSON parsing failed | LLM returned invalid JSON |
-| `SCHEMA_VALIDATION_FAILED` | Schema validation failed (after repair) | Output doesn't match schema |
-| `INVALID_INPUT` | Input validation failed | Input doesn't match input schema |
-| `MODULE_NOT_FOUND` | Module doesn't exist | Requested module not installed |
+| `PARSE_ERROR` / `E1000` | JSON parsing failed | LLM returned invalid JSON |
+| `INVALID_INPUT` / `E1001` | Input validation failed | Input doesn't match input schema |
+| `SCHEMA_VALIDATION_FAILED` / `E3001` | Schema validation failed (after repair) | Output doesn't match schema |
+| `MODULE_NOT_FOUND` / `E4006` | Module doesn't exist | Requested module not installed |
+| `INTERNAL_ERROR` / `E4000` | Internal error | Unexpected exception |
+
+Module-specific codes (OPTIONAL):
+| Code | Description | Trigger Scenario |
+|------|-------------|------------------|
 | `UNSUPPORTED_LANGUAGE` | Unsupported language | code-simplifier etc. modules |
 | `NO_SIMPLIFICATION_POSSIBLE` | Cannot simplify | Code is already minimal |
 | `BEHAVIOR_CHANGE_REQUIRED` | Behavior change required | Simplification would change semantics |
-| `INTERNAL_ERROR` | Internal error | Unexpected exception |
 
-### 5.2 Error Response Must Include
+### 5.2 Error Response Requirements (Normative)
+
+A conforming error response MUST satisfy:
+
+1. The `error` object MUST include `code` (string)
+2. The `error` object MUST include `message` (string)
+3. The `error.code` SHOULD use standard codes or E-format codes
+4. The `error.message` MUST be human-readable
+5. The `error` object MAY include `recoverable` (boolean)
+6. The `error` object MAY include `suggestion` (string)
 
 ```json
 {
@@ -587,15 +736,17 @@ When upgrading v2.1 payload to v2.2 envelope:
   },
   "error": {
     "code": "INVALID_INPUT",
-    "message": "Human-readable description"
+    "message": "Human-readable description",
+    "recoverable": true,
+    "suggestion": "Provide the 'code' field in input"
   },
   "partial_data": null
 }
 ```
 
-**Note**:
-- For `INVALID_INPUT` errors, `confidence: 0.0` means "cannot execute" not "model unreliable"
-- `explain` must clearly indicate caller error, e.g.: "Input validation failed: ..."
+**Confidence for Errors:**
+- For `INVALID_INPUT` errors, `confidence` SHOULD be `0.0` (cannot execute)
+- The `explain` field MUST clearly indicate whether the error is caller's fault or system failure
 - This lets upstream systems distinguish "model failure" from "call error"
 
 ---
@@ -971,6 +1122,17 @@ tests:
 | v0.1 | 2024 | Initial specification |
 | v2.1 | 2024 | Envelope format, Failure Contract, Tools Policy |
 | v2.2 | 2026-02 | Control/Data separation, Tier, Overflow, Extensible Enum, Migration strategy, Contract two-layer definition |
+| v2.2.1 | 2026-02 | Added: Versioning Policy, Compatibility Matrix, Conformance Levels, Error Code Taxonomy, JSON Schemas, Test Vectors |
+
+---
+
+## 10. Normative References
+
+| Reference | Description |
+|-----------|-------------|
+| [RFC 2119](https://tools.ietf.org/html/rfc2119) | Key words for use in RFCs |
+| [JSON Schema Draft-07](https://json-schema.org/draft-07/json-schema-release-notes.html) | Schema validation |
+| [Semantic Versioning 2.0](https://semver.org/) | Version numbering |
 
 ---
 

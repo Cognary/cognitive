@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "minimal-success-envelope",
+    "description": "Minimal valid success envelope with only required fields",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.85,
+      "risk": "low",
+      "explain": "Operation completed successfully."
+    },
+    "data": {
+      "rationale": "The task was completed as requested with no issues encountered."
+    }
+  }
+}

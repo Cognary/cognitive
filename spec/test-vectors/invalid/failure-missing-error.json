@@ -1,0 +1,17 @@
+{
+  "$test": {
+    "name": "failure-missing-error-field",
+    "description": "Failure envelope (ok=false) missing required error field",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": false,
+    "meta": {
+      "confidence": 0.0,
+      "risk": "high",
+      "explain": "Failure response must include error."
+    }
+  }
+}

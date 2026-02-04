@@ -1,0 +1,24 @@
+{
+  "$test": {
+    "name": "success-with-error-field",
+    "description": "Success envelope (ok=true) should not have error field",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.85,
+      "risk": "low",
+      "explain": "Success response should not include error."
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    },
+    "error": {
+      "code": "SOME_ERROR",
+      "message": "This should not be here"
+    }
+  }
+}
