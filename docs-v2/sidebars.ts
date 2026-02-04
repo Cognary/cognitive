@@ -72,6 +72,7 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'specification/index',
+        'specification/spec-v25',
         'specification/spec-v22',
         'specification/conformance',
         'specification/error-codes',

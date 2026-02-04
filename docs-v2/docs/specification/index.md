@@ -6,14 +6,25 @@ sidebar_position: 1
 
 The Cognitive Modules specification defines a standard for verifiable, structured AI task execution.
 
+## Current Version: v2.5
+
+**v2.5** adds streaming response and multimodal support while maintaining full backward compatibility with v2.2.
+
+| Feature | Description |
+|---------|-------------|
+| 🔄 **Streaming** | Real-time chunk-based output |
+| 🖼️ **Multimodal** | Native image/audio/video support |
+| ✅ **Compatible** | v2.2 modules work unchanged |
+
 ## Documents
 
 ### Core Specification
 
 | Document | Description |
 |----------|-------------|
-| [v2.2 Specification](./spec-v22) | Full v2.2 specification with envelope format |
-| [Conformance Levels](./conformance) | Level 1/2/3 implementation requirements |
+| [v2.5 Specification](./spec-v25) | **Latest** - Streaming & multimodal support |
+| [v2.2 Specification](./spec-v22) | Envelope format, tiers, overflow |
+| [Conformance Levels](./conformance) | Level 1/2/3/4 implementation requirements |
 | [Error Codes](./error-codes) | Standard error taxonomy (E1xxx-E4xxx) |
 
 ### Advanced Features
