@@ -39,12 +39,14 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 
 | 版本 | 规范 | npm | PyPI | 状态 |
 |------|------|-----|------|------|
-| **v2.2** | v2.2 | `2.2.0` | `2.2.1` | ✅ 稳定版 (推荐) |
+| **v2.2** | v2.2 | `2.2.1` | `2.2.1` | ✅ 稳定版 (推荐) |
 | **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 测试版 (流式 + 多模态) |
 
 ```bash
 # 安装稳定版 v2.2
-npm install cognitive-modules-cli@2.2.0
+npm install cognitive-modules-cli@2.2.1
+# 或安装别名包（同样提供 `cog` 命令）
+npm install cogn@2.2.1
 pip install cognitive-modules==2.2.1
 
 # 安装测试版 v2.5 (流式 + 多模态)
@@ -58,11 +60,17 @@ pip install cognitive-modules==2.5.0b1
 
 ```bash
 # 零安装快速体验（推荐）
-npx cognitive-modules-cli@2.2.0 run code-reviewer --args "your code"
+npx cogn@2.2.1 run code-reviewer --args "your code"
+
+# 或使用完整包名
+npx cognitive-modules-cli@2.2.1 run code-reviewer --args "your code"
 
 # 全局安装
-npm install -g cognitive-modules-cli@2.2.0
+npm install -g cogn@2.2.1
+# 或: npm install -g cognitive-modules-cli@2.2.1
 ```
+
+> **说明**: `cogn` 是 `cognitive-modules-cli` 的别名包，两者提供相同的 `cog` 命令。
 
 ### Python (pip)
 
@@ -88,7 +96,7 @@ export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
 
 # 运行代码审查（npm）
-npx cognitive-modules-cli run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # 或使用全局安装的 cog 命令
 cog run code-reviewer --args "..." --pretty

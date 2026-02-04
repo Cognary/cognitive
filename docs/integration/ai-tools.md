@@ -7,8 +7,8 @@ Cognitive Modules 可以与各种 AI 工具无缝集成。
 MCP (Model Context Protocol) 是最佳集成方式，Claude Desktop、Cursor 等工具原生支持。
 
 ```bash
-pip install cognitive-modules[mcp]
-cogn mcp
+pip install "cognitive-modules[mcp]"
+cog mcp
 ```
 
 配置 Claude Desktop：
@@ -17,7 +17,7 @@ cogn mcp
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cogn",
+      "command": "cog",
       "args": ["mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"

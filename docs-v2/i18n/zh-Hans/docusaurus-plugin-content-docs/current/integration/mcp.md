@@ -30,7 +30,7 @@ npx cogn --help
 <TabItem value="pip" label="Python (pip)">
 
 ```bash
-pip install cognitive-modules[mcp]
+pip install "cognitive-modules[mcp]"
 ```
 
 </TabItem>
@@ -49,7 +49,7 @@ cog mcp
 <TabItem value="pip" label="Python">
 
 ```bash
-cogn mcp
+cog mcp
 ```
 
 </TabItem>
@@ -104,7 +104,7 @@ cogn mcp
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cogn",
+      "command": "cog",
       "args": ["mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"
@@ -144,7 +144,7 @@ cogn mcp
 {
   "mcp.servers": {
     "cognitive": {
-      "command": "cogn",
+      "command": "cog",
       "args": ["mcp"]
     }
   }
@@ -240,7 +240,7 @@ Claude 会自动调用 `cognitive_run("code-reviewer", ...)` 并返回结构化�
 npx -y @modelcontextprotocol/inspector
 ```
 
-然后连接到 `cogn mcp` 启动的服务。
+然后连接到 `cog mcp` 启动的服务。
 
 ## 环境变量
 
@@ -250,7 +250,7 @@ MCP Server 需要配置 LLM API Key：
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cogn",
+      "command": "cog",
       "args": ["mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx",

@@ -31,6 +31,13 @@
       "tags": ["api", "rest", "design", "backend"],
       "author": "ziel-io"
     },
+    "code-simplifier": {
+      "description": "简化代码同时保持行为不变",
+      "version": "1.0.0",
+      "source": "github:ziel-io/cognitive-modules/cognitive/modules/code-simplifier",
+      "tags": ["code", "simplify", "refactor", "quality"],
+      "author": "ziel-io"
+    },
     "product-analyzer": {
       "description": "分析产品需求并调用 UI 规范生成器（子代理示例）",
       "version": "1.0.0",
@@ -48,7 +55,7 @@
     "code-quality": {
       "name": "代码质量",
       "description": "代码审查和质量保证模块",
-      "modules": ["code-reviewer"]
+      "modules": ["code-reviewer", "code-simplifier"]
     },
     "project-management": {
       "name": "项目管理",

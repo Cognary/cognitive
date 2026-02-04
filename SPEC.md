@@ -1,5 +1,8 @@
 # Cognitive Modules Specification v0.1
 
+> **注意**：本文档为 **v0.1（历史版本）**，不再作为最新规范维护。  
+> 请优先阅读最新规范：`SPEC-v2.2.md`（英文） / `SPEC-v2.2_zh.md`（中文）。
+
 **Cognitive Modules** 是一种结构化的 AI 任务定义规范，专为需要**强约束、可验证、可审计**的生成任务设计。
 
 ---

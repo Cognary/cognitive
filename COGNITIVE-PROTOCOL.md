@@ -124,8 +124,8 @@ AI IDE 应该：
 |------|------|
 | PyPI | `pip install cognitive-modules` ✅ |
 | npm | `npx cogn` ✅ |
-| MCP | `cogn mcp` (Claude Desktop) ✅ |
-| HTTP API | `cogn serve` ✅ |
+| MCP | `cog mcp` (Claude Desktop) ✅ |
+| HTTP API | `cog serve` ✅ |
 
 ---
 

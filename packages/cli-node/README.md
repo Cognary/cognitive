@@ -11,6 +11,8 @@ Node.js/TypeScript 版本的 Cognitive Modules CLI。
 ```bash
 # 全局安装（推荐）
 npm install -g cogn
+# 或使用完整包名（同样提供 `cog` 命令）
+# npm install -g cognitive-modules-cli
 
 # 或使用 npx 零安装
 npx cogn --help
@@ -35,9 +37,9 @@ echo "review this code" | cog pipe --module code-reviewer
 
 ## 与 Python 版的功能对比
 
-| 功能 | Python (`cogn`) | Node.js (`cog`) |
+| 功能 | Python (`cog`) | Node.js (`cog`) |
 |------|----------------|-----------------|
-| 包名 | `cognitive-modules` | `cogn` / `cognitive-modules-cli` |
+| 包名 | `cognitive-modules` | `cogn`（别名） / `cognitive-modules-cli`（主包） |
 | 安装 | `pip install` | `npm install -g` |
 | 子代理 | ✅ `@call:module` | ✅ `@call:module` |
 | MCP Server | ✅ | ✅ |

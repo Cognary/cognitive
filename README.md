@@ -39,12 +39,14 @@ Cognitive Modules is an AI task definition specification designed for generation
 
 | Version | Spec | npm | PyPI | Status |
 |---------|------|-----|------|--------|
-| **v2.2** | v2.2 | `2.2.0` | `2.2.1` | ✅ Stable (recommended) |
+| **v2.2** | v2.2 | `2.2.1` | `2.2.1` | ✅ Stable (recommended) |
 | **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 Beta (streaming + multimodal) |
 
 ```bash
 # Install stable v2.2
-npm install cognitive-modules-cli@2.2.0
+npm install cognitive-modules-cli@2.2.1
+# or install the alias package (same `cog` command)
+npm install cogn@2.2.1
 pip install cognitive-modules==2.2.1
 
 # Install beta v2.5 (streaming + multimodal)
@@ -58,11 +60,17 @@ pip install cognitive-modules==2.5.0b1
 
 ```bash
 # Zero-install quick start (recommended)
-npx cognitive-modules-cli@2.2.0 run code-reviewer --args "your code"
+npx cogn@2.2.1 run code-reviewer --args "your code"
+
+# Or use the full package name
+npx cognitive-modules-cli@2.2.1 run code-reviewer --args "your code"
 
 # Global installation
-npm install -g cognitive-modules-cli@2.2.0
+npm install -g cogn@2.2.1
+# or: npm install -g cognitive-modules-cli@2.2.1
 ```
+
+> **Note**: `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.
 
 ### Python (pip)
 
@@ -88,7 +96,7 @@ export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
 
 # Run code review (npm)
-npx cognitive-modules-cli run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # Or use globally installed cog command
 cog run code-reviewer --args "..." --pretty

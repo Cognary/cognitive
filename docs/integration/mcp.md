@@ -21,7 +21,7 @@ MCP 是 Anthropic 提出的开放协议，让 AI 工具可以连接外部资源�
 === "Python (pip)"
 
     ```bash
-    pip install cognitive-modules[mcp]
+    pip install "cognitive-modules[mcp]"
     ```
 
 ## 启动 MCP Server
@@ -35,7 +35,7 @@ MCP 是 Anthropic 提出的开放协议，让 AI 工具可以连接外部资源�
 === "Python"
 
     ```bash
-    cogn mcp
+    cog mcp
     ```
 
 ## 配置 Claude Desktop
@@ -80,7 +80,7 @@ MCP 是 Anthropic 提出的开放协议，让 AI 工具可以连接外部资源�
     {
       "mcpServers": {
         "cognitive": {
-          "command": "cogn",
+          "command": "cog",
           "args": ["mcp"],
           "env": {
             "OPENAI_API_KEY": "sk-xxx"
@@ -115,7 +115,7 @@ MCP 是 Anthropic 提出的开放协议，让 AI 工具可以连接外部资源�
     {
       "mcp.servers": {
         "cognitive": {
-          "command": "cogn",
+          "command": "cog",
           "args": ["mcp"]
         }
       }
@@ -208,7 +208,7 @@ Claude 会自动调用 `cognitive_run("code-reviewer", ...)` 并返回结构化�
 npx -y @modelcontextprotocol/inspector
 ```
 
-然后连接到 `cogn mcp` 启动的服务。
+然后连接到 `cog mcp` 启动的服务。
 
 ## 环境变量
 
@@ -218,7 +218,7 @@ MCP Server 需要配置 LLM API Key：
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cogn",
+      "command": "cog",
       "args": ["mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx",

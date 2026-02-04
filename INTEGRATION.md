@@ -10,7 +10,7 @@
 |------|----------|------|
 | **MCP Server** | Claude Desktop、Cursor 等 AI 工具 | [MCP 文档](docs/integration/mcp.md) |
 | **HTTP API** | n8n、Coze、Dify 等工作流平台 | [API 文档](docs/integration/http-api.md) |
-| **CLI** | 命令行、脚本 | `cogn run` |
+| **CLI** | 命令行、脚本 | `cog run` |
 | **Python API** | 程序化集成 | `from cognitive.runner import run_module` |
 
 ---
@@ -22,13 +22,13 @@ MCP 是 Anthropic 提出的标准协议，Claude Desktop 和 Cursor 原生支持
 ### 安装
 
 ```bash
-pip install cognitive-modules[mcp]
+pip install "cognitive-modules[mcp]"
 ```
 
 ### 启动
 
 ```bash
-cogn mcp
+cog mcp
 ```
 
 ### 配置 Claude Desktop
@@ -39,7 +39,7 @@ cogn mcp
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cogn",
+      "command": "cog",
       "args": ["mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"
