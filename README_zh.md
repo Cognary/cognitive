@@ -58,6 +58,23 @@ modalities:
 - **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
 - **公共注册表** - `cogn install registry:module-name`
 
+## 版本选择
+
+| 版本 | 状态 | npm | pip | 使用场景 |
+|------|------|-----|-----|----------|
+| **v2.2** | ✅ 稳定版 | `npm i cognitive-modules-cli` | `pip install cognitive-modules` | 生产环境 |
+| **v2.5** | 🧪 测试版 | `npm i cognitive-modules-cli@beta` | `pip install cognitive-modules==2.5.0b1` | 预览流式和多模态 |
+
+```bash
+# 安装稳定版 (v2.2) - 生产环境推荐
+npm install -g cognitive-modules-cli
+pip install cognitive-modules
+
+# 安装测试版 (v2.5) - 体验新功能
+npm install -g cognitive-modules-cli@beta
+pip install cognitive-modules==2.5.0b1
+```
+
 ## 安装
 
 ### Node.js (npm) - 推荐
@@ -66,17 +83,21 @@ modalities:
 # 零安装快速体验（推荐）
 npx cogn run code-reviewer --args "your code"
 
-# 全局安装
-npm install -g cogn
-
-# 或安装完整包名
+# 全局安装（稳定版 v2.2）
 npm install -g cognitive-modules-cli
+
+# 或安装测试版（v2.5 含流式和多模态）
+npm install -g cognitive-modules-cli@beta
 ```
 
 ### Python (pip)
 
 ```bash
+# 稳定版 v2.2
 pip install cognitive-modules
+
+# 测试版 v2.5（流式和多模态）
+pip install cognitive-modules==2.5.0b1
 
 # 带 LLM 支持
 pip install cognitive-modules[openai]      # OpenAI

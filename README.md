@@ -58,6 +58,23 @@ modalities:
 - **Multi-LLM Support** - OpenAI / Anthropic / MiniMax / Ollama
 - **Public Registry** - `cogn install registry:module-name`
 
+## Version Selection
+
+| Version | Status | npm | pip | Use Case |
+|---------|--------|-----|-----|----------|
+| **v2.2** | ✅ Stable | `npm i cognitive-modules-cli` | `pip install cognitive-modules` | Production use |
+| **v2.5** | 🧪 Beta | `npm i cognitive-modules-cli@beta` | `pip install cognitive-modules==2.5.0b1` | Preview streaming & multimodal |
+
+```bash
+# Install stable version (v2.2) - Recommended for production
+npm install -g cognitive-modules-cli
+pip install cognitive-modules
+
+# Install beta version (v2.5) - For testing new features
+npm install -g cognitive-modules-cli@beta
+pip install cognitive-modules==2.5.0b1
+```
+
 ## Installation
 
 ### Node.js (npm) - Recommended
@@ -66,17 +83,21 @@ modalities:
 # Zero-install quick start (recommended)
 npx cogn run code-reviewer --args "your code"
 
-# Global installation
-npm install -g cogn
-
-# Or install with full package name
+# Global installation (stable v2.2)
 npm install -g cognitive-modules-cli
+
+# Or install beta (v2.5 with streaming & multimodal)
+npm install -g cognitive-modules-cli@beta
 ```
 
 ### Python (pip)
 
 ```bash
+# Stable v2.2
 pip install cognitive-modules
+
+# Beta v2.5 (streaming & multimodal)
+pip install cognitive-modules==2.5.0b1
 
 # With LLM support
 pip install cognitive-modules[openai]      # OpenAI
