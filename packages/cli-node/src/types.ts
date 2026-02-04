@@ -562,16 +562,35 @@ export interface FinalChunk {
   };
 }
 
+/** Recovery checkpoint for stream resume */
+export interface Checkpoint {
+  offset: number;
+  hash: string;  // First 6 chars of SHA256
+}
+
+/** Recovery information in error */
+export interface RecoveryInfo {
+  last_seq: number;
+  last_checkpoint?: Checkpoint;
+  retry_after_ms?: number;
+  max_retries?: number;
+}
+
+/** Error with optional recovery information */
+export interface ErrorWithRecovery {
+  code: string;
+  message: string;
+  recoverable?: boolean;
+  recovery?: RecoveryInfo;
+  details?: Record<string, unknown>;
+}
+
 /** Error chunk during streaming */
 export interface ErrorChunk {
   ok: false;
   streaming: true;
   session_id?: string;
-  error: {
-    code: string;
-    message: string;
-    recoverable?: boolean;
-  };
+  error: ErrorWithRecovery;
   partial_data?: unknown;
 }
 
@@ -592,6 +611,45 @@ export interface StreamingSession {
   chunks_sent: number;
   accumulated_data: Record<string, unknown>;
   accumulated_text: Record<string, string>;
+  last_checkpoint?: Checkpoint;
+}
+
+// =============================================================================
+// v2.5 Response Mode Negotiation
+// =============================================================================
+
+/** Request options for response mode negotiation */
+export interface RequestOptions {
+  response_mode?: ResponseMode;
+  chunk_type?: ChunkType;
+}
+
+/** Recovery context for stream retry */
+export interface RecoveryContext {
+  session_id: string;
+  last_seq: number;
+  last_checkpoint?: Checkpoint;
+}
+
+/** Warning in response (for fallback scenarios) */
+export interface ResponseWarning {
+  code: string;
+  message: string;
+  fallback_used?: string;
+}
+
+/** Execute options with negotiation support */
+export interface ExecuteOptionsV25 {
+  input: Record<string, unknown>;
+  _options?: RequestOptions;
+  _recovery?: RecoveryContext;
+}
+
+/** Negotiation result */
+export interface NegotiationResult {
+  mode: ResponseMode;
+  reason: 'header' | 'body_option' | 'query_param' | 'accept_header' | 'module_default';
+  warnings?: ResponseWarning[];
 }
 
 // =============================================================================
@@ -640,8 +698,72 @@ export interface FileMediaInput {
   path: string;
 }
 
+/** Media input - Upload reference (for pre-uploaded files) */
+export interface UploadRefMediaInput {
+  type: 'upload_ref';
+  upload_id: string;
+  media_type?: string;
+}
+
 /** Union of media input types */
-export type MediaInput = UrlMediaInput | Base64MediaInput | FileMediaInput;
+export type MediaInput = UrlMediaInput | Base64MediaInput | FileMediaInput | UploadRefMediaInput;
+
+/** Checksum for media integrity */
+export interface MediaChecksum {
+  algorithm: 'sha256' | 'md5' | 'crc32';
+  value: string;
+}
+
+/** Media validation result */
+export interface MediaValidationResult {
+  index: number;
+  media_type: string;
+  size_bytes: number;
+  dimensions?: {
+    width: number;
+    height: number;
+  };
+  duration_ms?: number;
+  valid: boolean;
+  errors?: string[];
+}
+
+/** Media validation summary in meta */
+export interface MediaValidationSummary {
+  input_count: number;
+  validated: MediaValidationResult[];
+}
+
+/** Magic bytes for media type detection */
+export const MEDIA_MAGIC_BYTES: Record<string, string[]> = {
+  'image/jpeg': ['ffd8ff'],
+  'image/png': ['89504e470d0a1a0a'],
+  'image/gif': ['47494638'],
+  'image/webp': ['52494646'],
+  'audio/mpeg': ['fffb', 'fffa', '494433'],
+  'audio/wav': ['52494646'],
+  'audio/ogg': ['4f676753'],
+  'video/mp4': ['0000001866747970', '0000002066747970'],
+  'video/webm': ['1a45dfa3'],
+  'application/pdf': ['25504446'],
+};
+
+/** Media size limits in bytes */
+export const MEDIA_SIZE_LIMITS: Record<string, number> = {
+  'image': 20 * 1024 * 1024,  // 20MB
+  'audio': 25 * 1024 * 1024,  // 25MB
+  'video': 100 * 1024 * 1024, // 100MB
+  'document': 50 * 1024 * 1024, // 50MB
+};
+
+/** Media dimension limits */
+export const MEDIA_DIMENSION_LIMITS = {
+  max_width: 8192,
+  max_height: 8192,
+  min_width: 10,
+  min_height: 10,
+  max_pixels: 67108864,  // 8192 x 8192
+};
 
 /** Media output with metadata */
 export interface MediaOutput {
@@ -691,6 +813,13 @@ export const ErrorCodesV25 = {
   MEDIA_TOO_LARGE: 'E1011',
   MEDIA_FETCH_FAILED: 'E1012',
   MEDIA_DECODE_FAILED: 'E1013',
+  MEDIA_TYPE_MISMATCH: 'E1014',
+  MEDIA_DIMENSION_EXCEEDED: 'E1015',
+  MEDIA_DIMENSION_TOO_SMALL: 'E1016',
+  MEDIA_PIXEL_LIMIT: 'E1017',
+  UPLOAD_EXPIRED: 'E1018',
+  UPLOAD_NOT_FOUND: 'E1019',
+  CHECKSUM_MISMATCH: 'E1020',
   
   // Streaming errors (E2xxx)
   STREAM_INTERRUPTED: 'E2010',
@@ -699,6 +828,9 @@ export const ErrorCodesV25 = {
   // Capability errors (E4xxx)
   STREAMING_NOT_SUPPORTED: 'E4010',
   MULTIMODAL_NOT_SUPPORTED: 'E4011',
+  RECOVERY_NOT_SUPPORTED: 'E4012',
+  SESSION_EXPIRED: 'E4013',
+  CHECKPOINT_INVALID: 'E4014',
 } as const;
 
 export type ErrorCodeV25 = typeof ErrorCodesV25[keyof typeof ErrorCodesV25];

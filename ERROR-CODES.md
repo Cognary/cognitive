@@ -60,6 +60,13 @@ Errors in this category indicate problems with the input provided to the module.
 | E1011 | MEDIA_TOO_LARGE | Media file exceeds size limit (v2.5) | Yes |
 | E1012 | MEDIA_FETCH_FAILED | Failed to fetch media from URL (v2.5) | Yes |
 | E1013 | MEDIA_DECODE_FAILED | Failed to decode base64 media (v2.5) | Yes |
+| E1014 | MEDIA_TYPE_MISMATCH | Media content does not match declared type (v2.5) | Yes |
+| E1015 | MEDIA_DIMENSION_EXCEEDED | Media dimensions exceed max allowed (v2.5) | Yes |
+| E1016 | MEDIA_DIMENSION_TOO_SMALL | Media dimensions below minimum required (v2.5) | Yes |
+| E1017 | MEDIA_PIXEL_LIMIT | Total pixels exceed maximum allowed (v2.5) | Yes |
+| E1018 | UPLOAD_EXPIRED | Pre-uploaded file has expired (v2.5) | Yes |
+| E1019 | UPLOAD_NOT_FOUND | Pre-upload reference not found (v2.5) | Yes |
+| E1020 | CHECKSUM_MISMATCH | Media checksum validation failed (v2.5) | Yes |
 
 #### Example Response
 
@@ -177,6 +184,9 @@ Errors in this category are infrastructure or system-level failures. These are t
 | E4007 | PERMISSION_DENIED | Policy blocks this operation | No |
 | E4010 | STREAMING_NOT_SUPPORTED | Runtime does not support streaming (v2.5) | No |
 | E4011 | MULTIMODAL_NOT_SUPPORTED | Runtime does not support multimodal (v2.5) | No |
+| E4012 | RECOVERY_NOT_SUPPORTED | Stream recovery not supported by runtime (v2.5) | No |
+| E4013 | SESSION_EXPIRED | Stream session has expired, cannot recover (v2.5) | No |
+| E4014 | CHECKPOINT_INVALID | Recovery checkpoint does not match (v2.5) | Yes |
 
 #### Example Response
 
@@ -332,5 +342,6 @@ Custom codes SHOULD be documented in the module's schema.json:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.5.1-draft | 2026-02 | Added media validation codes (E1014-E1020), recovery codes (E4012-E4014) |
 | 2.5-draft | 2026-02 | Added v2.5 codes: E1010-E1013 (media), E2010-E2011 (streaming), E4010-E4011 (capability) |
 | 2.2-draft | 2026-02 | Initial error taxonomy |

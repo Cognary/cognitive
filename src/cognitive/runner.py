@@ -930,54 +930,247 @@ SUPPORTED_VIDEO_TYPES = {
     "video/mp4", "video/webm", "video/quicktime"
 }
 
+# Magic bytes for media type detection
+MEDIA_MAGIC_BYTES = {
+    "image/jpeg": [b"\xff\xd8\xff"],
+    "image/png": [b"\x89PNG\r\n\x1a\n"],
+    "image/gif": [b"GIF87a", b"GIF89a"],
+    "image/webp": [b"RIFF"],  # Check WEBP signature later
+    "audio/mpeg": [b"\xff\xfb", b"\xff\xfa", b"ID3"],
+    "audio/wav": [b"RIFF"],  # Check WAVE signature later
+    "audio/ogg": [b"OggS"],
+    "video/mp4": [b"\x00\x00\x00"],  # ftyp check needed
+    "video/webm": [b"\x1a\x45\xdf\xa3"],
+    "application/pdf": [b"%PDF"],
+}
 
-def validate_media_input(media: dict, constraints: dict = None) -> tuple[bool, str]:
+# Media size limits in bytes
+MEDIA_SIZE_LIMITS = {
+    "image": 20 * 1024 * 1024,   # 20MB
+    "audio": 25 * 1024 * 1024,   # 25MB
+    "video": 100 * 1024 * 1024,  # 100MB
+    "document": 50 * 1024 * 1024,  # 50MB
+}
+
+# Media dimension limits
+MEDIA_DIMENSION_LIMITS = {
+    "max_width": 8192,
+    "max_height": 8192,
+    "min_width": 10,
+    "min_height": 10,
+    "max_pixels": 67108864,  # 8192 x 8192
+}
+
+# v2.5 Error codes
+ERROR_CODES_V25 = {
+    "UNSUPPORTED_MEDIA_TYPE": "E1010",
+    "MEDIA_TOO_LARGE": "E1011",
+    "MEDIA_FETCH_FAILED": "E1012",
+    "MEDIA_DECODE_FAILED": "E1013",
+    "MEDIA_TYPE_MISMATCH": "E1014",
+    "MEDIA_DIMENSION_EXCEEDED": "E1015",
+    "MEDIA_DIMENSION_TOO_SMALL": "E1016",
+    "MEDIA_PIXEL_LIMIT": "E1017",
+    "UPLOAD_EXPIRED": "E1018",
+    "UPLOAD_NOT_FOUND": "E1019",
+    "CHECKSUM_MISMATCH": "E1020",
+    "STREAM_INTERRUPTED": "E2010",
+    "STREAM_TIMEOUT": "E2011",
+    "STREAMING_NOT_SUPPORTED": "E4010",
+    "MULTIMODAL_NOT_SUPPORTED": "E4011",
+    "RECOVERY_NOT_SUPPORTED": "E4012",
+    "SESSION_EXPIRED": "E4013",
+    "CHECKPOINT_INVALID": "E4014",
+}
+
+
+def detect_media_type_from_magic(data: bytes) -> str | None:
+    """Detect media type from magic bytes."""
+    for mime_type, magic_list in MEDIA_MAGIC_BYTES.items():
+        for magic in magic_list:
+            if data.startswith(magic):
+                # Special handling for RIFF-based formats
+                if magic == b"RIFF" and len(data) >= 12:
+                    if data[8:12] == b"WEBP":
+                        return "image/webp"
+                    elif data[8:12] == b"WAVE":
+                        return "audio/wav"
+                    continue
+                # Special handling for MP4 (check for ftyp)
+                if mime_type == "video/mp4" and len(data) >= 8:
+                    if b"ftyp" in data[4:8]:
+                        return "video/mp4"
+                    continue
+                return mime_type
+    return None
+
+
+def validate_media_magic_bytes(data: bytes, declared_type: str) -> tuple[bool, str]:
     """
-    Validate a media input object.
+    Validate that media content matches declared MIME type.
     
     Returns:
         Tuple of (is_valid, error_message)
     """
+    detected_type = detect_media_type_from_magic(data)
+    
+    if detected_type is None:
+        return True, ""  # Can't detect, assume valid
+    
+    # Normalize types for comparison
+    declared_category = declared_type.split("/")[0]
+    detected_category = detected_type.split("/")[0]
+    
+    if declared_category != detected_category:
+        return False, f"Media content mismatch: declared {declared_type}, detected {detected_type}"
+    
+    return True, ""
+
+
+def validate_image_dimensions(data: bytes) -> tuple[int, int] | None:
+    """
+    Extract image dimensions from raw bytes.
+    
+    Returns:
+        Tuple of (width, height) or None if cannot determine.
+    """
+    try:
+        # PNG dimensions at bytes 16-24
+        if data.startswith(b"\x89PNG"):
+            width = int.from_bytes(data[16:20], "big")
+            height = int.from_bytes(data[20:24], "big")
+            return (width, height)
+        
+        # JPEG - need to parse markers
+        if data.startswith(b"\xff\xd8"):
+            i = 2
+            while i < len(data) - 8:
+                if data[i] != 0xff:
+                    break
+                marker = data[i + 1]
+                if marker in (0xc0, 0xc1, 0xc2):  # SOF markers
+                    height = int.from_bytes(data[i + 5:i + 7], "big")
+                    width = int.from_bytes(data[i + 7:i + 9], "big")
+                    return (width, height)
+                length = int.from_bytes(data[i + 2:i + 4], "big")
+                i += 2 + length
+        
+        # GIF dimensions at bytes 6-10
+        if data.startswith(b"GIF"):
+            width = int.from_bytes(data[6:8], "little")
+            height = int.from_bytes(data[8:10], "little")
+            return (width, height)
+        
+    except Exception:
+        pass
+    
+    return None
+
+
+def validate_media_input(media: dict, constraints: dict = None) -> tuple[bool, str, str | None]:
+    """
+    Validate a media input object with enhanced v2.5 validation.
+    
+    Returns:
+        Tuple of (is_valid, error_message, error_code)
+    """
     constraints = constraints or {}
     
     media_type = media.get("type")
-    if media_type not in ("url", "base64", "file"):
-        return False, "Invalid media type. Must be url, base64, or file"
+    if media_type not in ("url", "base64", "file", "upload_ref"):
+        return False, "Invalid media type. Must be url, base64, file, or upload_ref", None
     
     if media_type == "url":
         url = media.get("url")
         if not url:
-            return False, "URL media missing 'url' field"
+            return False, "URL media missing 'url' field", None
         if not url.startswith(("http://", "https://")):
-            return False, "URL must start with http:// or https://"
+            return False, "URL must start with http:// or https://", None
     
     elif media_type == "base64":
         mime_type = media.get("media_type")
         if not mime_type:
-            return False, "Base64 media missing 'media_type' field"
+            return False, "Base64 media missing 'media_type' field", None
         data = media.get("data")
         if not data:
-            return False, "Base64 media missing 'data' field"
-        # Validate base64
+            return False, "Base64 media missing 'data' field", None
+        
+        # Validate base64 and decode
         try:
-            base64.b64decode(data)
+            decoded = base64.b64decode(data)
         except Exception:
-            return False, "Invalid base64 encoding"
+            return False, "Invalid base64 encoding", ERROR_CODES_V25["MEDIA_DECODE_FAILED"]
         
         # Check size
-        max_size = constraints.get("max_size_bytes", 20 * 1024 * 1024)  # 20MB default
-        data_size = len(data) * 3 // 4  # Approximate decoded size
-        if data_size > max_size:
-            return False, f"Media exceeds size limit ({data_size} > {max_size} bytes)"
+        category = mime_type.split("/")[0]
+        max_size = constraints.get("max_size_bytes", MEDIA_SIZE_LIMITS.get(category, 20 * 1024 * 1024))
+        if len(decoded) > max_size:
+            return False, f"Media exceeds size limit ({len(decoded)} > {max_size} bytes)", ERROR_CODES_V25["MEDIA_TOO_LARGE"]
+        
+        # Validate magic bytes
+        is_valid, error = validate_media_magic_bytes(decoded, mime_type)
+        if not is_valid:
+            return False, error, ERROR_CODES_V25["MEDIA_TYPE_MISMATCH"]
+        
+        # Validate image dimensions if applicable
+        if category == "image":
+            dimensions = validate_image_dimensions(decoded)
+            if dimensions:
+                width, height = dimensions
+                limits = MEDIA_DIMENSION_LIMITS
+                
+                if width > limits["max_width"] or height > limits["max_height"]:
+                    return False, f"Image dimensions ({width}x{height}) exceed maximum ({limits['max_width']}x{limits['max_height']})", ERROR_CODES_V25["MEDIA_DIMENSION_EXCEEDED"]
+                
+                if width < limits["min_width"] or height < limits["min_height"]:
+                    return False, f"Image dimensions ({width}x{height}) below minimum ({limits['min_width']}x{limits['min_height']})", ERROR_CODES_V25["MEDIA_DIMENSION_TOO_SMALL"]
+                
+                if width * height > limits["max_pixels"]:
+                    return False, f"Image pixel count ({width * height}) exceeds maximum ({limits['max_pixels']})", ERROR_CODES_V25["MEDIA_PIXEL_LIMIT"]
+        
+        # Validate checksum if provided
+        checksum = media.get("checksum")
+        if checksum:
+            import hashlib
+            algorithm = checksum.get("algorithm", "sha256")
+            expected = checksum.get("value", "")
+            
+            if algorithm == "sha256":
+                actual = hashlib.sha256(decoded).hexdigest()
+            elif algorithm == "md5":
+                actual = hashlib.md5(decoded).hexdigest()
+            elif algorithm == "crc32":
+                import zlib
+                actual = format(zlib.crc32(decoded) & 0xffffffff, '08x')
+            else:
+                return False, f"Unsupported checksum algorithm: {algorithm}", None
+            
+            if actual.lower() != expected.lower():
+                return False, f"Checksum mismatch: expected {expected}, got {actual}", ERROR_CODES_V25["CHECKSUM_MISMATCH"]
     
     elif media_type == "file":
         path = media.get("path")
         if not path:
-            return False, "File media missing 'path' field"
+            return False, "File media missing 'path' field", None
         if not Path(path).exists():
-            return False, f"File not found: {path}"
+            return False, f"File not found: {path}", None
+        
+        # Check file size
+        file_size = Path(path).stat().st_size
+        mime, _ = mimetypes.guess_type(str(path))
+        if mime:
+            category = mime.split("/")[0]
+            max_size = constraints.get("max_size_bytes", MEDIA_SIZE_LIMITS.get(category, 20 * 1024 * 1024))
+            if file_size > max_size:
+                return False, f"File exceeds size limit ({file_size} > {max_size} bytes)", ERROR_CODES_V25["MEDIA_TOO_LARGE"]
     
-    return True, ""
+    elif media_type == "upload_ref":
+        upload_id = media.get("upload_id")
+        if not upload_id:
+            return False, "Upload reference missing 'upload_id' field", None
+        # Note: Actual upload validation would require backend lookup
+    
+    return True, "", None
 
 
 def load_media_as_base64(media: dict) -> tuple[str, str]:

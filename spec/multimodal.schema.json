@@ -1,0 +1,294 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/schema/v2.5/multimodal.json",
+  "title": "Cognitive Modules Multimodal Schema v2.5",
+  "description": "Schema definitions for multimodal input/output in Cognitive Modules v2.5",
+
+  "definitions": {
+    "MediaInput": {
+      "type": "object",
+      "description": "Media input in one of several formats",
+      "required": ["type"],
+      "oneOf": [
+        { "$ref": "#/definitions/UrlMediaInput" },
+        { "$ref": "#/definitions/Base64MediaInput" },
+        { "$ref": "#/definitions/FileMediaInput" },
+        { "$ref": "#/definitions/UploadRefMediaInput" }
+      ]
+    },
+
+    "UrlMediaInput": {
+      "type": "object",
+      "description": "Media referenced by URL",
+      "required": ["type", "url"],
+      "properties": {
+        "type": { "const": "url" },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to fetch media from"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^(image|audio|video|application)/[a-z0-9.+-]+$",
+          "description": "MIME type (optional, inferred from Content-Type)"
+        },
+        "checksum": { "$ref": "#/definitions/Checksum" }
+      },
+      "additionalProperties": false
+    },
+
+    "Base64MediaInput": {
+      "type": "object",
+      "description": "Media encoded as base64",
+      "required": ["type", "media_type", "data"],
+      "properties": {
+        "type": { "const": "base64" },
+        "media_type": {
+          "type": "string",
+          "pattern": "^(image|audio|video|application)/[a-z0-9.+-]+$",
+          "description": "MIME type (required for base64)"
+        },
+        "data": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Base64-encoded media data"
+        },
+        "checksum": { "$ref": "#/definitions/Checksum" }
+      },
+      "additionalProperties": false
+    },
+
+    "FileMediaInput": {
+      "type": "object",
+      "description": "Media referenced by local file path",
+      "required": ["type", "path"],
+      "properties": {
+        "type": { "const": "file" },
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^(image|audio|video|application)/[a-z0-9.+-]+$",
+          "description": "MIME type (optional, inferred from extension)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "UploadRefMediaInput": {
+      "type": "object",
+      "description": "Media referenced by pre-upload ID",
+      "required": ["type", "upload_id"],
+      "properties": {
+        "type": { "const": "upload_ref" },
+        "upload_id": {
+          "type": "string",
+          "pattern": "^upl_[a-zA-Z0-9]+$",
+          "description": "Pre-upload reference ID"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^(image|audio|video|application)/[a-z0-9.+-]+$",
+          "description": "MIME type"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "MediaOutput": {
+      "type": "object",
+      "description": "Generated media output",
+      "required": ["type", "media_type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["url", "base64", "file"]
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^(image|audio|video)/[a-z0-9.+-]+$"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for url type output"
+        },
+        "data": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Base64 data for base64 type output"
+        },
+        "path": {
+          "type": "string",
+          "description": "File path for file type output"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Expiration time for URL outputs"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Width in pixels (for images/video)"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Height in pixels (for images/video)"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Duration in milliseconds (for audio/video)"
+        },
+        "generation_params": {
+          "type": "object",
+          "description": "Parameters used for generation",
+          "properties": {
+            "model": { "type": "string" },
+            "quality": { "type": "string" },
+            "style": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Checksum": {
+      "type": "object",
+      "description": "Checksum for integrity verification",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["sha256", "md5", "crc32"],
+          "description": "Hash algorithm"
+        },
+        "value": {
+          "type": "string",
+          "description": "Hash value in hexadecimal"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "MediaValidation": {
+      "type": "object",
+      "description": "Media validation result",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Index in input array"
+        },
+        "media_type": {
+          "type": "string",
+          "description": "Detected/declared MIME type"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes"
+        },
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "width": { "type": "integer" },
+            "height": { "type": "integer" }
+          }
+        },
+        "duration_ms": {
+          "type": "integer",
+          "description": "Duration for audio/video"
+        },
+        "valid": {
+          "type": "boolean",
+          "description": "Whether validation passed"
+        },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Validation error messages"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "UploadRequest": {
+      "type": "object",
+      "description": "Request for pre-upload URL",
+      "required": ["filename", "media_type", "size_bytes"],
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Original filename"
+        },
+        "media_type": {
+          "type": "string",
+          "pattern": "^(image|audio|video|application)/[a-z0-9.+-]+$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "File size in bytes"
+        },
+        "checksum": { "$ref": "#/definitions/Checksum" }
+      },
+      "additionalProperties": false
+    },
+
+    "UploadResponse": {
+      "type": "object",
+      "description": "Response with upload URL",
+      "required": ["upload_id", "upload_url", "method", "expires_at"],
+      "properties": {
+        "upload_id": {
+          "type": "string",
+          "pattern": "^upl_[a-zA-Z0-9]+$"
+        },
+        "upload_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["PUT", "POST"]
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "max_size_bytes": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "MagicBytes": {
+      "type": "object",
+      "description": "Magic bytes for media type detection",
+      "properties": {
+        "image/jpeg": { "const": "ffd8ff" },
+        "image/png": { "const": "89504e470d0a1a0a" },
+        "image/gif": { "const": "47494638" },
+        "image/webp": { "const": "52494646" },
+        "audio/mpeg": { "enum": ["fffb", "fffa", "494433"] },
+        "audio/wav": { "const": "52494646" },
+        "audio/ogg": { "const": "4f676753" },
+        "video/mp4": { "const": "00000020667479" },
+        "video/webm": { "const": "1a45dfa3" },
+        "application/pdf": { "const": "25504446" }
+      }
+    }
+  }
+}

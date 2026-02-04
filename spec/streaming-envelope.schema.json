@@ -25,6 +25,15 @@
           "type": "string",
           "description": "Unique session identifier for this stream"
         },
+        "resumed": {
+          "type": "boolean",
+          "description": "True if this is a resumed stream"
+        },
+        "resume_from_seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Sequence number to resume from (if resumed)"
+        },
         "meta": { "$ref": "#/definitions/StreamingMeta" }
       },
       "additionalProperties": false
@@ -52,7 +61,8 @@
             "delta": {
               "type": "string",
               "description": "Incremental text content to append"
-            }
+            },
+            "checkpoint": { "$ref": "#/definitions/Checkpoint" }
           },
           "additionalProperties": false
         }
@@ -142,7 +152,7 @@
         "ok": { "const": false },
         "streaming": { "const": true },
         "session_id": { "type": "string" },
-        "error": { "$ref": "#/definitions/Error" },
+        "error": { "$ref": "#/definitions/ErrorWithRecovery" },
         "partial_data": {
           "type": "object",
           "description": "Partial data accumulated before error"
@@ -204,6 +214,48 @@
       "additionalProperties": true
     },
 
+    "Checkpoint": {
+      "type": "object",
+      "description": "Recovery checkpoint for stream resume",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Byte offset in the target field"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{6}$",
+          "description": "Short hash of accumulated content (first 6 chars of SHA256)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "RecoveryInfo": {
+      "type": "object",
+      "description": "Information for stream recovery",
+      "properties": {
+        "last_seq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Last successful sequence number"
+        },
+        "last_checkpoint": { "$ref": "#/definitions/Checkpoint" },
+        "retry_after_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Suggested wait time before retry in milliseconds"
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of retries allowed"
+        }
+      },
+      "additionalProperties": false
+    },
+
     "Error": {
       "type": "object",
       "required": ["code", "message"],
@@ -218,6 +270,29 @@
         "recoverable": {
           "type": "boolean"
         },
+        "details": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ErrorWithRecovery": {
+      "type": "object",
+      "description": "Error with optional recovery information",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^E[1-4][0-9]{3}$"
+        },
+        "message": {
+          "type": "string"
+        },
+        "recoverable": {
+          "type": "boolean"
+        },
+        "recovery": { "$ref": "#/definitions/RecoveryInfo" },
         "details": {
           "type": "object"
         }

@@ -474,6 +474,210 @@ event: final
 data: {"final":true,"meta":{...},"data":{...}}
 ```
 
+#### 3.2.5 响应模式协商（`both` 模式）
+
+当配置 `response.mode: both` 时，模块同时支持同步和流式响应。客户端通过请求协商所需模式。
+
+##### 3.2.5.1 协商机制
+
+**方式 1：HTTP Header（推荐）**
+
+```http
+POST /v1/modules/image-analyzer/execute HTTP/1.1
+Accept: text/event-stream
+X-Cognitive-Response-Mode: streaming
+```
+
+| Header | 值 | 行为 |
+|--------|------|----------|
+| `Accept: application/json` | （默认） | 同步响应 |
+| `Accept: text/event-stream` | 流式 | SSE 流式响应 |
+| `X-Cognitive-Response-Mode` | `sync` / `streaming` | 显式模式覆盖 |
+
+**方式 2：查询参数**
+
+```
+POST /v1/modules/image-analyzer/execute?response_mode=streaming
+```
+
+**方式 3：请求体字段**
+
+```json
+{
+  "input": { ... },
+  "_options": {
+    "response_mode": "streaming",
+    "chunk_type": "delta"
+  }
+}
+```
+
+##### 3.2.5.2 协商优先级
+
+当存在多个信号时，运行时 MUST 按此优先级处理：
+
+1. `X-Cognitive-Response-Mode` header（最高）
+2. 请求体中的 `_options.response_mode`
+3. `response_mode` 查询参数
+4. `Accept` header 推断
+5. 模块默认的 `response.mode`（最低）
+
+##### 3.2.5.3 能力不匹配处理
+
+| 模块模式 | 客户端请求 | Provider 支持 | 运行时行为 |
+|----------|------------|---------------|------------|
+| `both` | streaming | ✅ 是 | 流式响应 |
+| `both` | streaming | ❌ 否 | 同步响应 + 警告 header |
+| `both` | sync | 任意 | 同步响应 |
+| `streaming` | sync | 任意 | E4010 错误或强制同步并警告 |
+| `sync` | streaming | 任意 | 同步响应 + 警告 header |
+
+**警告响应 Header：**
+
+```http
+X-Cognitive-Warning: STREAMING_UNAVAILABLE; fallback=sync; reason=provider_limitation
+```
+
+**响应体中的警告（同步回退时）：**
+
+```json
+{
+  "ok": true,
+  "meta": { ... },
+  "data": { ... },
+  "_warnings": [
+    {
+      "code": "W4010",
+      "message": "请求流式但不可用，返回同步响应",
+      "fallback_used": "sync"
+    }
+  ]
+}
+```
+
+#### 3.2.6 错误恢复协议
+
+当流在中途失败时，客户端 MAY 使用以下协议尝试恢复。
+
+##### 3.2.6.1 恢复检查点
+
+每个 chunk 包含恢复信息：
+
+```json
+{
+  "chunk": {
+    "seq": 15,
+    "type": "delta",
+    "field": "data.rationale",
+    "delta": "分析构图...",
+    "checkpoint": {
+      "offset": 342,
+      "hash": "a3f2b1"
+    }
+  }
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `checkpoint.offset` | 目标字段中的字节偏移量 |
+| `checkpoint.hash` | 已累积内容的短哈希（SHA256 前 6 个字符） |
+
+##### 3.2.6.2 带恢复信息的错误 Chunk
+
+```json
+{
+  "ok": false,
+  "streaming": true,
+  "session_id": "sess_abc123",
+  "error": {
+    "code": "E2010",
+    "message": "流中断：连接超时",
+    "recoverable": true,
+    "recovery": {
+      "last_seq": 15,
+      "last_checkpoint": {
+        "offset": 342,
+        "hash": "a3f2b1"
+      },
+      "retry_after_ms": 1000,
+      "max_retries": 3
+    }
+  },
+  "partial_data": {
+    "rationale": "图像显示美丽的日落，温暖的橙色..."
+  }
+}
+```
+
+##### 3.2.6.3 重试请求
+
+客户端 MAY 带恢复上下文重试：
+
+```http
+POST /v1/modules/image-analyzer/execute HTTP/1.1
+X-Cognitive-Recovery-Session: sess_abc123
+X-Cognitive-Recovery-Seq: 15
+```
+
+或在请求体中：
+
+```json
+{
+  "input": { ... },
+  "_recovery": {
+    "session_id": "sess_abc123",
+    "last_seq": 15,
+    "last_checkpoint": {
+      "offset": 342,
+      "hash": "a3f2b1"
+    }
+  }
+}
+```
+
+##### 3.2.6.4 服务器恢复行为
+
+| 场景 | 服务器行为 |
+|------|------------|
+| 会话存在，检查点有效 | 从 `last_seq + 1` 恢复 |
+| 会话存在，检查点不匹配 | 以 `seq: 1` 重新开始流，包含 `_warnings` |
+| 会话过期/不存在 | 以新 `session_id` 重新开始流 |
+| 不支持恢复 | 返回 E4012 错误 |
+
+**恢复后的流示例：**
+
+```json
+// 恢复后的首个 chunk
+{
+  "ok": true,
+  "streaming": true,
+  "session_id": "sess_abc123",
+  "resumed": true,
+  "resume_from_seq": 16,
+  "meta": {
+    "confidence": null,
+    "risk": "low",
+    "explain": "恢复分析中..."
+  }
+}
+```
+
+##### 3.2.6.5 客户端恢复策略
+
+```
+1. 收到 recoverable=true 的错误时：
+   a. 等待 retry_after_ms（或指数退避）
+   b. 检查重试次数 < max_retries
+   c. 发送带恢复上下文的重试请求
+   d. 验证首个恢复 chunk 的 seq 符合预期
+   e. 如果哈希不匹配，丢弃 partial_data 并接受新流
+
+2. 收到 recoverable=false 的错误时：
+   a. 向用户展示错误
+   b. 可选择使用全新请求重试（无恢复上下文）
+```
+
 ---
 
 ## 4. 多模态规范（v2.5 新增）
@@ -497,9 +701,146 @@ data: {"final":true,"meta":{...},"data":{...}}
 | **音频** | `audio/mpeg`、`audio/wav` | TTS、音乐生成 |
 | **视频** | `video/mp4` | 视频生成（新兴） |
 
-### 4.2 媒体输入格式
+#### 4.1.3 大小限制与约束
 
-#### 4.2.1 URL 引用
+| 类别 | 最大大小 | 最大尺寸 | 最长时长 | 备注 |
+|------|----------|----------|----------|------|
+| **图像** | 20MB | 8192×8192 像素 | - | 更大图像 SHOULD 被缩小 |
+| **音频** | 25MB | - | 10 分钟 | 更长音频 SHOULD 被分块 |
+| **视频** | 100MB | 4K (3840×2160) | 5 分钟 | 长视频进行帧采样 |
+| **文档** | 50MB | - | - | 最多 500 页 |
+
+### 4.2 大文件处理
+
+对于超过内联大小限制的文件，Cognitive Modules 支持多种上传策略。
+
+#### 4.2.1 上传策略选择
+
+| 文件大小 | 推荐策略 | 原因 |
+|----------|----------|------|
+| < 5MB | Base64 内联 | 简单，无需额外基础设施 |
+| 5MB - 20MB | URL 引用 | 避免大 JSON 有效载荷 |
+| > 20MB | 预上传后引用 | 大型媒体必需 |
+
+#### 4.2.2 预上传协议
+
+对于大文件，客户端 SHOULD 使用预上传：
+
+**步骤 1：请求上传 URL**
+
+```http
+POST /v1/media/upload-url HTTP/1.1
+Content-Type: application/json
+
+{
+  "filename": "large-video.mp4",
+  "media_type": "video/mp4",
+  "size_bytes": 52428800,
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
+```
+
+**响应：**
+
+```json
+{
+  "upload_id": "upl_abc123",
+  "upload_url": "https://storage.example.com/upload/upl_abc123",
+  "method": "PUT",
+  "headers": {
+    "Content-Type": "video/mp4",
+    "x-amz-checksum-sha256": "..."
+  },
+  "expires_at": "2026-02-04T13:00:00Z",
+  "max_size_bytes": 104857600
+}
+```
+
+**步骤 2：上传文件**
+
+```http
+PUT https://storage.example.com/upload/upl_abc123 HTTP/1.1
+Content-Type: video/mp4
+Content-Length: 52428800
+
+<二进制数据>
+```
+
+**步骤 3：在请求中引用**
+
+```json
+{
+  "input": {
+    "video": {
+      "type": "upload_ref",
+      "upload_id": "upl_abc123",
+      "media_type": "video/mp4"
+    }
+  }
+}
+```
+
+#### 4.2.3 分块上传（文件 > 50MB）
+
+对于超大文件，使用多部分分块上传：
+
+```http
+POST /v1/media/upload-multipart/init HTTP/1.1
+
+{
+  "filename": "large-video.mp4",
+  "media_type": "video/mp4",
+  "size_bytes": 157286400,
+  "chunk_size_bytes": 10485760
+}
+```
+
+**响应：**
+
+```json
+{
+  "upload_id": "upl_xyz789",
+  "chunk_count": 15,
+  "chunk_urls": [
+    {"part": 1, "url": "https://storage.example.com/upload/upl_xyz789/1"},
+    {"part": 2, "url": "https://storage.example.com/upload/upl_xyz789/2"}
+  ],
+  "complete_url": "https://storage.example.com/upload/upl_xyz789/complete"
+}
+```
+
+**完成多部分上传：**
+
+```http
+POST https://storage.example.com/upload/upl_xyz789/complete HTTP/1.1
+
+{
+  "parts": [
+    {"part": 1, "etag": "abc123"},
+    {"part": 2, "etag": "def456"}
+  ]
+}
+```
+
+#### 4.2.4 流式上传（替代方案）
+
+对于实时媒体捕获，运行时 MAY 支持流式上传：
+
+```http
+POST /v1/media/stream HTTP/1.1
+Content-Type: audio/webm
+Transfer-Encoding: chunked
+X-Cognitive-Stream-Id: stream_123
+
+<分块二进制数据>
+```
+
+### 4.3 媒体输入格式
+
+#### 4.3.1 URL 引用
 
 ```json
 {
@@ -514,7 +855,7 @@ data: {"final":true,"meta":{...},"data":{...}}
 - `media_type` 是 OPTIONAL 的；运行时 MAY 从 Content-Type 推断
 - 运行时 SHOULD 缓存获取的媒体以便重试
 
-#### 4.2.2 Base64 内联
+#### 4.3.2 Base64 内联
 
 ```json
 {
@@ -529,7 +870,7 @@ data: {"final":true,"meta":{...},"data":{...}}
 - `data` MUST 是有效的 base64 编码
 - 运行时 SHOULD 在 LLM 调用前验证媒体
 
-#### 4.2.3 文件路径（本地）
+#### 4.3.3 文件路径（本地）
 
 ```json
 {
@@ -543,9 +884,24 @@ data: {"final":true,"meta":{...},"data":{...}}
 - 运行时 MUST 检查文件存在且可读
 - `media_type` 从扩展名推断
 
-### 4.3 媒体输出格式
+#### 4.3.4 上传引用（预上传文件）
 
-#### 4.3.1 生成的图像
+```json
+{
+  "type": "upload_ref",
+  "upload_id": "upl_abc123",
+  "media_type": "video/mp4"
+}
+```
+
+**要求：**
+- `upload_id` MUST 引用已完成的上传
+- 上传 MUST 未过期
+- 运行时 MUST 验证上传所有权
+
+### 4.4 媒体输出格式
+
+#### 4.4.1 生成的图像
 
 ```json
 {
@@ -562,7 +918,7 @@ data: {"final":true,"meta":{...},"data":{...}}
 }
 ```
 
-#### 4.3.2 URL 引用（临时）
+#### 4.4.2 URL 引用（临时）
 
 ```json
 {
@@ -575,7 +931,153 @@ data: {"final":true,"meta":{...},"data":{...}}
 }
 ```
 
-### 4.4 Prompt 中的多模态
+### 4.5 媒体内容验证
+
+运行时 MUST 在处理前验证媒体内容。本节定义验证要求。
+
+#### 4.5.1 验证级别
+
+| 级别 | 说明 | 使用场景 |
+|------|------|----------|
+| **结构** | 仅验证 JSON 结构 | 始终（MUST） |
+| **格式** | 验证媒体格式/魔数 | 始终（MUST） |
+| **内容** | 验证尺寸、时长等 | 推荐（SHOULD） |
+| **深度** | 内容安全、损坏检查 | 可选（MAY） |
+
+#### 4.5.2 魔数验证
+
+运行时 MUST 验证媒体内容与声明的 MIME 类型匹配：
+
+| 媒体类型 | 魔数（十六进制） | 说明 |
+|----------|------------------|------|
+| `image/jpeg` | `FF D8 FF` | JPEG/JFIF 图像 |
+| `image/png` | `89 50 4E 47 0D 0A 1A 0A` | PNG 图像 |
+| `image/gif` | `47 49 46 38` | GIF 图像 |
+| `image/webp` | `52 49 46 46 ... 57 45 42 50` | WebP 图像 |
+| `audio/mpeg` | `FF FB` 或 `FF FA` 或 `49 44 33` | MP3 音频 |
+| `audio/wav` | `52 49 46 46 ... 57 41 56 45` | WAV 音频 |
+| `audio/ogg` | `4F 67 67 53` | OGG 音频 |
+| `video/mp4` | `00 00 00 ... 66 74 79 70` | MP4 视频 |
+| `video/webm` | `1A 45 DF A3` | WebM 视频 |
+| `application/pdf` | `25 50 44 46` | PDF 文档 |
+
+**验证错误：**
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "E1014",
+    "message": "媒体内容与声明类型不匹配",
+    "details": {
+      "declared_type": "image/png",
+      "detected_type": "image/jpeg",
+      "magic_bytes": "ffd8ff"
+    }
+  }
+}
+```
+
+#### 4.5.3 尺寸验证
+
+对于图像，运行时 SHOULD 验证尺寸：
+
+```json
+{
+  "validation": {
+    "width": 1920,
+    "height": 1080,
+    "aspect_ratio": "16:9",
+    "color_space": "sRGB",
+    "bit_depth": 8,
+    "has_alpha": false
+  }
+}
+```
+
+**尺寸约束：**
+
+| 约束 | 验证 | 错误码 |
+|------|------|--------|
+| 最大宽/高 | width ≤ 8192 且 height ≤ 8192 | E1015 |
+| 最小宽/高 | width ≥ 10 且 height ≥ 10 | E1016 |
+| 最大像素数 | width × height ≤ 67,108,864 | E1017 |
+
+#### 4.5.4 时长验证
+
+对于音频/视频，运行时 SHOULD 验证时长：
+
+```json
+{
+  "validation": {
+    "duration_ms": 180000,
+    "sample_rate": 44100,
+    "channels": 2,
+    "codec": "aac"
+  }
+}
+```
+
+#### 4.5.5 校验和验证
+
+客户端 MAY 包含校验和以进行完整性验证：
+
+```json
+{
+  "type": "base64",
+  "media_type": "image/png",
+  "data": "iVBORw0KGgoAAAANSUhEUgAAAAUA...",
+  "checksum": {
+    "algorithm": "sha256",
+    "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
+```
+
+**支持的算法：**
+
+| 算法 | 输出长度 | 使用场景 |
+|------|----------|----------|
+| `sha256` | 64 十六进制字符 | 推荐用于所有场景 |
+| `md5` | 32 十六进制字符 | 仅遗留支持 |
+| `crc32` | 8 十六进制字符 | 快速验证 |
+
+#### 4.5.6 验证响应
+
+运行时 SHOULD 在响应中包含验证结果：
+
+```json
+{
+  "ok": true,
+  "meta": {
+    "confidence": 0.92,
+    "risk": "low",
+    "explain": "图像分析成功",
+    "media_validation": {
+      "input_count": 2,
+      "validated": [
+        {
+          "index": 0,
+          "media_type": "image/jpeg",
+          "size_bytes": 245000,
+          "dimensions": {"width": 1920, "height": 1080},
+          "valid": true
+        },
+        {
+          "index": 1,
+          "media_type": "image/png",
+          "size_bytes": 128000,
+          "dimensions": {"width": 800, "height": 600},
+          "valid": true
+        }
+      ]
+    }
+  },
+  "data": { ... }
+}
+```
+
+### 4.6 Prompt 中的多模态
 
 在 `prompt.md` 中，使用占位符引用媒体输入：
 
@@ -709,6 +1211,118 @@ exploration:
 // 最终
 { "confidence": 0.92, "risk": "low", "explain": "分析完成" }
 ```
+
+### 6.4 多模态 Confidence 语义
+
+`confidence` 的含义因任务类型而异。本节定义不同多模态场景的语义。
+
+#### 6.4.1 按任务类型的 Confidence
+
+| 任务类型 | Confidence 含义 | 示例 |
+|----------|-----------------|------|
+| **文本分析** | 正确性的确定性 | 情感分类：0.95 |
+| **图像分析** | 检测/分类的确定性 | 物体检测：0.88 |
+| **图像生成** | Prompt 匹配度分数 | 生成图像与 prompt 匹配：0.82 |
+| **音频转录** | 转录准确度 | 语音转文字置信度：0.91 |
+| **音频生成** | 质量/自然度分数 | TTS 质量：0.85 |
+| **视频分析** | 整体分析确定性 | 视频理解：0.78 |
+
+#### 6.4.2 图像生成 Confidence
+
+对于图像生成任务，`confidence` 表示模型对生成图像与 prompt 匹配程度的评估：
+
+```json
+{
+  "meta": {
+    "confidence": 0.82,
+    "risk": "low",
+    "explain": "生成的图像与 prompt 高度匹配，有轻微艺术演绎",
+    "generation_quality": {
+      "prompt_adherence": 0.85,
+      "aesthetic_score": 0.79,
+      "technical_quality": 0.88
+    }
+  },
+  "data": {
+    "generated_image": {
+      "type": "base64",
+      "media_type": "image/png",
+      "data": "..."
+    }
+  }
+}
+```
+
+**Confidence 细分（可选）：**
+
+| 子分数 | 说明 | 范围 |
+|--------|------|------|
+| `prompt_adherence` | 图像与文本 prompt 的匹配程度 | [0.0, 1.0] |
+| `aesthetic_score` | 视觉美感和构图 | [0.0, 1.0] |
+| `technical_quality` | 分辨率、伪影、一致性 | [0.0, 1.0] |
+
+#### 6.4.3 多物体检测 Confidence
+
+检测多个物体时，总体 `confidence` 通常是各个检测的平均值或最小值：
+
+```json
+{
+  "meta": {
+    "confidence": 0.87,
+    "confidence_aggregation": "mean",
+    "risk": "low",
+    "explain": "检测到 3 个物体，置信度高"
+  },
+  "data": {
+    "objects": [
+      {"label": "汽车", "confidence": 0.95, "bbox": [10, 20, 100, 80]},
+      {"label": "行人", "confidence": 0.88, "bbox": [120, 30, 160, 180]},
+      {"label": "狗", "confidence": 0.78, "bbox": [200, 100, 250, 150]}
+    ]
+  }
+}
+```
+
+**聚合方法：**
+
+| 方法 | 计算 | 使用场景 |
+|------|------|----------|
+| `mean` | 所有 confidence 的平均值 | 通用检测 |
+| `min` | 最小 confidence | 保守估计 |
+| `weighted_mean` | 按物体面积/重要性加权 | 主要物体聚焦 |
+
+#### 6.4.4 音频/视频 Confidence
+
+对于时序媒体，confidence 可能随时间变化：
+
+```json
+{
+  "meta": {
+    "confidence": 0.89,
+    "risk": "low",
+    "explain": "转录完成，准确度高",
+    "temporal_confidence": {
+      "overall": 0.89,
+      "segments": [
+        {"start_ms": 0, "end_ms": 5000, "confidence": 0.95},
+        {"start_ms": 5000, "end_ms": 10000, "confidence": 0.82},
+        {"start_ms": 10000, "end_ms": 15000, "confidence": 0.91}
+      ],
+      "low_confidence_regions": [
+        {"start_ms": 5000, "end_ms": 7000, "reason": "background_noise"}
+      ]
+    }
+  }
+}
+```
+
+#### 6.4.5 按分级的 Confidence 阈值
+
+| 分级 | 最小 Confidence | 低于阈值时的操作 |
+|------|-----------------|------------------|
+| `exec` | 0.9 | MUST 失败并返回 E3001 |
+| `decision` | 0.5 | SHOULD 包含警告 |
+| `exploration` | 无 | 仅供参考 |
 
 ---
 
