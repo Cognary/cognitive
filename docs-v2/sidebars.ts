@@ -67,9 +67,48 @@ const sidebars: SidebarsConfig = {
       ],
     },
     {
+      type: 'category',
+      label: 'Specification',
+      collapsed: false,
+      items: [
+        'specification/index',
+        'specification/spec-v22',
+        'specification/conformance',
+        'specification/error-codes',
+        {
+          type: 'category',
+          label: 'Advanced Features',
+          collapsed: true,
+          items: [
+            'specification/composition',
+            'specification/context-protocol',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Ecosystem',
+          collapsed: true,
+          items: [
+            'specification/registry-protocol',
+            'specification/certification',
+          ],
+        },
+        'specification/implementers-guide',
+        {
+          type: 'category',
+          label: 'Governance',
+          collapsed: true,
+          items: [
+            'specification/cmep-process',
+            'specification/governance',
+          ],
+        },
+      ],
+    },
+    {
       type: 'doc',
       id: 'spec',
-      label: 'Specification',
+      label: 'Specification (Legacy)',
     },
   ],
 };
