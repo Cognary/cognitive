@@ -827,9 +827,9 @@ npm install cognitive-modules-cli
 
 ## Questions?
 
-- **Specification**: [SPEC-v2.2.md](SPEC-v2.2.md)
-- **Conformance Levels**: [CONFORMANCE.md](CONFORMANCE.md)
-- **Error Codes**: [ERROR-CODES.md](ERROR-CODES.md)
-- **Test Vectors**: [spec/test-vectors/](spec/test-vectors/)
+- **Specification**: [SPEC-v2.2.md](./spec-v22)
+- **Conformance Levels**: [CONFORMANCE.md](./conformance)
+- **Error Codes**: [ERROR-CODES.md](./error-codes)
+- **Test Vectors**: [spec/test-vectors/](https://github.com/ziel-io/cognitive-modules/tree/main/spec/test-vectors)
 
 For questions not covered here, open an issue on GitHub.

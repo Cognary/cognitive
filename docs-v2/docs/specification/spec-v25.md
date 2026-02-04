@@ -6,7 +6,7 @@ sidebar_position: 1
 
 > **Verifiable Structured AI Task Specification — Streaming & Multimodal Edition**
 
-English | [中文](../../SPEC-v2.5_zh.md)
+English | [中文](https://github.com/ziel-io/cognitive-modules/blob/main/SPEC-v2.5_zh.md)
 
 ---
 
@@ -210,7 +210,7 @@ modalities:
 
 ## 6. Example Module
 
-See the complete [image-analyzer module](/docs/modules/image-analyzer) for a working v2.5 example with streaming and multimodal support.
+See the complete [image-analyzer module](https://github.com/ziel-io/cognitive-modules/tree/main/cognitive/modules/image-analyzer) for a working v2.5 example with streaming and multimodal support.
 
 ---
 

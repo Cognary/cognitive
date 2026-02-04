@@ -352,11 +352,11 @@ This document itself serves as CMEP-0001.
 
 ### CMEP-0002: Module Composition
 
-See [COMPOSITION.md](COMPOSITION.md) for the full specification.
+See [COMPOSITION.md](./composition) for the full specification.
 
 ### CMEP-0003: Context Protocol
 
-See [CONTEXT-PROTOCOL.md](CONTEXT-PROTOCOL.md) for the full specification.
+See [CONTEXT-PROTOCOL.md](./context-protocol) for the full specification.
 
 ---
 

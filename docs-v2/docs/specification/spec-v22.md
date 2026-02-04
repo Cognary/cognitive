@@ -6,7 +6,7 @@ sidebar_position: 2
 
 > **Verifiable Structured AI Task Specification — Second Generation Enhanced**
 
-English | [中文](SPEC-v2.2_zh.md)
+English | [中文](https://github.com/ziel-io/cognitive-modules/blob/main/SPEC-v2.2_zh.md)
 
 ---
 
@@ -67,11 +67,11 @@ cognitive:
 
 | Document | Description |
 |----------|-------------|
-| [CONFORMANCE.md](CONFORMANCE.md) | Conformance levels (Level 1/2/3) for implementations |
-| [ERROR-CODES.md](ERROR-CODES.md) | Standard error code taxonomy (E1xxx-E4xxx) |
-| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | JSON Schema for response validation |
-| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | JSON Schema for module.yaml |
-| [spec/test-vectors/](spec/test-vectors/) | Official test vectors for compliance |
+| [CONFORMANCE.md](./conformance) | Conformance levels (Level 1/2/3) for implementations |
+| [ERROR-CODES.md](./error-codes) | Standard error code taxonomy (E1xxx-E4xxx) |
+| [spec/response-envelope.schema.json](https://github.com/ziel-io/cognitive-modules/blob/main/spec/response-envelope.schema.json) | JSON Schema for response validation |
+| [spec/module.yaml.schema.json](https://github.com/ziel-io/cognitive-modules/blob/main/spec/module.yaml.schema.json) | JSON Schema for module.yaml |
+| [spec/test-vectors/](https://github.com/ziel-io/cognitive-modules/tree/main/spec/test-vectors) | Official test vectors for compliance |
 
 ---
 
@@ -698,7 +698,7 @@ When upgrading v2.1 payload to v2.2 envelope:
 
 ## 5. Error Code Specification (Normative)
 
-For the complete error taxonomy with categories E1xxx-E4xxx, see [ERROR-CODES.md](ERROR-CODES.md).
+For the complete error taxonomy with categories E1xxx-E4xxx, see [ERROR-CODES.md](./error-codes).
 
 ### 5.1 Standard Error Codes
 
