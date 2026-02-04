@@ -60,17 +60,17 @@ modalities:
 
 ## Version Selection
 
-| Version | Status | npm | pip | Use Case |
-|---------|--------|-----|-----|----------|
-| **v2.2** | ✅ Stable | `npm i cognitive-modules-cli` | `pip install cognitive-modules` | Production use |
-| **v2.5** | 🧪 Beta | `npm i cognitive-modules-cli@beta` | `pip install cognitive-modules==2.5.0b1` | Preview streaming & multimodal |
+| Version | Spec | npm | PyPI | Status |
+|---------|------|-----|------|--------|
+| **v2.2** | v2.2 | `2.2.0` | `2.2.0` | ✅ Stable (production) |
+| **v2.5** | v2.5 | `2.5.0-beta.1` | `2.5.0b1` | 🧪 Beta (streaming + multimodal) |
 
 ```bash
-# Install stable version (v2.2) - Recommended for production
-npm install -g cognitive-modules-cli
-pip install cognitive-modules
+# Install stable v2.2 - Recommended for production
+npm install -g cognitive-modules-cli@2.2.0
+pip install cognitive-modules==2.2.0
 
-# Install beta version (v2.5) - For testing new features
+# Install beta v2.5 - For testing streaming & multimodal
 npm install -g cognitive-modules-cli@beta
 pip install cognitive-modules==2.5.0b1
 ```

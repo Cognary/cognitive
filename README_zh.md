@@ -60,17 +60,17 @@ modalities:
 
 ## 版本选择
 
-| 版本 | 状态 | npm | pip | 使用场景 |
-|------|------|-----|-----|----------|
-| **v2.2** | ✅ 稳定版 | `npm i cognitive-modules-cli` | `pip install cognitive-modules` | 生产环境 |
-| **v2.5** | 🧪 测试版 | `npm i cognitive-modules-cli@beta` | `pip install cognitive-modules==2.5.0b1` | 预览流式和多模态 |
+| 版本 | 规范 | npm | PyPI | 状态 |
+|------|------|-----|------|------|
+| **v2.2** | v2.2 | `2.2.0` | `2.2.0` | ✅ 稳定版 (生产环境) |
+| **v2.5** | v2.5 | `2.5.0-beta.1` | `2.5.0b1` | 🧪 测试版 (流式 + 多模态) |
 
 ```bash
-# 安装稳定版 (v2.2) - 生产环境推荐
-npm install -g cognitive-modules-cli
-pip install cognitive-modules
+# 安装稳定版 v2.2 - 生产环境推荐
+npm install -g cognitive-modules-cli@2.2.0
+pip install cognitive-modules==2.2.0
 
-# 安装测试版 (v2.5) - 体验新功能
+# 安装测试版 v2.5 - 体验流式和多模态
 npm install -g cognitive-modules-cli@beta
 pip install cognitive-modules==2.5.0b1
 ```
