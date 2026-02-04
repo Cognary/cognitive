@@ -29,9 +29,7 @@ import type {
   ProviderV25,
   CognitiveModuleV25,
   ModalityType,
-  ErrorCodesV25,
-  RuntimeCapabilities,
-  DEFAULT_RUNTIME_CAPABILITIES
+  RuntimeCapabilities
 } from '../types.js';
 import { 
   aggregateRisk, 
@@ -40,7 +38,9 @@ import {
   isModuleV25,
   moduleSupportsStreaming,
   moduleSupportsMultimodal,
-  getModuleInputModalities
+  getModuleInputModalities,
+  ErrorCodesV25,
+  DEFAULT_RUNTIME_CAPABILITIES
 } from '../types.js';
 import { randomUUID } from 'crypto';
 import { readFile } from 'fs/promises';

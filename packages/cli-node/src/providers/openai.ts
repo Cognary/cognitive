@@ -161,13 +161,16 @@ export class OpenAIProvider extends BaseProviderV25 {
       throw new Error(`OpenAI API error: ${response.status} - ${error}`);
     }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
+    const bodyReader = response.body?.getReader();
+    if (!bodyReader) {
       throw new Error('No response body');
     }
 
     const decoder = new TextDecoder();
     let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+
+    // Capture reader reference for closure
+    const reader = bodyReader;
 
     // Create async generator for streaming
     async function* streamGenerator(): AsyncIterable<string> {
