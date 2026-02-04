@@ -30,7 +30,7 @@ Cognitive Modules is an AI task definition specification designed for generation
 - **Subagent Orchestration** - `@call:module` supports inter-module calls
 - **Parameter Passing** - `$ARGUMENTS` runtime substitution
 - **Multi-LLM Support** - OpenAI / Anthropic / MiniMax / Ollama
-- **Public Registry** - `cogn install registry:module-name`
+- **Public Registry** - `cog install registry:module-name`
 
 ## Version Selection
 
@@ -75,7 +75,7 @@ pip install "cognitive-modules[all]==2.2.0"         # All providers
 | Platform | Package | Command | Features |
 |----------|---------|---------|----------|
 | **npm** | `cognitive-modules-cli` | `cog` | ✅ Recommended, zero-install, full features |
-| pip | `cognitive-modules` | `cogn` | ✅ Full features |
+| pip | `cognitive-modules` | `cog` | ✅ Full features |
 
 ## Quick Start
 
@@ -151,70 +151,70 @@ All modules now return the unified v2.2 envelope format:
 | **Risk Aggregation** | `meta.risk = max(changes[*].risk)` |
 | **Parameter Passing** | `$ARGUMENTS` runtime substitution |
 | **Subagents** | `@call:module` for inter-module calls |
-| **Validation Tools** | `cogn validate` / `cogn validate --v22` |
+| **Validation Tools** | `cog validate` / `cog validate --v22` |
 
 ## Integration Methods
 
 | Method | Command | Use Case |
 |--------|---------|----------|
-| CLI | `cogn run` | Command line |
-| HTTP API | `cogn serve` | n8n, Coze, Dify |
-| MCP Server | `cogn mcp` | Claude, Cursor |
+| CLI | `cog run` | Command line |
+| HTTP API | `cog serve` | n8n, Coze, Dify |
+| MCP Server | `cog mcp` | Claude, Cursor |
 
 ## CLI Commands
 
 ```bash
 # Module management
-cogn list                    # List installed modules
-cogn info <module>           # View module details
-cogn validate <module>       # Validate module structure
-cogn validate <module> --v22 # Validate v2.2 format
+cog list                    # List installed modules
+cog info <module>           # View module details
+cog validate <module>       # Validate module structure
+cog validate <module> --v22 # Validate v2.2 format
 
 # Run modules
-cogn run <module> input.json -o output.json --pretty
-cogn run <module> --args "requirements" --pretty
-cogn run <module> --args "requirements" --subagent  # Enable subagent
+cog run <module> input.json -o output.json --pretty
+cog run <module> --args "requirements" --pretty
+cog run <module> --args "requirements" --subagent  # Enable subagent
 
 # Create modules
-cogn init <name> -d "description"
-cogn init <name> --format v22  # Create v2.2 format module
+cog init <name> -d "description"
+cog init <name> --format v22  # Create v2.2 format module
 
 # Migrate modules
-cogn migrate <module>        # Migrate v1/v2.1 module to v2.2
+cog migrate <module>        # Migrate v1/v2.1 module to v2.2
 
 # Install from GitHub (recommended)
-cogn add ziel-io/cognitive-modules -m code-simplifier
-cogn add org/repo -m module-name --tag v1.0.0   # Install specific version
-cogn remove <module>                             # Remove module
+cog add ziel-io/cognitive-modules -m code-simplifier
+cog add org/repo -m module-name --tag v1.0.0   # Install specific version
+cog remove <module>                             # Remove module
 
 # Version management
-cogn update <module>                 # Update to latest version
-cogn update <module> --tag v2.0.0    # Update to specific version
-cogn versions <url>                  # View available versions
+cog update <module>                 # Update to latest version
+cog update <module> --tag v2.0.0    # Update to specific version
+cog versions <url>                  # View available versions
 
 # Other installation methods
-cogn install github:user/repo/path
-cogn install registry:module-name
-cogn uninstall <module>
+cog install github:user/repo/path
+cog install registry:module-name
+cog uninstall <module>
 
 # Registry
-cogn registry                # View public modules
-cogn search <query>          # Search modules
+cog registry                # View public modules
+cog search <query>          # Search modules
 
 # Environment check
-cogn doctor
+cog doctor
 ```
 
 ## Built-in Modules
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
-| `code-reviewer` | decision | Code review | `cogn run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | Code simplification | `cogn run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | Task priority sorting | `cogn run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API design | `cogn run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI spec generation | `cogn run ui-spec-generator --args "e-commerce homepage"` |
-| `product-analyzer` | exploration | Product analysis (subagent) | `cogn run product-analyzer --args "health product" -s` |
+| `code-reviewer` | decision | Code review | `cog run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | Code simplification | `cog run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | Task priority sorting | `cog run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API design | `cog run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI spec generation | `cog run ui-spec-generator --args "e-commerce homepage"` |
+| `product-analyzer` | exploration | Product analysis (subagent) | `cog run product-analyzer --args "health product" -s` |
 
 ## Module Format
 
@@ -326,7 +326,7 @@ export MINIMAX_API_KEY=sk-xxx
 export LLM_PROVIDER=ollama
 
 # Check configuration
-cogn doctor
+cog doctor
 ```
 
 ## Migrating to v2.2
@@ -335,13 +335,13 @@ Migrate from v1 or v2.1 modules to v2.2:
 
 ```bash
 # Auto-migrate single module
-cogn migrate code-reviewer
+cog migrate code-reviewer
 
 # Migrate all modules
-cogn migrate --all
+cog migrate --all
 
 # Verify migration result
-cogn validate code-reviewer --v22
+cog validate code-reviewer --v22
 ```
 
 Manual migration steps:
@@ -364,8 +364,8 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # Create new module (v2.2 format)
-cogn init my-module -d "module description" --format v22
-cogn validate my-module --v22
+cog init my-module -d "module description" --format v22
+cog validate my-module --v22
 ```
 
 ## Project Structure
@@ -399,7 +399,7 @@ cognitive-modules/
 
 | Platform | Package | Command | Installation |
 |----------|---------|---------|--------------|
-| Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
+| Python | `cognitive-modules` | `cog` | `pip install cognitive-modules` |
 | Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
 
 Both versions share the same module format and v2.2 specification.

@@ -30,7 +30,7 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 - **子代理编排** - `@call:module` 支持模块间调用
 - **参数传递** - `$ARGUMENTS` 运行时替换
 - **多 LLM 支持** - OpenAI / Anthropic / MiniMax / Ollama
-- **公共注册表** - `cogn install registry:module-name`
+- **公共注册表** - `cog install registry:module-name`
 
 ## 版本选择
 
@@ -75,7 +75,7 @@ pip install "cognitive-modules[all]==2.2.0"         # 全部
 | 平台 | 包名 | 命令 | 特性 |
 |------|------|------|------|
 | **npm** | `cognitive-modules-cli` | `cog` | ✅ 推荐，零安装，完整功能 |
-| pip | `cognitive-modules` | `cogn` | ✅ 完整功能 |
+| pip | `cognitive-modules` | `cog` | ✅ 完整功能 |
 
 ## 快速开始
 
@@ -151,70 +151,70 @@ cog mcp
 | **风险聚合** | `meta.risk = max(changes[*].risk)` |
 | **参数传递** | `$ARGUMENTS` 运行时替换 |
 | **子代理** | `@call:module` 支持模块间调用 |
-| **验证工具** | `cogn validate` / `cogn validate --v22` |
+| **验证工具** | `cog validate` / `cog validate --v22` |
 
 ## 集成方式
 
 | 方式 | 命令 | 适用场景 |
 |------|------|----------|
-| CLI | `cogn run` | 命令行 |
-| HTTP API | `cogn serve` | n8n、Coze、Dify |
-| MCP Server | `cogn mcp` | Claude、Cursor |
+| CLI | `cog run` | 命令行 |
+| HTTP API | `cog serve` | n8n、Coze、Dify |
+| MCP Server | `cog mcp` | Claude、Cursor |
 
 ## CLI 命令
 
 ```bash
 # 模块管理
-cogn list                    # 列出已安装模块
-cogn info <module>           # 查看模块详情
-cogn validate <module>       # 验证模块结构
-cogn validate <module> --v22 # 验证 v2.2 格式
+cog list                    # 列出已安装模块
+cog info <module>           # 查看模块详情
+cog validate <module>       # 验证模块结构
+cog validate <module> --v22 # 验证 v2.2 格式
 
 # 运行模块
-cogn run <module> input.json -o output.json --pretty
-cogn run <module> --args "需求描述" --pretty
-cogn run <module> --args "需求" --subagent  # 启用子代理
+cog run <module> input.json -o output.json --pretty
+cog run <module> --args "需求描述" --pretty
+cog run <module> --args "需求" --subagent  # 启用子代理
 
 # 创建模块
-cogn init <name> -d "描述"
-cogn init <name> --format v22  # 创建 v2.2 格式模块
+cog init <name> -d "描述"
+cog init <name> --format v22  # 创建 v2.2 格式模块
 
 # 迁移模块
-cogn migrate <module>        # 将 v1/v2.1 模块迁移到 v2.2
+cog migrate <module>        # 将 v1/v2.1 模块迁移到 v2.2
 
 # 从 GitHub 安装（推荐）
-cogn add ziel-io/cognitive-modules -m code-simplifier
-cogn add org/repo -m module-name --tag v1.0.0   # 安装指定版本
-cogn remove <module>                             # 删除模块
+cog add ziel-io/cognitive-modules -m code-simplifier
+cog add org/repo -m module-name --tag v1.0.0   # 安装指定版本
+cog remove <module>                             # 删除模块
 
 # 版本管理
-cogn update <module>                 # 更新到最新版本
-cogn update <module> --tag v2.0.0    # 更新到指定版本
-cogn versions <url>                  # 查看可用版本
+cog update <module>                 # 更新到最新版本
+cog update <module> --tag v2.0.0    # 更新到指定版本
+cog versions <url>                  # 查看可用版本
 
 # 其他安装方式
-cogn install github:user/repo/path
-cogn install registry:module-name
-cogn uninstall <module>
+cog install github:user/repo/path
+cog install registry:module-name
+cog uninstall <module>
 
 # 注册表
-cogn registry                # 查看公共模块
-cogn search <query>          # 搜索模块
+cog registry                # 查看公共模块
+cog search <query>          # 搜索模块
 
 # 环境检查
-cogn doctor
+cog doctor
 ```
 
 ## 内置模块
 
 | 模块 | Tier | 功能 | 示例 |
 |------|------|------|------|
-| `code-reviewer` | decision | 代码审查 | `cogn run code-reviewer --args "你的代码"` |
-| `code-simplifier` | decision | 代码简化 | `cogn run code-simplifier --args "复杂代码"` |
-| `task-prioritizer` | decision | 任务优先级排序 | `cogn run task-prioritizer --args "任务1,任务2"` |
-| `api-designer` | decision | REST API 设计 | `cogn run api-designer --args "订单系统"` |
-| `ui-spec-generator` | exploration | UI 规范生成 | `cogn run ui-spec-generator --args "电商首页"` |
-| `product-analyzer` | exploration | 产品分析（子代理） | `cogn run product-analyzer --args "健康产品" -s` |
+| `code-reviewer` | decision | 代码审查 | `cog run code-reviewer --args "你的代码"` |
+| `code-simplifier` | decision | 代码简化 | `cog run code-simplifier --args "复杂代码"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `cog run task-prioritizer --args "任务1,任务2"` |
+| `api-designer` | decision | REST API 设计 | `cog run api-designer --args "订单系统"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `cog run ui-spec-generator --args "电商首页"` |
+| `product-analyzer` | exploration | 产品分析（子代理） | `cog run product-analyzer --args "健康产品" -s` |
 
 ## 模块格式
 
@@ -326,7 +326,7 @@ export MINIMAX_API_KEY=sk-xxx
 export LLM_PROVIDER=ollama
 
 # 检查配置
-cogn doctor
+cog doctor
 ```
 
 ## 迁移到 v2.2
@@ -335,13 +335,13 @@ cogn doctor
 
 ```bash
 # 自动迁移单个模块
-cogn migrate code-reviewer
+cog migrate code-reviewer
 
 # 迁移所有模块
-cogn migrate --all
+cog migrate --all
 
 # 验证迁移结果
-cogn validate code-reviewer --v22
+cog validate code-reviewer --v22
 ```
 
 手动迁移步骤：
@@ -364,8 +364,8 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # 创建新模块（v2.2 格式）
-cogn init my-module -d "模块描述" --format v22
-cogn validate my-module --v22
+cog init my-module -d "模块描述" --format v22
+cog validate my-module --v22
 ```
 
 ## 项目结构
@@ -399,7 +399,7 @@ cognitive-modules/
 
 | 平台 | 包名 | 命令 | 安装 |
 |------|------|------|------|
-| Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
+| Python | `cognitive-modules` | `cog` | `pip install cognitive-modules` |
 | Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
 
 两个版本共享相同的模块格式和 v2.2 规范。
