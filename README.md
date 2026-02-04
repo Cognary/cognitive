@@ -74,7 +74,7 @@ pip install "cognitive-modules[all]==2.2.0"         # All providers
 
 | Platform | Package | Command | Features |
 |----------|---------|---------|----------|
-| **npm** | `cogn` | `cog` | ✅ Recommended, zero-install, full features |
+| **npm** | `cognitive-modules-cli` | `cog` | ✅ Recommended, zero-install, full features |
 | pip | `cognitive-modules` | `cogn` | ✅ Full features |
 
 ## Quick Start
@@ -85,7 +85,7 @@ export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
 
 # Run code review (npm)
-npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cognitive-modules-cli run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # Or use globally installed cog command
 cog run code-reviewer --args "..." --pretty
@@ -400,7 +400,7 @@ cognitive-modules/
 | Platform | Package | Command | Installation |
 |----------|---------|---------|--------------|
 | Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
-| Node.js | `cogn` or `cognitive-modules-cli` | `cog` | `npm install -g cogn` or `npx cogn` |
+| Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
 
 Both versions share the same module format and v2.2 specification.
 

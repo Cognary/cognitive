@@ -74,7 +74,7 @@ pip install "cognitive-modules[all]==2.2.0"         # 全部
 
 | 平台 | 包名 | 命令 | 特性 |
 |------|------|------|------|
-| **npm** | `cogn` | `cog` | ✅ 推荐，零安装，完整功能 |
+| **npm** | `cognitive-modules-cli` | `cog` | ✅ 推荐，零安装，完整功能 |
 | pip | `cognitive-modules` | `cogn` | ✅ 完整功能 |
 
 ## 快速开始
@@ -85,7 +85,7 @@ export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
 
 # 运行代码审查（npm）
-npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cognitive-modules-cli run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # 或使用全局安装的 cog 命令
 cog run code-reviewer --args "..." --pretty
@@ -400,7 +400,7 @@ cognitive-modules/
 | 平台 | 包名 | 命令 | 安装 |
 |------|------|------|------|
 | Python | `cognitive-modules` | `cogn` | `pip install cognitive-modules` |
-| Node.js | `cogn` 或 `cognitive-modules-cli` | `cog` | `npm install -g cogn` 或 `npx cogn` |
+| Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
 
 两个版本共享相同的模块格式和 v2.2 规范。
 
