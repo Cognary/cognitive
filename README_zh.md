@@ -36,13 +36,13 @@ Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、�
 
 | 版本 | 规范 | npm | PyPI | 状态 |
 |------|------|-----|------|------|
-| **v2.2** | v2.2 | `2.2.0` | `2.2.0` | ✅ 稳定版 (推荐) |
+| **v2.2** | v2.2 | `2.2.0` | `2.2.1` | ✅ 稳定版 (推荐) |
 | **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 测试版 (流式 + 多模态) |
 
 ```bash
 # 安装稳定版 v2.2
 npm install cognitive-modules-cli@2.2.0
-pip install cognitive-modules==2.2.0
+pip install cognitive-modules==2.2.1
 
 # 安装测试版 v2.5 (流式 + 多模态)
 npm install cognitive-modules-cli@beta
@@ -64,12 +64,12 @@ npm install -g cognitive-modules-cli@2.2.0
 ### Python (pip)
 
 ```bash
-pip install cognitive-modules==2.2.0
+pip install cognitive-modules==2.2.1
 
 # 带 LLM 支持
-pip install "cognitive-modules[openai]==2.2.0"      # OpenAI
-pip install "cognitive-modules[anthropic]==2.2.0"   # Claude
-pip install "cognitive-modules[all]==2.2.0"         # 全部
+pip install "cognitive-modules[openai]==2.2.1"      # OpenAI
+pip install "cognitive-modules[anthropic]==2.2.1"   # Claude
+pip install "cognitive-modules[all]==2.2.1"         # 全部
 ```
 
 | 平台 | 包名 | 命令 | 特性 |

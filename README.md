@@ -36,13 +36,13 @@ Cognitive Modules is an AI task definition specification designed for generation
 
 | Version | Spec | npm | PyPI | Status |
 |---------|------|-----|------|--------|
-| **v2.2** | v2.2 | `2.2.0` | `2.2.0` | ✅ Stable (recommended) |
+| **v2.2** | v2.2 | `2.2.0` | `2.2.1` | ✅ Stable (recommended) |
 | **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 Beta (streaming + multimodal) |
 
 ```bash
 # Install stable v2.2
 npm install cognitive-modules-cli@2.2.0
-pip install cognitive-modules==2.2.0
+pip install cognitive-modules==2.2.1
 
 # Install beta v2.5 (streaming + multimodal)
 npm install cognitive-modules-cli@beta
@@ -64,12 +64,12 @@ npm install -g cognitive-modules-cli@2.2.0
 ### Python (pip)
 
 ```bash
-pip install cognitive-modules==2.2.0
+pip install cognitive-modules==2.2.1
 
 # With LLM support
-pip install "cognitive-modules[openai]==2.2.0"      # OpenAI
-pip install "cognitive-modules[anthropic]==2.2.0"   # Claude
-pip install "cognitive-modules[all]==2.2.0"         # All providers
+pip install "cognitive-modules[openai]==2.2.1"      # OpenAI
+pip install "cognitive-modules[anthropic]==2.2.1"   # Claude
+pip install "cognitive-modules[all]==2.2.1"         # All providers
 ```
 
 | Platform | Package | Command | Features |
