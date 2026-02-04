@@ -1,6 +1,6 @@
 {
   "name": "cognitive-modules-cli",
-  "version": "1.3.0",
+  "version": "2.2.0",
   "description": "Cognitive Modules - Structured AI Task Execution with version management",
   "type": "module",
   "main": "dist/index.js",
