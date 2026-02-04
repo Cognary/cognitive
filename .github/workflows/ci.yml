@@ -122,8 +122,8 @@ jobs:
 
       - name: Validate all modules
         run: |
-          cogn list
-          cogn validate ui-spec-generator || true
-          cogn validate code-reviewer || true
-          cogn validate task-prioritizer || true
-          cogn validate api-designer || true
+          cog list
+          cog validate ui-spec-generator || true
+          cog validate code-reviewer || true
+          cog validate task-prioritizer || true
+          cog validate api-designer || true
