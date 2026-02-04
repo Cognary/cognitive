@@ -1102,7 +1102,7 @@ $MEDIA_INPUTS
 - 对于图像：根据模型支持使用内联或 URL
 - 运行时处理不同 LLM API 的格式转换
 
-### 4.5 多模态信封示例
+### 4.7 多模态信封示例
 
 **输入：**
 
@@ -1336,19 +1336,29 @@ exploration:
 | **E1011** | MEDIA_TOO_LARGE | 媒体超出大小限制 |
 | **E1012** | MEDIA_FETCH_FAILED | 无法从 URL 获取媒体 |
 | **E1013** | MEDIA_DECODE_FAILED | 无法解码 base64 媒体 |
+| **E1014** | MEDIA_TYPE_MISMATCH | 媒体内容与声明类型不匹配 |
+| **E1015** | MEDIA_DIMENSION_EXCEEDED | 媒体尺寸超出最大值 |
+| **E1016** | MEDIA_DIMENSION_TOO_SMALL | 媒体尺寸低于最小值 |
+| **E1017** | MEDIA_PIXEL_LIMIT | 总像素数超出最大值 |
+| **E1018** | UPLOAD_EXPIRED | 预上传文件已过期 |
+| **E1019** | UPLOAD_NOT_FOUND | 预上传引用未找到 |
+| **E1020** | CHECKSUM_MISMATCH | 媒体校验和验证失败 |
 | **E2010** | STREAM_INTERRUPTED | 流被中断 |
 | **E2011** | STREAM_TIMEOUT | 流超时 |
 | **E4010** | STREAMING_NOT_SUPPORTED | 运行时不支持流式 |
 | **E4011** | MULTIMODAL_NOT_SUPPORTED | 运行时不支持多模态 |
+| **E4012** | RECOVERY_NOT_SUPPORTED | 运行时不支持流恢复 |
+| **E4013** | SESSION_EXPIRED | 流会话已过期 |
+| **E4014** | CHECKPOINT_INVALID | 恢复检查点不匹配 |
 
 ### 7.2 完整错误码表
 
 | 范围 | 类别 | v2.5 新增 |
 |------|------|-----------|
-| E1xxx | 输入错误 | E1010-E1013（媒体） |
+| E1xxx | 输入错误 | E1010-E1020（媒体、上传、校验） |
 | E2xxx | 处理错误 | E2010-E2011（流式） |
 | E3xxx | 输出错误 | （无） |
-| E4xxx | 运行时错误 | E4010-E4011（能力） |
+| E4xxx | 运行时错误 | E4010-E4014（能力、恢复） |
 
 ---
 

@@ -1096,7 +1096,7 @@ Return analysis in the schema-defined format.
 - For images: inline or URL depending on model support
 - Runtime handles format conversion for different LLM APIs
 
-### 4.5 Multimodal Envelope Example
+### 4.7 Multimodal Envelope Example
 
 **Input:**
 
@@ -1330,19 +1330,29 @@ For temporal media, confidence may vary over time:
 | **E1011** | MEDIA_TOO_LARGE | Media exceeds size limit |
 | **E1012** | MEDIA_FETCH_FAILED | Failed to fetch media from URL |
 | **E1013** | MEDIA_DECODE_FAILED | Failed to decode base64 media |
+| **E1014** | MEDIA_TYPE_MISMATCH | Media content does not match declared type |
+| **E1015** | MEDIA_DIMENSION_EXCEEDED | Media dimensions exceed maximum |
+| **E1016** | MEDIA_DIMENSION_TOO_SMALL | Media dimensions below minimum |
+| **E1017** | MEDIA_PIXEL_LIMIT | Total pixels exceed maximum |
+| **E1018** | UPLOAD_EXPIRED | Pre-uploaded file has expired |
+| **E1019** | UPLOAD_NOT_FOUND | Pre-upload reference not found |
+| **E1020** | CHECKSUM_MISMATCH | Media checksum validation failed |
 | **E2010** | STREAM_INTERRUPTED | Stream was interrupted |
 | **E2011** | STREAM_TIMEOUT | Stream exceeded timeout |
 | **E4010** | STREAMING_NOT_SUPPORTED | Runtime doesn't support streaming |
 | **E4011** | MULTIMODAL_NOT_SUPPORTED | Runtime doesn't support multimodal |
+| **E4012** | RECOVERY_NOT_SUPPORTED | Stream recovery not supported |
+| **E4013** | SESSION_EXPIRED | Stream session has expired |
+| **E4014** | CHECKPOINT_INVALID | Recovery checkpoint does not match |
 
 ### 7.2 Full Error Code Table
 
 | Range | Category | v2.5 Additions |
 |-------|----------|----------------|
-| E1xxx | Input errors | E1010-E1013 (media) |
+| E1xxx | Input errors | E1010-E1020 (media, upload, checksum) |
 | E2xxx | Processing errors | E2010-E2011 (streaming) |
 | E3xxx | Output errors | (none) |
-| E4xxx | Runtime errors | E4010-E4011 (capability) |
+| E4xxx | Runtime errors | E4010-E4014 (capability, recovery) |
 
 ---
 

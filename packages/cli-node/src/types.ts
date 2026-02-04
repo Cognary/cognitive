@@ -518,6 +518,8 @@ export interface MetaChunk {
   ok: true;
   streaming: true;
   session_id: string;
+  resumed?: boolean;
+  resume_from_seq?: number;
   meta: Partial<EnvelopeMeta>;
 }
 
@@ -528,6 +530,7 @@ export interface DeltaChunk {
     type: 'delta';
     field?: string;
     delta: string;
+    checkpoint?: Checkpoint;
   };
 }
 

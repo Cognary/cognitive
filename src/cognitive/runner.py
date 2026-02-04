@@ -984,7 +984,7 @@ ERROR_CODES_V25 = {
 }
 
 
-def detect_media_type_from_magic(data: bytes) -> str | None:
+def detect_media_type_from_magic(data: bytes) -> Optional[str]:
     """Detect media type from magic bytes."""
     for mime_type, magic_list in MEDIA_MAGIC_BYTES.items():
         for magic in magic_list:
@@ -1027,7 +1027,7 @@ def validate_media_magic_bytes(data: bytes, declared_type: str) -> tuple[bool, s
     return True, ""
 
 
-def validate_image_dimensions(data: bytes) -> tuple[int, int] | None:
+def validate_image_dimensions(data: bytes) -> Optional[tuple]:
     """
     Extract image dimensions from raw bytes.
     
@@ -1067,7 +1067,7 @@ def validate_image_dimensions(data: bytes) -> tuple[int, int] | None:
     return None
 
 
-def validate_media_input(media: dict, constraints: dict = None) -> tuple[bool, str, str | None]:
+def validate_media_input(media: dict, constraints: dict = None) -> tuple:
     """
     Validate a media input object with enhanced v2.5 validation.
     
@@ -1306,9 +1306,9 @@ def validate_multimodal_input(input_data: dict, module: dict) -> tuple[bool, lis
                 errors.append(f"Too many images ({len(images)} > {max_images})")
             
             for i, img in enumerate(images):
-                valid, err = validate_media_input(img, constraints)
+                valid, err, err_code = validate_media_input(img, constraints)
                 if not valid:
-                    errors.append(f"Image {i}: {err}")
+                    errors.append(f"Image {i}: {err}" + (f" [{err_code}]" if err_code else ""))
     
     # Check audio
     audio = input_data.get("audio", [])
