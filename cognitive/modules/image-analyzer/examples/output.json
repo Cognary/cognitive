@@ -1,0 +1,91 @@
+{
+  "ok": true,
+  "meta": {
+    "confidence": 0.91,
+    "risk": "none",
+    "explain": "Clear photograph analyzed with 4 objects detected, no text found",
+    "processing_time_ms": 2340,
+    "model": "gpt-4-vision-preview",
+    "images_processed": 1
+  },
+  "data": {
+    "rationale": "The image is a high-quality photograph showing a natural landscape scene. The lighting and composition are clear, allowing for confident object identification. No text is visible in the image. The scene appears to be a peaceful outdoor setting with natural elements.",
+    "analysis": {
+      "description": "A scenic nature photograph capturing a serene landscape. The image shows rolling hills covered in green vegetation under a partly cloudy sky. The foreground features wild grasses and flowers, while the background shows distant mountains. The lighting suggests either early morning or late afternoon, with warm golden tones.",
+      "objects": [
+        {
+          "label": "sky",
+          "confidence": 0.99,
+          "attributes": {
+            "condition": "partly cloudy",
+            "time_of_day": "golden hour"
+          }
+        },
+        {
+          "label": "mountains",
+          "confidence": 0.94,
+          "attributes": {
+            "distance": "far",
+            "vegetation": "forested"
+          }
+        },
+        {
+          "label": "grass",
+          "confidence": 0.97,
+          "attributes": {
+            "type": "wild meadow",
+            "color": "green with golden tips"
+          }
+        },
+        {
+          "label": "wildflowers",
+          "confidence": 0.82,
+          "attributes": {
+            "colors": ["yellow", "purple", "white"]
+          }
+        }
+      ],
+      "extracted_text": "",
+      "tags": [
+        "nature",
+        "landscape",
+        "mountains",
+        "meadow",
+        "scenic",
+        "outdoor",
+        "golden hour",
+        "peaceful"
+      ],
+      "colors": [
+        {"hex": "#87CEEB", "percentage": 35},
+        {"hex": "#228B22", "percentage": 40},
+        {"hex": "#FFD700", "percentage": 15},
+        {"hex": "#8B4513", "percentage": 10}
+      ],
+      "dimensions": {
+        "width": 1200,
+        "height": 800
+      }
+    },
+    "extensions": {
+      "insights": [
+        {
+          "observation": "The photograph appears to be taken during golden hour, which enhances the warm tones",
+          "category": "photography",
+          "suggested_mapping": {
+            "target_field": "analysis.lighting",
+            "schema_suggestion": "Add lighting assessment field"
+          }
+        },
+        {
+          "observation": "The composition follows the rule of thirds with the horizon at the upper third",
+          "category": "composition",
+          "suggested_mapping": {
+            "target_field": "analysis.composition",
+            "schema_suggestion": "Add composition analysis field"
+          }
+        }
+      ]
+    }
+  }
+}

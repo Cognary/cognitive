@@ -1,6 +1,6 @@
 # Cognitive Modules Conformance Levels
 
-> **Version**: 2.2  
+> **Version**: 2.5  
 > **Status**: Draft  
 > **Last Updated**: 2026-02
 
@@ -21,6 +21,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 | 1 | Basic | Core envelope validation | Minimal viable implementation |
 | 2 | Standard | Full tier + error codes | Production-ready implementation |
 | 3 | Full | Composition + context | Enterprise/platform implementation |
+| 4 | Extended | Streaming + multimodal (v2.5) | Real-time and rich media applications |
 
 ---
 
@@ -166,6 +167,71 @@ Level 3 implementations MUST pass all test vectors regardless of `conformance_le
 
 ---
 
+## Level 4: Extended Conformance (v2.5)
+
+### Requirements
+
+A Level 4 conformant implementation MUST meet all Level 3 requirements, plus:
+
+1. **Streaming Response**
+   - MUST support `response.mode: streaming` configuration
+   - MUST emit initial `meta` chunk with `session_id`
+   - MUST support `delta` chunk type for incremental content
+   - MUST support `snapshot` chunk type for full replacement
+   - MAY support `progress` chunks for progress updates
+   - MUST emit `final` chunk at stream end
+   - MUST emit `error` chunk on stream failure with `partial_data`
+   - MUST enforce monotonically increasing `chunk.seq` numbers
+
+2. **Streaming Transports**
+   - MUST support at least one transport: SSE, WebSocket, or NDJSON
+   - SHOULD support SSE (`text/event-stream`) for HTTP streaming
+   - MAY support WebSocket for bidirectional streaming
+   - SHOULD implement heartbeat to prevent timeout (default: 15s)
+
+3. **Multimodal Input**
+   - MUST support `modalities.input` configuration
+   - MUST support `url` media input type
+   - MUST support `base64` media input type
+   - SHOULD support `file` media input type
+   - MUST validate media MIME types against supported types
+   - MUST enforce size limits from `modalities.constraints`
+   - MUST return `E1010` for unsupported media types
+   - MUST return `E1011` for media exceeding size limit
+   - MUST return `E1012` for failed URL fetch
+   - MUST return `E1013` for failed base64 decode
+
+4. **Multimodal Output** (OPTIONAL)
+   - MAY support `modalities.output` for generated media
+   - SHOULD return generated media as `base64` or `url`
+   - SHOULD include `width`, `height`, `duration_ms` metadata
+
+5. **Graceful Degradation**
+   - MUST fall back to sync response when streaming unavailable
+   - SHOULD emit warning when falling back
+   - MUST return `E4010` if streaming explicitly required but unavailable
+   - MUST return `E4011` if multimodal explicitly required but unavailable
+
+6. **Capability Declaration**
+   - MUST expose runtime capabilities via `get_runtime_capabilities()`
+   - MUST declare `streaming: true/false`
+   - MUST declare `multimodal.input` array
+   - MUST declare `multimodal.output` array
+   - SHOULD declare `max_media_size_mb`
+   - SHOULD declare `supported_transports` array
+
+### Test Vectors
+
+Level 4 implementations MUST pass all test vectors including those with `conformance_level: 4`.
+
+### Badge
+
+```
+[Cognitive Modules Level 4]
+```
+
+---
+
 ## Conformance Declaration
 
 Implementations SHOULD declare their conformance level in documentation:
@@ -173,11 +239,12 @@ Implementations SHOULD declare their conformance level in documentation:
 ```markdown
 ## Conformance
 
-This implementation conforms to Cognitive Modules Specification v2.2 at **Level 2**.
+This implementation conforms to Cognitive Modules Specification v2.5 at **Level 4**.
 
 - [x] Level 1: Basic envelope validation
 - [x] Level 2: Full tier support, error codes, overflow
-- [ ] Level 3: Composition, context protocol
+- [x] Level 3: Composition, context protocol
+- [x] Level 4: Streaming, multimodal
 ```
 
 ---
@@ -232,25 +299,42 @@ A formal certification program will be established when:
 | E4004 | Runtime | Circular dependency detected |
 | E4005 | Runtime | Max call depth exceeded |
 
+### Level 4 Required
+
+| Code | Category | Description |
+|------|----------|-------------|
+| E1010 | Input | Unsupported media type |
+| E1011 | Input | Media exceeds size limit |
+| E1012 | Input | Failed to fetch media URL |
+| E1013 | Input | Failed to decode base64 media |
+| E2010 | Processing | Stream interrupted |
+| E2011 | Processing | Stream timeout |
+| E4010 | Runtime | Streaming not supported |
+| E4011 | Runtime | Multimodal not supported |
+
 ---
 
 ## Appendix: Conformance Matrix
 
-| Feature | Level 1 | Level 2 | Level 3 |
-|---------|---------|---------|---------|
-| Envelope validation | MUST | MUST | MUST |
-| Meta field validation | MUST | MUST | MUST |
-| Schema validation | MUST | MUST | MUST |
-| Tier support | - | MUST | MUST |
-| Error codes (E1-E3) | - | MUST | MUST |
-| Overflow handling | - | MUST | MUST |
-| Extensible enum | - | MUST | MUST |
-| Repair pass | - | SHOULD | MUST |
-| v2.1 compatibility | - | SHOULD | SHOULD |
-| Module composition | - | - | MUST |
-| Context protocol | - | - | MUST |
-| Policy enforcement | - | - | MUST |
-| Error codes (E4) | - | - | MUST |
+| Feature | Level 1 | Level 2 | Level 3 | Level 4 |
+|---------|---------|---------|---------|---------|
+| Envelope validation | MUST | MUST | MUST | MUST |
+| Meta field validation | MUST | MUST | MUST | MUST |
+| Schema validation | MUST | MUST | MUST | MUST |
+| Tier support | - | MUST | MUST | MUST |
+| Error codes (E1-E3) | - | MUST | MUST | MUST |
+| Overflow handling | - | MUST | MUST | MUST |
+| Extensible enum | - | MUST | MUST | MUST |
+| Repair pass | - | SHOULD | MUST | MUST |
+| v2.1 compatibility | - | SHOULD | SHOULD | SHOULD |
+| Module composition | - | - | MUST | MUST |
+| Context protocol | - | - | MUST | MUST |
+| Policy enforcement | - | - | MUST | MUST |
+| Error codes (E4) | - | - | MUST | MUST |
+| Streaming response | - | - | - | MUST |
+| Multimodal input | - | - | - | MUST |
+| Multimodal output | - | - | - | MAY |
+| Capability declaration | - | - | - | MUST |
 
 ---
 
@@ -258,4 +342,5 @@ A formal certification program will be established when:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.5-draft | 2026-02 | Added Level 4: streaming, multimodal |
 | 2.2-draft | 2026-02 | Initial conformance levels |

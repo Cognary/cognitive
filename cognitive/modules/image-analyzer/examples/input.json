@@ -1,0 +1,14 @@
+{
+  "prompt": "Analyze this image and describe what you see. Identify all objects and extract any visible text.",
+  "images": [
+    {
+      "type": "url",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1200px-Image_created_with_a_mobile_phone.png"
+    }
+  ],
+  "options": {
+    "extract_text": true,
+    "detect_objects": true,
+    "include_bbox": false
+  }
+}

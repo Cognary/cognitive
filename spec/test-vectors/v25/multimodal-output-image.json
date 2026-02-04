@@ -1,0 +1,32 @@
+{
+  "$test": {
+    "name": "multimodal-output-image",
+    "description": "Valid multimodal output with generated image",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "multimodal"
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.95,
+      "risk": "none",
+      "explain": "Image generated successfully"
+    },
+    "data": {
+      "rationale": "Generated a sunset landscape image based on the description.",
+      "generated_image": {
+        "type": "base64",
+        "media_type": "image/png",
+        "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "width": 1024,
+        "height": 1024,
+        "generation_params": {
+          "model": "dall-e-3",
+          "quality": "hd",
+          "style": "natural"
+        }
+      }
+    }
+  }
+}

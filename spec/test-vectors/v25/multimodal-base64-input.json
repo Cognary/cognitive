@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "multimodal-base64-input",
+    "description": "Valid multimodal input with base64 encoded image",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "multimodal"
+  },
+  "input": {
+    "prompt": "What objects are in this image?",
+    "images": [
+      {
+        "type": "base64",
+        "media_type": "image/png",
+        "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      }
+    ]
+  }
+}

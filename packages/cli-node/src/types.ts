@@ -1,6 +1,6 @@
 /**
  * Cognitive Runtime - Core Types
- * Version 2.2 - With Control/Data plane separation, tier, overflow, extensible enums
+ * Version 2.5 - With streaming response and multimodal support
  */
 
 // =============================================================================
@@ -492,4 +492,322 @@ export function shouldEscalate<T>(
   }
   
   return false;
+}
+
+// =============================================================================
+// v2.5 Streaming Types
+// =============================================================================
+
+/** Response mode configuration */
+export type ResponseMode = 'sync' | 'streaming' | 'both';
+
+/** Chunk type for streaming */
+export type ChunkType = 'delta' | 'snapshot';
+
+/** Response configuration in module.yaml */
+export interface ResponseConfig {
+  mode: ResponseMode;
+  chunk_type?: ChunkType;
+  buffer_size?: number;
+  heartbeat_interval_ms?: number;
+  max_duration_ms?: number;
+}
+
+/** Meta chunk - initial streaming response */
+export interface MetaChunk {
+  ok: true;
+  streaming: true;
+  session_id: string;
+  meta: Partial<EnvelopeMeta>;
+}
+
+/** Delta chunk - incremental content */
+export interface DeltaChunk {
+  chunk: {
+    seq: number;
+    type: 'delta';
+    field?: string;
+    delta: string;
+  };
+}
+
+/** Snapshot chunk - full state replacement */
+export interface SnapshotChunk {
+  chunk: {
+    seq: number;
+    type: 'snapshot';
+    field?: string;
+    data: unknown;
+  };
+}
+
+/** Progress chunk - progress update */
+export interface ProgressChunk {
+  progress: {
+    percent: number;
+    stage?: string;
+    message?: string;
+  };
+}
+
+/** Final chunk - completion signal */
+export interface FinalChunk {
+  final: true;
+  meta: EnvelopeMeta;
+  data: ModuleResultData;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
+}
+
+/** Error chunk during streaming */
+export interface ErrorChunk {
+  ok: false;
+  streaming: true;
+  session_id?: string;
+  error: {
+    code: string;
+    message: string;
+    recoverable?: boolean;
+  };
+  partial_data?: unknown;
+}
+
+/** Union of all streaming chunk types */
+export type StreamingChunk = 
+  | MetaChunk 
+  | DeltaChunk 
+  | SnapshotChunk 
+  | ProgressChunk 
+  | FinalChunk 
+  | ErrorChunk;
+
+/** Streaming session state */
+export interface StreamingSession {
+  session_id: string;
+  module_name: string;
+  started_at: number;
+  chunks_sent: number;
+  accumulated_data: Record<string, unknown>;
+  accumulated_text: Record<string, string>;
+}
+
+// =============================================================================
+// v2.5 Multimodal Types
+// =============================================================================
+
+/** Supported modality types */
+export type ModalityType = 'text' | 'image' | 'audio' | 'video' | 'document';
+
+/** Modalities configuration in module.yaml */
+export interface ModalitiesConfig {
+  input: ModalityType[];
+  output: ModalityType[];
+  constraints?: MediaConstraints;
+}
+
+/** Media size/duration constraints */
+export interface MediaConstraints {
+  max_image_size_mb?: number;
+  max_audio_size_mb?: number;
+  max_video_size_mb?: number;
+  max_audio_duration_s?: number;
+  max_video_duration_s?: number;
+  allowed_image_types?: string[];
+  allowed_audio_types?: string[];
+  allowed_video_types?: string[];
+}
+
+/** Media input - URL reference */
+export interface UrlMediaInput {
+  type: 'url';
+  url: string;
+  media_type?: string;
+}
+
+/** Media input - Base64 inline */
+export interface Base64MediaInput {
+  type: 'base64';
+  media_type: string;
+  data: string;
+}
+
+/** Media input - File path */
+export interface FileMediaInput {
+  type: 'file';
+  path: string;
+}
+
+/** Union of media input types */
+export type MediaInput = UrlMediaInput | Base64MediaInput | FileMediaInput;
+
+/** Media output with metadata */
+export interface MediaOutput {
+  type: 'url' | 'base64' | 'file';
+  media_type: string;
+  url?: string;
+  data?: string;
+  path?: string;
+  width?: number;
+  height?: number;
+  duration_ms?: number;
+  expires_at?: string;
+  generation_params?: Record<string, unknown>;
+}
+
+/** Supported image MIME types */
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+] as const;
+
+/** Supported audio MIME types */
+export const SUPPORTED_AUDIO_TYPES = [
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/webm'
+] as const;
+
+/** Supported video MIME types */
+export const SUPPORTED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime'
+] as const;
+
+// =============================================================================
+// v2.5 Error Codes
+// =============================================================================
+
+/** v2.5 Error codes for streaming and multimodal */
+export const ErrorCodesV25 = {
+  // Media errors (E1xxx)
+  UNSUPPORTED_MEDIA_TYPE: 'E1010',
+  MEDIA_TOO_LARGE: 'E1011',
+  MEDIA_FETCH_FAILED: 'E1012',
+  MEDIA_DECODE_FAILED: 'E1013',
+  
+  // Streaming errors (E2xxx)
+  STREAM_INTERRUPTED: 'E2010',
+  STREAM_TIMEOUT: 'E2011',
+  
+  // Capability errors (E4xxx)
+  STREAMING_NOT_SUPPORTED: 'E4010',
+  MULTIMODAL_NOT_SUPPORTED: 'E4011',
+} as const;
+
+export type ErrorCodeV25 = typeof ErrorCodesV25[keyof typeof ErrorCodesV25];
+
+// =============================================================================
+// v2.5 Runtime Capabilities
+// =============================================================================
+
+/** Runtime capability declaration */
+export interface RuntimeCapabilities {
+  streaming: boolean;
+  multimodal: {
+    input: ModalityType[];
+    output: ModalityType[];
+  };
+  max_media_size_mb: number;
+  supported_transports: ('sse' | 'websocket' | 'ndjson')[];
+}
+
+/** Default runtime capabilities */
+export const DEFAULT_RUNTIME_CAPABILITIES: RuntimeCapabilities = {
+  streaming: true,
+  multimodal: {
+    input: ['text', 'image'],
+    output: ['text']
+  },
+  max_media_size_mb: 20,
+  supported_transports: ['sse', 'ndjson']
+};
+
+// =============================================================================
+// v2.5 Extended Provider Interface
+// =============================================================================
+
+/** Extended invoke params with streaming support */
+export interface InvokeParamsV25 extends InvokeParams {
+  stream?: boolean;
+  images?: MediaInput[];
+  audio?: MediaInput[];
+  video?: MediaInput[];
+}
+
+/** Streaming invoke result */
+export interface StreamingInvokeResult {
+  stream: AsyncIterable<string>;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+/** Extended provider interface for v2.5 */
+export interface ProviderV25 extends Provider {
+  /** Check if provider supports streaming */
+  supportsStreaming?(): boolean;
+  
+  /** Check if provider supports multimodal input */
+  supportsMultimodal?(): { input: ModalityType[]; output: ModalityType[] };
+  
+  /** Invoke with streaming */
+  invokeStream?(params: InvokeParamsV25): Promise<StreamingInvokeResult>;
+}
+
+/** Type guard for v2.5 provider */
+export function isProviderV25(provider: Provider): provider is ProviderV25 {
+  return 'invokeStream' in provider || 'supportsStreaming' in provider;
+}
+
+// =============================================================================
+// v2.5 Module Configuration Extensions
+// =============================================================================
+
+/** Extended module interface for v2.5 */
+export interface CognitiveModuleV25 extends CognitiveModule {
+  /** v2.5: Response configuration */
+  response?: ResponseConfig;
+  
+  /** v2.5: Modalities configuration */
+  modalities?: ModalitiesConfig;
+}
+
+/** Type guard for v2.5 module */
+export function isModuleV25(module: CognitiveModule): module is CognitiveModuleV25 {
+  return 'response' in module || 'modalities' in module;
+}
+
+/** Check if module supports streaming */
+export function moduleSupportsStreaming(module: CognitiveModule): boolean {
+  if (!isModuleV25(module)) return false;
+  const mode = module.response?.mode;
+  return mode === 'streaming' || mode === 'both';
+}
+
+/** Check if module supports multimodal input */
+export function moduleSupportsMultimodal(module: CognitiveModule): boolean {
+  if (!isModuleV25(module)) return false;
+  const modalities = module.modalities?.input ?? ['text'];
+  return modalities.some(m => m !== 'text');
+}
+
+/** Get supported input modalities for module */
+export function getModuleInputModalities(module: CognitiveModule): ModalityType[] {
+  if (!isModuleV25(module)) return ['text'];
+  return module.modalities?.input ?? ['text'];
+}
+
+/** Get supported output modalities for module */
+export function getModuleOutputModalities(module: CognitiveModule): ModalityType[] {
+  if (!isModuleV25(module)) return ['text'];
+  return module.modalities?.output ?? ['text'];
 }

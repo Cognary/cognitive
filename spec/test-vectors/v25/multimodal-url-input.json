@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "multimodal-url-input",
+    "description": "Valid multimodal input with URL reference",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "multimodal"
+  },
+  "input": {
+    "prompt": "Describe this image",
+    "images": [
+      {
+        "type": "url",
+        "url": "https://example.com/sunset.jpg",
+        "media_type": "image/jpeg"
+      }
+    ]
+  }
+}

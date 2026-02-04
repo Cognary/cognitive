@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://cognitive-modules.dev/schema/v2.2/module.yaml.json",
-  "title": "Cognitive Module Manifest v2.2",
-  "description": "Schema for module.yaml - the machine-readable configuration for Cognitive Modules.",
+  "$id": "https://cognitive-modules.dev/schema/v2.5/module.yaml.json",
+  "title": "Cognitive Module Manifest v2.5",
+  "description": "Schema for module.yaml - the machine-readable configuration for Cognitive Modules. Supports v2.5 features: streaming and multimodal.",
   "type": "object",
   
   "required": ["name", "version", "responsibility", "tier"],
@@ -93,6 +93,130 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Explicitly denied tools."
+        }
+      }
+    },
+
+    "response": {
+      "type": "object",
+      "description": "v2.5: Response mode configuration for streaming support.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["sync", "streaming", "both"],
+          "default": "sync",
+          "description": "'sync' for traditional request/response, 'streaming' for real-time chunks, 'both' to support either."
+        },
+        "chunk_type": {
+          "type": "string",
+          "enum": ["delta", "snapshot"],
+          "default": "delta",
+          "description": "'delta' for incremental updates, 'snapshot' for full state replacement."
+        },
+        "buffer_size": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1024,
+          "description": "Bytes to buffer before flushing (streaming mode)."
+        },
+        "heartbeat_interval_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 15000,
+          "description": "Milliseconds between heartbeat chunks to prevent timeout."
+        },
+        "max_duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 300000,
+          "description": "Maximum stream duration in milliseconds (default 5 minutes)."
+        }
+      }
+    },
+
+    "modalities": {
+      "type": "object",
+      "description": "v2.5: Multimodal input/output configuration.",
+      "properties": {
+        "input": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["text", "image", "audio", "video", "document"]
+          },
+          "uniqueItems": true,
+          "default": ["text"],
+          "description": "Supported input modalities. 'text' is always implicitly supported."
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["text", "image", "audio", "video"]
+          },
+          "uniqueItems": true,
+          "default": ["text"],
+          "description": "Supported output modalities."
+        },
+        "constraints": {
+          "type": "object",
+          "description": "Constraints for media inputs.",
+          "properties": {
+            "max_image_size_mb": {
+              "type": "number",
+              "minimum": 0,
+              "default": 20,
+              "description": "Maximum image size in megabytes."
+            },
+            "max_audio_size_mb": {
+              "type": "number",
+              "minimum": 0,
+              "default": 25,
+              "description": "Maximum audio size in megabytes."
+            },
+            "max_video_size_mb": {
+              "type": "number",
+              "minimum": 0,
+              "default": 100,
+              "description": "Maximum video size in megabytes."
+            },
+            "max_audio_duration_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 600,
+              "description": "Maximum audio duration in seconds."
+            },
+            "max_video_duration_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 300,
+              "description": "Maximum video duration in seconds."
+            },
+            "max_images": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "description": "Maximum number of images per request."
+            },
+            "allowed_image_types": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["image/jpeg", "image/png", "image/webp", "image/gif"],
+              "description": "Allowed image MIME types."
+            },
+            "allowed_audio_types": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["audio/mpeg", "audio/wav", "audio/ogg"],
+              "description": "Allowed audio MIME types."
+            },
+            "allowed_video_types": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["video/mp4", "video/webm"],
+              "description": "Allowed video MIME types."
+            }
+          }
         }
       }
     },

@@ -10,8 +10,13 @@ v2.2 Features:
 """
 
 import json
+import base64
+import mimetypes
 from pathlib import Path
-from typing import Optional, TypedDict, Union, Literal
+from typing import Optional, TypedDict, Union, Literal, Callable, AsyncIterator
+from dataclasses import dataclass, field
+from urllib.request import urlopen
+from urllib.error import URLError
 
 import jsonschema
 import yaml
@@ -652,3 +657,499 @@ def should_escalate(result: EnvelopeResponseV22, confidence_threshold: float = 0
         return True
     
     return False
+
+
+# =============================================================================
+# v2.5 Streaming Support
+# =============================================================================
+
+import uuid
+from typing import AsyncIterator, Iterator, Any, Callable
+from dataclasses import dataclass, field
+
+
+@dataclass
+class StreamingSession:
+    """Represents an active streaming session."""
+    session_id: str
+    module_name: str
+    started_at: float = field(default_factory=lambda: __import__('time').time())
+    chunks_sent: int = 0
+    accumulated_data: dict = field(default_factory=dict)
+    accumulated_text: dict = field(default_factory=dict)  # field -> accumulated string
+
+
+def create_session_id() -> str:
+    """Generate a unique session ID for streaming."""
+    return f"sess_{uuid.uuid4().hex[:12]}"
+
+
+def create_meta_chunk(session_id: str, initial_risk: str = "low") -> dict:
+    """Create the initial meta chunk for streaming."""
+    return {
+        "ok": True,
+        "streaming": True,
+        "session_id": session_id,
+        "meta": {
+            "confidence": None,
+            "risk": initial_risk,
+            "explain": "Processing..."
+        }
+    }
+
+
+def create_delta_chunk(seq: int, field: str, delta: str) -> dict:
+    """Create a delta chunk for incremental content."""
+    return {
+        "chunk": {
+            "seq": seq,
+            "type": "delta",
+            "field": field,
+            "delta": delta
+        }
+    }
+
+
+def create_snapshot_chunk(seq: int, field: str, data: Any) -> dict:
+    """Create a snapshot chunk for full field replacement."""
+    return {
+        "chunk": {
+            "seq": seq,
+            "type": "snapshot",
+            "field": field,
+            "data": data
+        }
+    }
+
+
+def create_progress_chunk(percent: int, stage: str = "", message: str = "") -> dict:
+    """Create a progress update chunk."""
+    return {
+        "progress": {
+            "percent": percent,
+            "stage": stage,
+            "message": message
+        }
+    }
+
+
+def create_final_chunk(meta: dict, data: dict, usage: dict = None) -> dict:
+    """Create the final chunk with complete data."""
+    chunk = {
+        "final": True,
+        "meta": meta,
+        "data": data
+    }
+    if usage:
+        chunk["usage"] = usage
+    return chunk
+
+
+def create_error_chunk(session_id: str, error_code: str, message: str, 
+                       recoverable: bool = False, partial_data: dict = None) -> dict:
+    """Create an error chunk for stream failures."""
+    chunk = {
+        "ok": False,
+        "streaming": True,
+        "session_id": session_id,
+        "error": {
+            "code": error_code,
+            "message": message,
+            "recoverable": recoverable
+        }
+    }
+    if partial_data:
+        chunk["partial_data"] = partial_data
+    return chunk
+
+
+def assemble_streamed_data(session: StreamingSession) -> dict:
+    """Assemble accumulated streaming data into final format."""
+    data = session.accumulated_data.copy()
+    
+    # Merge accumulated text fields
+    for field_path, text in session.accumulated_text.items():
+        parts = field_path.split(".")
+        target = data
+        for part in parts[:-1]:
+            if part not in target:
+                target[part] = {}
+            target = target[part]
+        target[parts[-1]] = text
+    
+    return data
+
+
+class StreamingRunner:
+    """Runner with streaming support for v2.5 modules."""
+    
+    def __init__(self, provider_callback: Callable = None):
+        """
+        Initialize streaming runner.
+        
+        Args:
+            provider_callback: Function to call LLM with streaming support.
+                              Signature: async (prompt, images=None) -> AsyncIterator[str]
+        """
+        self.provider_callback = provider_callback or self._default_provider
+        self.active_sessions: dict[str, StreamingSession] = {}
+    
+    async def _default_provider(self, prompt: str, images: list = None) -> AsyncIterator[str]:
+        """Default provider - yields entire response at once (for testing)."""
+        # In real implementation, this would stream from LLM
+        yield '{"ok": true, "meta": {"confidence": 0.9, "risk": "low", "explain": "Test"}, "data": {"rationale": "Test response"}}'
+    
+    async def execute_stream(
+        self,
+        module_name: str,
+        input_data: dict,
+        on_chunk: Callable[[dict], None] = None
+    ) -> AsyncIterator[dict]:
+        """
+        Execute a module with streaming output.
+        
+        Args:
+            module_name: Name of the module to execute
+            input_data: Input data including multimodal content
+            on_chunk: Optional callback for each chunk
+        
+        Yields:
+            Streaming chunks (meta, delta, progress, final, or error)
+        """
+        session_id = create_session_id()
+        session = StreamingSession(session_id=session_id, module_name=module_name)
+        self.active_sessions[session_id] = session
+        
+        try:
+            # Load module
+            module = load_module(module_name)
+            
+            # Check if module supports streaming
+            response_config = module.get("response", {})
+            mode = response_config.get("mode", "sync")
+            if mode not in ("streaming", "both"):
+                # Fall back to sync execution
+                result = await self._execute_sync(module, input_data)
+                yield create_meta_chunk(session_id)
+                yield create_final_chunk(result["meta"], result["data"])
+                return
+            
+            # Extract images for multimodal
+            images = self._extract_media(input_data)
+            
+            # Build prompt
+            prompt = self._build_prompt(module, input_data)
+            
+            # Send initial meta chunk
+            meta_chunk = create_meta_chunk(session_id)
+            if on_chunk:
+                on_chunk(meta_chunk)
+            yield meta_chunk
+            
+            # Stream from LLM
+            seq = 1
+            accumulated_response = ""
+            
+            async for text_chunk in self.provider_callback(prompt, images):
+                accumulated_response += text_chunk
+                
+                # Create delta chunk for rationale field
+                delta_chunk = create_delta_chunk(seq, "data.rationale", text_chunk)
+                session.chunks_sent += 1
+                session.accumulated_text.setdefault("data.rationale", "")
+                session.accumulated_text["data.rationale"] += text_chunk
+                
+                if on_chunk:
+                    on_chunk(delta_chunk)
+                yield delta_chunk
+                seq += 1
+            
+            # Parse final response
+            try:
+                final_data = parse_llm_response(accumulated_response)
+                final_data = repair_envelope(final_data)
+            except Exception as e:
+                error_chunk = create_error_chunk(
+                    session_id, "E2001", str(e), 
+                    recoverable=False,
+                    partial_data={"rationale": session.accumulated_text.get("data.rationale", "")}
+                )
+                yield error_chunk
+                return
+            
+            # Send final chunk
+            final_chunk = create_final_chunk(
+                final_data.get("meta", {}),
+                final_data.get("data", {}),
+                {"input_tokens": 0, "output_tokens": seq}  # Placeholder
+            )
+            if on_chunk:
+                on_chunk(final_chunk)
+            yield final_chunk
+            
+        except Exception as e:
+            error_chunk = create_error_chunk(
+                session_id, "E2010", f"Stream error: {str(e)}",
+                recoverable=False
+            )
+            yield error_chunk
+        finally:
+            del self.active_sessions[session_id]
+    
+    async def _execute_sync(self, module: dict, input_data: dict) -> dict:
+        """Execute module synchronously (fallback)."""
+        # Use existing sync execution
+        return run_module(module["name"], input_data)
+    
+    def _build_prompt(self, module: dict, input_data: dict) -> str:
+        """Build prompt from module and input."""
+        prompt_template = module.get("prompt", "")
+        return substitute_arguments(prompt_template, input_data)
+    
+    def _extract_media(self, input_data: dict) -> list:
+        """Extract media inputs from input data."""
+        images = input_data.get("images", [])
+        audio = input_data.get("audio", [])
+        video = input_data.get("video", [])
+        return images + audio + video
+
+
+# =============================================================================
+# v2.5 Multimodal Support
+# =============================================================================
+
+SUPPORTED_IMAGE_TYPES = {
+    "image/jpeg", "image/png", "image/webp", "image/gif"
+}
+
+SUPPORTED_AUDIO_TYPES = {
+    "audio/mpeg", "audio/wav", "audio/ogg", "audio/webm"
+}
+
+SUPPORTED_VIDEO_TYPES = {
+    "video/mp4", "video/webm", "video/quicktime"
+}
+
+
+def validate_media_input(media: dict, constraints: dict = None) -> tuple[bool, str]:
+    """
+    Validate a media input object.
+    
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    constraints = constraints or {}
+    
+    media_type = media.get("type")
+    if media_type not in ("url", "base64", "file"):
+        return False, "Invalid media type. Must be url, base64, or file"
+    
+    if media_type == "url":
+        url = media.get("url")
+        if not url:
+            return False, "URL media missing 'url' field"
+        if not url.startswith(("http://", "https://")):
+            return False, "URL must start with http:// or https://"
+    
+    elif media_type == "base64":
+        mime_type = media.get("media_type")
+        if not mime_type:
+            return False, "Base64 media missing 'media_type' field"
+        data = media.get("data")
+        if not data:
+            return False, "Base64 media missing 'data' field"
+        # Validate base64
+        try:
+            base64.b64decode(data)
+        except Exception:
+            return False, "Invalid base64 encoding"
+        
+        # Check size
+        max_size = constraints.get("max_size_bytes", 20 * 1024 * 1024)  # 20MB default
+        data_size = len(data) * 3 // 4  # Approximate decoded size
+        if data_size > max_size:
+            return False, f"Media exceeds size limit ({data_size} > {max_size} bytes)"
+    
+    elif media_type == "file":
+        path = media.get("path")
+        if not path:
+            return False, "File media missing 'path' field"
+        if not Path(path).exists():
+            return False, f"File not found: {path}"
+    
+    return True, ""
+
+
+def load_media_as_base64(media: dict) -> tuple[str, str]:
+    """
+    Load media from any source and return as base64.
+    
+    Returns:
+        Tuple of (base64_data, media_type)
+    """
+    media_type = media.get("type")
+    
+    if media_type == "base64":
+        return media["data"], media["media_type"]
+    
+    elif media_type == "url":
+        url = media["url"]
+        try:
+            with urlopen(url, timeout=30) as response:
+                data = response.read()
+                content_type = response.headers.get("Content-Type", "application/octet-stream")
+                # Extract just the mime type (remove charset etc)
+                content_type = content_type.split(";")[0].strip()
+                return base64.b64encode(data).decode("utf-8"), content_type
+        except URLError as e:
+            raise ValueError(f"Failed to fetch media from URL: {e}")
+    
+    elif media_type == "file":
+        path = Path(media["path"])
+        if not path.exists():
+            raise ValueError(f"File not found: {path}")
+        
+        mime_type, _ = mimetypes.guess_type(str(path))
+        mime_type = mime_type or "application/octet-stream"
+        
+        with open(path, "rb") as f:
+            data = f.read()
+        
+        return base64.b64encode(data).decode("utf-8"), mime_type
+    
+    raise ValueError(f"Unknown media type: {media_type}")
+
+
+def prepare_media_for_llm(media_list: list, provider: str = "openai") -> list:
+    """
+    Prepare media inputs for specific LLM provider format.
+    
+    Different providers have different multimodal input formats:
+    - OpenAI: {"type": "image_url", "image_url": {"url": "data:..."}}
+    - Anthropic: {"type": "image", "source": {"type": "base64", ...}}
+    - Google: {"inlineData": {"mimeType": "...", "data": "..."}}
+    """
+    prepared = []
+    
+    for media in media_list:
+        data, mime_type = load_media_as_base64(media)
+        
+        if provider == "openai":
+            prepared.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{mime_type};base64,{data}"
+                }
+            })
+        elif provider == "anthropic":
+            prepared.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": mime_type,
+                    "data": data
+                }
+            })
+        elif provider == "google":
+            prepared.append({
+                "inlineData": {
+                    "mimeType": mime_type,
+                    "data": data
+                }
+            })
+        else:
+            # Generic format
+            prepared.append({
+                "type": "base64",
+                "media_type": mime_type,
+                "data": data
+            })
+    
+    return prepared
+
+
+def get_modalities_config(module: dict) -> dict:
+    """Get modalities configuration from module."""
+    return module.get("modalities", {
+        "input": ["text"],
+        "output": ["text"]
+    })
+
+
+def supports_multimodal_input(module: dict) -> bool:
+    """Check if module supports multimodal input."""
+    modalities = get_modalities_config(module)
+    input_modalities = modalities.get("input", ["text"])
+    return any(m in input_modalities for m in ["image", "audio", "video"])
+
+
+def supports_multimodal_output(module: dict) -> bool:
+    """Check if module supports multimodal output."""
+    modalities = get_modalities_config(module)
+    output_modalities = modalities.get("output", ["text"])
+    return any(m in output_modalities for m in ["image", "audio", "video"])
+
+
+def validate_multimodal_input(input_data: dict, module: dict) -> tuple[bool, list[str]]:
+    """
+    Validate multimodal input against module configuration.
+    
+    Returns:
+        Tuple of (is_valid, list of errors)
+    """
+    errors = []
+    modalities = get_modalities_config(module)
+    input_modalities = set(modalities.get("input", ["text"]))
+    constraints = modalities.get("constraints", {})
+    
+    # Check images
+    images = input_data.get("images", [])
+    if images:
+        if "image" not in input_modalities:
+            errors.append("Module does not support image input")
+        else:
+            max_images = constraints.get("max_images", 10)
+            if len(images) > max_images:
+                errors.append(f"Too many images ({len(images)} > {max_images})")
+            
+            for i, img in enumerate(images):
+                valid, err = validate_media_input(img, constraints)
+                if not valid:
+                    errors.append(f"Image {i}: {err}")
+    
+    # Check audio
+    audio = input_data.get("audio", [])
+    if audio:
+        if "audio" not in input_modalities:
+            errors.append("Module does not support audio input")
+    
+    # Check video
+    video = input_data.get("video", [])
+    if video:
+        if "video" not in input_modalities:
+            errors.append("Module does not support video input")
+    
+    return len(errors) == 0, errors
+
+
+# =============================================================================
+# v2.5 Runtime Capabilities
+# =============================================================================
+
+def get_runtime_capabilities() -> dict:
+    """Get runtime capabilities for v2.5."""
+    return {
+        "runtime": "cognitive-runtime-python",
+        "version": "2.5.0",
+        "spec_version": "2.5",
+        "capabilities": {
+            "streaming": True,
+            "multimodal": {
+                "input": ["image"],  # Basic image support
+                "output": []  # No generation yet
+            },
+            "max_media_size_mb": 20,
+            "supported_transports": ["ndjson"],  # SSE requires async server
+            "conformance_level": 4
+        }
+    }

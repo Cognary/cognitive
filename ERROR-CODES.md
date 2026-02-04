@@ -1,6 +1,6 @@
 # Cognitive Modules Error Codes
 
-> **Version**: 2.2  
+> **Version**: 2.5  
 > **Status**: Draft  
 > **Last Updated**: 2026-02
 
@@ -56,6 +56,10 @@ Errors in this category indicate problems with the input provided to the module.
 | E1004 | UNSUPPORTED_VALUE | Value not supported (e.g., language) | Maybe |
 | E1005 | INPUT_TOO_LARGE | Input exceeds max_input_tokens | Yes |
 | E1006 | INVALID_REFERENCE | Referenced resource not found | Yes |
+| E1010 | UNSUPPORTED_MEDIA_TYPE | Media type not supported by module (v2.5) | Yes |
+| E1011 | MEDIA_TOO_LARGE | Media file exceeds size limit (v2.5) | Yes |
+| E1012 | MEDIA_FETCH_FAILED | Failed to fetch media from URL (v2.5) | Yes |
+| E1013 | MEDIA_DECODE_FAILED | Failed to decode base64 media (v2.5) | Yes |
 
 #### Example Response
 
@@ -91,6 +95,8 @@ Errors in this category occur during module execution. The module understood the
 | E2005 | SEMANTIC_CONFLICT | Action would violate constraints | Maybe |
 | E2006 | AMBIGUOUS_INPUT | Input is ambiguous, multiple interpretations | Yes |
 | E2007 | INSUFFICIENT_CONTEXT | Need more context to proceed | Yes |
+| E2010 | STREAM_INTERRUPTED | Streaming response was interrupted (v2.5) | Maybe |
+| E2011 | STREAM_TIMEOUT | Stream exceeded maximum duration (v2.5) | Yes |
 
 #### Example Response
 
@@ -169,6 +175,8 @@ Errors in this category are infrastructure or system-level failures. These are t
 | E4005 | MAX_DEPTH_EXCEEDED | Maximum call depth exceeded | No |
 | E4006 | MODULE_NOT_FOUND | Requested module not installed | Yes |
 | E4007 | PERMISSION_DENIED | Policy blocks this operation | No |
+| E4010 | STREAMING_NOT_SUPPORTED | Runtime does not support streaming (v2.5) | No |
+| E4011 | MULTIMODAL_NOT_SUPPORTED | Runtime does not support multimodal (v2.5) | No |
 
 #### Example Response
 
@@ -324,4 +332,5 @@ Custom codes SHOULD be documented in the module's schema.json:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.5-draft | 2026-02 | Added v2.5 codes: E1010-E1013 (media), E2010-E2011 (streaming), E4010-E4011 (capability) |
 | 2.2-draft | 2026-02 | Initial error taxonomy |

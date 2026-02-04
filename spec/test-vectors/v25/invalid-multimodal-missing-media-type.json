@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "invalid-multimodal-missing-media-type",
+    "description": "Invalid base64 input without media_type",
+    "expects": "reject",
+    "conformance_level": 4,
+    "category": "multimodal",
+    "error_codes": ["E1002"]
+  },
+  "input": {
+    "prompt": "Describe this image",
+    "images": [
+      {
+        "type": "base64",
+        "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      }
+    ]
+  }
+}

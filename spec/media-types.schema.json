@@ -1,0 +1,249 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/schema/v2.5/media-types.json",
+  "title": "Cognitive Modules Media Types v2.5",
+  "description": "Schema definitions for multimodal input/output in Cognitive Modules v2.5",
+
+  "definitions": {
+    "MediaInput": {
+      "type": "object",
+      "description": "Input media reference (URL, base64, or file path)",
+      "required": ["type"],
+      "oneOf": [
+        { "$ref": "#/definitions/UrlMediaInput" },
+        { "$ref": "#/definitions/Base64MediaInput" },
+        { "$ref": "#/definitions/FileMediaInput" }
+      ]
+    },
+
+    "UrlMediaInput": {
+      "type": "object",
+      "description": "Media referenced by URL",
+      "required": ["type", "url"],
+      "properties": {
+        "type": { "const": "url" },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Publicly accessible URL to the media"
+        },
+        "media_type": {
+          "$ref": "#/definitions/MimeType",
+          "description": "MIME type (optional, may be inferred)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Base64MediaInput": {
+      "type": "object",
+      "description": "Media encoded as base64",
+      "required": ["type", "media_type", "data"],
+      "properties": {
+        "type": { "const": "base64" },
+        "media_type": {
+          "$ref": "#/definitions/MimeType",
+          "description": "MIME type (required for base64)"
+        },
+        "data": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Base64-encoded media data"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "FileMediaInput": {
+      "type": "object",
+      "description": "Media referenced by local file path",
+      "required": ["type", "path"],
+      "properties": {
+        "type": { "const": "file" },
+        "path": {
+          "type": "string",
+          "description": "Absolute or relative file path"
+        },
+        "media_type": {
+          "$ref": "#/definitions/MimeType",
+          "description": "MIME type (optional, inferred from extension)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "MediaOutput": {
+      "type": "object",
+      "description": "Output media with metadata",
+      "required": ["type", "media_type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["url", "base64", "file"]
+        },
+        "media_type": { "$ref": "#/definitions/MimeType" },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for type=url"
+        },
+        "data": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Base64 data for type=base64"
+        },
+        "path": {
+          "type": "string",
+          "description": "File path for type=file"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Expiration time for temporary URLs"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Width in pixels (for images/videos)"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Height in pixels (for images/videos)"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Duration in milliseconds (for audio/video)"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes"
+        },
+        "generation_params": {
+          "type": "object",
+          "description": "Parameters used for generation (if applicable)",
+          "properties": {
+            "model": { "type": "string" },
+            "quality": { "type": "string" },
+            "style": { "type": "string" },
+            "seed": { "type": "integer" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "MimeType": {
+      "type": "string",
+      "pattern": "^(image|audio|video|application)/[a-z0-9.+-]+$",
+      "description": "MIME type string"
+    },
+
+    "ImageMimeType": {
+      "type": "string",
+      "enum": [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/svg+xml"
+      ]
+    },
+
+    "AudioMimeType": {
+      "type": "string",
+      "enum": [
+        "audio/mpeg",
+        "audio/wav",
+        "audio/ogg",
+        "audio/webm",
+        "audio/flac"
+      ]
+    },
+
+    "VideoMimeType": {
+      "type": "string",
+      "enum": [
+        "video/mp4",
+        "video/webm",
+        "video/quicktime",
+        "video/x-msvideo"
+      ]
+    },
+
+    "DocumentMimeType": {
+      "type": "string",
+      "enum": [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ]
+    },
+
+    "SupportedInputModalities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["text", "image", "audio", "video", "document"]
+      },
+      "uniqueItems": true,
+      "description": "List of supported input modalities"
+    },
+
+    "SupportedOutputModalities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["text", "image", "audio", "video"]
+      },
+      "uniqueItems": true,
+      "description": "List of supported output modalities"
+    },
+
+    "ModalitiesConfig": {
+      "type": "object",
+      "description": "Module modalities configuration",
+      "properties": {
+        "input": { "$ref": "#/definitions/SupportedInputModalities" },
+        "output": { "$ref": "#/definitions/SupportedOutputModalities" }
+      },
+      "additionalProperties": false
+    },
+
+    "MediaConstraints": {
+      "type": "object",
+      "description": "Constraints for media inputs",
+      "properties": {
+        "max_size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum file size in bytes"
+        },
+        "max_width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum image/video width"
+        },
+        "max_height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum image/video height"
+        },
+        "max_duration_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum audio/video duration"
+        },
+        "allowed_types": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MimeType" },
+          "description": "Allowed MIME types"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/schema/v2.5/streaming-envelope.json",
+  "title": "Cognitive Modules Streaming Envelope v2.5",
+  "description": "Schema for streaming response chunks in Cognitive Modules v2.5",
+
+  "oneOf": [
+    { "$ref": "#/definitions/MetaChunk" },
+    { "$ref": "#/definitions/DeltaChunk" },
+    { "$ref": "#/definitions/SnapshotChunk" },
+    { "$ref": "#/definitions/ProgressChunk" },
+    { "$ref": "#/definitions/FinalChunk" },
+    { "$ref": "#/definitions/ErrorChunk" }
+  ],
+
+  "definitions": {
+    "MetaChunk": {
+      "type": "object",
+      "description": "Initial chunk sent at stream start",
+      "required": ["ok", "streaming", "session_id", "meta"],
+      "properties": {
+        "ok": { "const": true },
+        "streaming": { "const": true },
+        "session_id": {
+          "type": "string",
+          "description": "Unique session identifier for this stream"
+        },
+        "meta": { "$ref": "#/definitions/StreamingMeta" }
+      },
+      "additionalProperties": false
+    },
+
+    "DeltaChunk": {
+      "type": "object",
+      "description": "Incremental content chunk",
+      "required": ["chunk"],
+      "properties": {
+        "chunk": {
+          "type": "object",
+          "required": ["seq", "type", "delta"],
+          "properties": {
+            "seq": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Sequence number, monotonically increasing"
+            },
+            "type": { "const": "delta" },
+            "field": {
+              "type": "string",
+              "description": "JSON path of the field being updated (e.g., 'data.rationale')"
+            },
+            "delta": {
+              "type": "string",
+              "description": "Incremental text content to append"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "SnapshotChunk": {
+      "type": "object",
+      "description": "Full state replacement chunk",
+      "required": ["chunk"],
+      "properties": {
+        "chunk": {
+          "type": "object",
+          "required": ["seq", "type", "data"],
+          "properties": {
+            "seq": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "type": { "const": "snapshot" },
+            "field": {
+              "type": "string",
+              "description": "JSON path of the field being replaced"
+            },
+            "data": {
+              "description": "Complete replacement value for the field"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ProgressChunk": {
+      "type": "object",
+      "description": "Progress update chunk",
+      "required": ["progress"],
+      "properties": {
+        "progress": {
+          "type": "object",
+          "required": ["percent"],
+          "properties": {
+            "percent": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Progress percentage"
+            },
+            "stage": {
+              "type": "string",
+              "description": "Current processing stage identifier"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable progress message"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "FinalChunk": {
+      "type": "object",
+      "description": "Final chunk sent at stream end",
+      "required": ["final", "meta", "data"],
+      "properties": {
+        "final": { "const": true },
+        "meta": { "$ref": "#/definitions/CompleteMeta" },
+        "data": {
+          "type": "object",
+          "description": "Complete data payload"
+        },
+        "usage": { "$ref": "#/definitions/Usage" }
+      },
+      "additionalProperties": false
+    },
+
+    "ErrorChunk": {
+      "type": "object",
+      "description": "Error chunk for stream failures",
+      "required": ["ok", "error"],
+      "properties": {
+        "ok": { "const": false },
+        "streaming": { "const": true },
+        "session_id": { "type": "string" },
+        "error": { "$ref": "#/definitions/Error" },
+        "partial_data": {
+          "type": "object",
+          "description": "Partial data accumulated before error"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "StreamingMeta": {
+      "type": "object",
+      "description": "Meta fields for streaming start (confidence may be null)",
+      "required": ["risk", "explain"],
+      "properties": {
+        "confidence": {
+          "oneOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "null" }
+          ],
+          "description": "May be null during streaming, finalized at end"
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "explain": {
+          "type": "string",
+          "maxLength": 280
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "CompleteMeta": {
+      "type": "object",
+      "description": "Complete meta fields for final chunk",
+      "required": ["confidence", "risk", "explain"],
+      "properties": {
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "explain": {
+          "type": "string",
+          "maxLength": 280
+        },
+        "processing_time_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "model": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "Error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^E[1-4][0-9]{3}$"
+        },
+        "message": {
+          "type": "string"
+        },
+        "recoverable": {
+          "type": "boolean"
+        },
+        "details": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Usage": {
+      "type": "object",
+      "description": "Token usage statistics",
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "total_tokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  }
+}

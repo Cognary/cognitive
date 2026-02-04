@@ -1,0 +1,22 @@
+{
+  "$test": {
+    "name": "streaming-error-chunk",
+    "description": "Valid streaming error chunk",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "streaming"
+  },
+  "envelope": {
+    "ok": false,
+    "streaming": true,
+    "session_id": "sess_abc123",
+    "error": {
+      "code": "E2010",
+      "message": "Stream interrupted: connection timeout",
+      "recoverable": true
+    },
+    "partial_data": {
+      "rationale": "The image shows a beautiful sunset..."
+    }
+  }
+}

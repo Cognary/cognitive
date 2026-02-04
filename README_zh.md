@@ -11,6 +11,32 @@
 
 Cognitive Modules 是一种 AI 任务定义规范，专为需要**强约束、可验证、可审计**的生成任务设计。
 
+## v2.5 新特性
+
+| 特性 | 说明 |
+|------|------|
+| **流式响应** | 基于 chunk 的实时输出，提升用户体验 |
+| **多模态支持** | 原生支持图像、音频、视频的输入/输出 |
+| **向后兼容** | v2.2 模块无需修改即可运行 |
+| **Level 4 合规** | 扩展合规等级支持 v2.5 特性 |
+
+```yaml
+# module.yaml - v2.5 示例
+name: image-analyzer
+version: 2.5.0
+tier: decision
+
+# v2.5: 启用流式
+response:
+  mode: streaming
+  chunk_type: delta
+
+# v2.5: 启用多模态
+modalities:
+  input: [text, image]
+  output: [text]
+```
+
 ## v2.2 新特性
 
 | 特性 | 说明 |
@@ -271,6 +297,84 @@ my-module/
 | `decision` | 判断/评估/分类 | medium | 开启 |
 | `exploration` | 探索/调研/灵感 | low | 开启 |
 
+## v2.5 流式 & 多模态
+
+### 流式响应
+
+启用实时流式以获得更好的用户体验：
+
+```yaml
+# module.yaml
+response:
+  mode: streaming      # sync | streaming | both
+  chunk_type: delta    # delta | snapshot
+```
+
+**JavaScript/TypeScript 用法：**
+
+```typescript
+import { runModuleStream } from 'cognitive-modules-cli';
+
+// 流式执行
+for await (const chunk of runModuleStream(module, provider, { input })) {
+  if ('delta' in chunk.chunk) {
+    process.stdout.write(chunk.chunk.delta);
+  } else if ('final' in chunk) {
+    console.log('\n完成:', chunk.data);
+  }
+}
+```
+
+**Python 用法：**
+
+```python
+from cognitive import StreamingRunner
+
+runner = StreamingRunner()
+async for chunk in runner.execute_stream("image-analyzer", input_data):
+    if chunk.get("chunk"):
+        print(chunk["chunk"]["delta"], end="")
+    elif chunk.get("final"):
+        print("\n完成:", chunk["data"])
+```
+
+### 多模态输入
+
+启用图像/音频/视频处理：
+
+```yaml
+# module.yaml
+modalities:
+  input: [text, image, audio]
+  output: [text, image]
+```
+
+**JavaScript/TypeScript 用法：**
+
+```typescript
+const result = await runModule(module, provider, {
+  input: {
+    prompt: "描述这张图片",
+    images: [
+      { type: "url", url: "https://example.com/image.jpg" },
+      { type: "base64", media_type: "image/png", data: "iVBORw0K..." }
+    ]
+  }
+});
+```
+
+**Python 用法：**
+
+```python
+result = await runner.execute("image-analyzer", {
+    "prompt": "描述这张图片",
+    "images": [
+        {"type": "url", "url": "https://example.com/image.jpg"},
+        {"type": "file", "path": "./local-image.png"}
+    ]
+})
+```
+
 ## 在 AI 工具中使用
 
 ### Cursor / Codex CLI
@@ -396,6 +500,8 @@ cognitive-modules/
 
 | 文档 | 说明 |
 |------|------|
+| [SPEC-v2.5_zh.md](SPEC-v2.5_zh.md) | v2.5 完整规范（流式、多模态） |
+| [SPEC-v2.5.md](SPEC-v2.5.md) | v2.5 specification (English) |
 | [SPEC-v2.2_zh.md](SPEC-v2.2_zh.md) | v2.2 完整规范（Control/Data 分离、Tier、Overflow） |
 | [SPEC-v2.2.md](SPEC-v2.2.md) | v2.2 specification (English) |
 | [SPEC.md](SPEC.md) | v0.1 规范（含上下文哲学） |

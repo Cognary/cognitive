@@ -1,0 +1,270 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/modules/image-analyzer/schema.json",
+  "title": "Image Analyzer Schema v2.5",
+  "description": "Schema for image analysis module with multimodal support",
+
+  "meta": {
+    "type": "object",
+    "required": ["confidence", "risk", "explain"],
+    "properties": {
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Analysis confidence score"
+      },
+      "risk": {
+        "type": "string",
+        "enum": ["none", "low", "medium", "high"],
+        "description": "Content risk assessment"
+      },
+      "explain": {
+        "type": "string",
+        "maxLength": 280,
+        "description": "Brief analysis summary"
+      },
+      "processing_time_ms": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Time taken to analyze"
+      },
+      "model": {
+        "type": "string",
+        "description": "Vision model used"
+      },
+      "images_processed": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Number of images analyzed"
+      }
+    }
+  },
+
+  "input": {
+    "type": "object",
+    "required": ["images"],
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "maxLength": 2000,
+        "description": "Optional analysis instructions",
+        "default": "Analyze this image and describe what you see"
+      },
+      "images": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 5,
+        "items": {
+          "$ref": "#/$defs/MediaInput"
+        },
+        "description": "Images to analyze"
+      },
+      "options": {
+        "type": "object",
+        "properties": {
+          "extract_text": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to perform OCR"
+          },
+          "detect_objects": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to detect objects"
+          },
+          "include_bbox": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include bounding boxes for objects"
+          },
+          "language": {
+            "type": "string",
+            "default": "en",
+            "description": "Language for text extraction"
+          }
+        }
+      }
+    }
+  },
+
+  "data": {
+    "type": "object",
+    "required": ["rationale", "analysis"],
+    "properties": {
+      "rationale": {
+        "type": "string",
+        "minLength": 10,
+        "description": "Detailed reasoning about the analysis"
+      },
+      "analysis": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 20,
+            "description": "Comprehensive image description"
+          },
+          "objects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["label", "confidence"],
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "description": "Object name/category"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Detection confidence"
+                },
+                "bbox": {
+                  "type": "array",
+                  "items": { "type": "number" },
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "description": "[x, y, width, height] in pixels"
+                },
+                "attributes": {
+                  "type": "object",
+                  "description": "Additional object attributes",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "extracted_text": {
+            "type": "string",
+            "description": "Text found in the image (OCR result)"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true,
+            "description": "Categorical tags"
+          },
+          "colors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+                "percentage": { "type": "number", "minimum": 0, "maximum": 100 }
+              }
+            },
+            "description": "Dominant colors"
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "width": { "type": "integer", "minimum": 1 },
+              "height": { "type": "integer", "minimum": 1 }
+            },
+            "description": "Image dimensions"
+          }
+        }
+      },
+      "extensions": {
+        "$ref": "#/$defs/Extensions"
+      }
+    }
+  },
+
+  "error": {
+    "type": "object",
+    "required": ["code", "message"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "pattern": "^E[1-4][0-9]{3}$",
+        "description": "Error code"
+      },
+      "message": {
+        "type": "string",
+        "description": "Human-readable error message"
+      },
+      "recoverable": {
+        "type": "boolean",
+        "description": "Whether the error can be recovered from"
+      },
+      "details": {
+        "type": "object",
+        "description": "Additional error details",
+        "properties": {
+          "image_index": {
+            "type": "integer",
+            "description": "Which image caused the error"
+          },
+          "suggestion": {
+            "type": "string",
+            "description": "Suggested fix"
+          }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "MediaInput": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "url" },
+            "url": { "type": "string", "format": "uri" },
+            "media_type": { "type": "string" }
+          },
+          "required": ["type", "url"]
+        },
+        {
+          "properties": {
+            "type": { "const": "base64" },
+            "media_type": { 
+              "type": "string",
+              "enum": ["image/jpeg", "image/png", "image/webp", "image/gif"]
+            },
+            "data": { "type": "string", "contentEncoding": "base64" }
+          },
+          "required": ["type", "media_type", "data"]
+        },
+        {
+          "properties": {
+            "type": { "const": "file" },
+            "path": { "type": "string" }
+          },
+          "required": ["type", "path"]
+        }
+      ]
+    },
+
+    "Extensions": {
+      "type": "object",
+      "properties": {
+        "insights": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["observation"],
+            "properties": {
+              "observation": { "type": "string" },
+              "category": { "type": "string" },
+              "suggested_mapping": {
+                "type": "object",
+                "properties": {
+                  "target_field": { "type": "string" },
+                  "schema_suggestion": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

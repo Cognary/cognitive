@@ -11,6 +11,32 @@ English | [中文](README_zh.md)
 
 Cognitive Modules is an AI task definition specification designed for generation tasks that require **strong constraints, verifiability, and auditability**.
 
+## What's New in v2.5
+
+| Feature | Description |
+|---------|-------------|
+| **Streaming Response** | Real-time chunk-based output for better UX |
+| **Multimodal Support** | Native image, audio, and video input/output |
+| **Backward Compatible** | v2.2 modules run without modification |
+| **Level 4 Conformance** | Extended conformance level for v2.5 features |
+
+```yaml
+# module.yaml - v2.5 example
+name: image-analyzer
+version: 2.5.0
+tier: decision
+
+# v2.5: Enable streaming
+response:
+  mode: streaming
+  chunk_type: delta
+
+# v2.5: Enable multimodal
+modalities:
+  input: [text, image]
+  output: [text]
+```
+
 ## What's New in v2.2
 
 | Feature | Description |
@@ -271,6 +297,83 @@ my-module/
 | `decision` | Judgment/evaluation/classification | medium | Enabled |
 | `exploration` | Exploration/research/inspiration | low | Enabled |
 
+## v2.5 Streaming & Multimodal
+
+### Streaming Response
+
+Enable real-time streaming for better UX:
+
+```yaml
+# module.yaml
+response:
+  mode: streaming      # sync | streaming | both
+  chunk_type: delta    # delta | snapshot
+```
+
+**JavaScript/TypeScript Usage:**
+
+```typescript
+import { runModuleStream } from 'cognitive-modules-cli';
+
+// Stream execution
+for await (const chunk of runModuleStream(module, provider, { input })) {
+  if ('delta' in chunk.chunk) {
+    process.stdout.write(chunk.chunk.delta);
+  } else if ('final' in chunk) {
+    console.log('\nComplete:', chunk.data);
+  }
+}
+```
+
+**Python Usage:**
+
+```python
+from cognitive import StreamingRunner
+
+runner = StreamingRunner()
+async for chunk in runner.execute_stream("image-analyzer", input_data):
+    if chunk.get("chunk"):
+        print(chunk["chunk"]["delta"], end="")
+    elif chunk.get("final"):
+        print("\nComplete:", chunk["data"])
+```
+
+### Multimodal Input
+
+Enable image/audio/video processing:
+
+```yaml
+# module.yaml
+modalities:
+  input: [text, image, audio]
+  output: [text, image]
+```
+
+**JavaScript/TypeScript Usage:**
+
+```typescript
+const result = await runModule(module, provider, {
+  input: {
+    prompt: "Describe this image",
+    images: [
+      { type: "url", url: "https://example.com/image.jpg" },
+      { type: "base64", media_type: "image/png", data: "iVBORw0K..." }
+    ]
+  }
+});
+```
+
+**Python Usage:**
+
+```python
+result = await runner.execute("image-analyzer", {
+    "prompt": "Describe this image",
+    "images": [
+        {"type": "url", "url": "https://example.com/image.jpg"},
+        {"type": "file", "path": "./local-image.png"}
+    ]
+})
+
 ## Using with AI Tools
 
 ### Cursor / Codex CLI
@@ -396,6 +499,8 @@ Both versions share the same module format and v2.2 specification.
 
 | Document | Description |
 |----------|-------------|
+| [SPEC-v2.5.md](SPEC-v2.5.md) | v2.5 full specification (Streaming, Multimodal) |
+| [SPEC-v2.5_zh.md](SPEC-v2.5_zh.md) | v2.5 规范中文版 |
 | [SPEC-v2.2.md](SPEC-v2.2.md) | v2.2 full specification (Control/Data separation, Tier, Overflow) |
 | [SPEC-v2.2_zh.md](SPEC-v2.2_zh.md) | v2.2 规范中文版 |
 | [SPEC.md](SPEC.md) | v0.1 specification (context philosophy) |

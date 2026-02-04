@@ -1,0 +1,34 @@
+{
+  "$test": {
+    "name": "streaming-final-chunk",
+    "description": "Valid streaming final chunk with complete data",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "streaming"
+  },
+  "envelope": {
+    "final": true,
+    "meta": {
+      "confidence": 0.92,
+      "risk": "low",
+      "explain": "Analysis complete with 3 objects detected"
+    },
+    "data": {
+      "rationale": "The image shows a beautiful sunset over mountain peaks with vibrant orange and purple colors.",
+      "analysis": {
+        "description": "Landscape photograph",
+        "objects": [
+          {"label": "mountain", "confidence": 0.95},
+          {"label": "sun", "confidence": 0.88},
+          {"label": "sky", "confidence": 0.99}
+        ],
+        "tags": ["nature", "sunset", "landscape", "mountains"]
+      }
+    },
+    "usage": {
+      "input_tokens": 1250,
+      "output_tokens": 340,
+      "total_tokens": 1590
+    }
+  }
+}

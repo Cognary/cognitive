@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "streaming-meta-chunk",
+    "description": "Valid streaming meta chunk (initial)",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "streaming"
+  },
+  "envelope": {
+    "ok": true,
+    "streaming": true,
+    "session_id": "sess_abc123",
+    "meta": {
+      "confidence": null,
+      "risk": "low",
+      "explain": "Starting analysis..."
+    }
+  }
+}

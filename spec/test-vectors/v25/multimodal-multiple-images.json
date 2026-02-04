@@ -1,0 +1,22 @@
+{
+  "$test": {
+    "name": "multimodal-multiple-images",
+    "description": "Valid multimodal input with multiple images",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "multimodal"
+  },
+  "input": {
+    "prompt": "Compare these two images",
+    "images": [
+      {
+        "type": "url",
+        "url": "https://example.com/image1.jpg"
+      },
+      {
+        "type": "url",
+        "url": "https://example.com/image2.jpg"
+      }
+    ]
+  }
+}

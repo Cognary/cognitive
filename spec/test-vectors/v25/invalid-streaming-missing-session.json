@@ -1,0 +1,19 @@
+{
+  "$test": {
+    "name": "invalid-streaming-missing-session",
+    "description": "Invalid streaming meta chunk without session_id",
+    "expects": "reject",
+    "conformance_level": 4,
+    "category": "streaming",
+    "error_codes": ["E1002"]
+  },
+  "envelope": {
+    "ok": true,
+    "streaming": true,
+    "meta": {
+      "confidence": null,
+      "risk": "low",
+      "explain": "Starting..."
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$test": {
+    "name": "streaming-progress-chunk",
+    "description": "Valid streaming progress update chunk",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "streaming"
+  },
+  "envelope": {
+    "progress": {
+      "percent": 45,
+      "stage": "analyzing_objects",
+      "message": "Detecting objects in image..."
+    }
+  }
+}

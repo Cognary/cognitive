@@ -1,0 +1,18 @@
+{
+  "$test": {
+    "name": "invalid-multimodal-missing-type",
+    "description": "Invalid multimodal input without type field",
+    "expects": "reject",
+    "conformance_level": 4,
+    "category": "multimodal",
+    "error_codes": ["E1002"]
+  },
+  "input": {
+    "prompt": "Describe this image",
+    "images": [
+      {
+        "url": "https://example.com/image.jpg"
+      }
+    ]
+  }
+}

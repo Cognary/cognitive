@@ -1,0 +1,17 @@
+{
+  "$test": {
+    "name": "streaming-delta-chunk",
+    "description": "Valid streaming delta chunk",
+    "expects": "accept",
+    "conformance_level": 4,
+    "category": "streaming"
+  },
+  "envelope": {
+    "chunk": {
+      "seq": 1,
+      "type": "delta",
+      "field": "data.rationale",
+      "delta": "The image shows a beautiful sunset "
+    }
+  }
+}

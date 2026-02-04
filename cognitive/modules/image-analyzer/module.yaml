@@ -1,0 +1,63 @@
+# Image Analyzer Module - Cognitive Modules v2.5
+# Demonstrates multimodal input and streaming output
+
+name: image-analyzer
+version: 2.5.0
+responsibility: Analyze images to identify objects, extract text, and provide detailed descriptions
+
+tier: decision
+schema_strictness: medium
+
+# v2.5: Response mode configuration
+response:
+  mode: streaming      # Support real-time analysis feedback
+  chunk_type: delta    # Incremental text updates
+  buffer_size: 512     # Flush frequently for responsiveness
+
+# v2.5: Multimodal configuration
+modalities:
+  input:
+    - text             # Analysis instructions
+    - image            # Images to analyze
+  output:
+    - text             # Analysis results
+  constraints:
+    max_image_size_mb: 20
+    max_images: 5
+    allowed_image_types:
+      - image/jpeg
+      - image/png
+      - image/webp
+      - image/gif
+
+excludes:
+  - storing or transmitting images to third parties
+  - generating inappropriate content descriptions
+  - extracting personal information without consent
+
+overflow:
+  enabled: true
+  max_items: 10
+  require_suggested_mapping: true
+
+enums:
+  strategy: extensible
+
+policies:
+  network: allow       # May need to fetch URL images
+  filesystem_write: deny
+  side_effects: deny
+
+compat:
+  accepts_v22_payload: false  # Requires v2.5 multimodal input
+  runtime_auto_wrap: true
+
+meta:
+  author: cognitive-modules
+  license: MIT
+  tags:
+    - image
+    - vision
+    - multimodal
+    - analysis
+    - ocr
