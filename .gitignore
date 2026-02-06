@@ -28,3 +28,8 @@ Thumbs.db
 ui-spec.json
 result.json
 site/
+
+# Node
+node_modules/
+.npm-cache/
+*.tsbuildinfo

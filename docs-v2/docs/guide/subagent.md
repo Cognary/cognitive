@@ -2,17 +2,14 @@
 sidebar_position: 3
 ---
 
-# Sub-agents
+# Sub-agents (@call)
 
-Cognitive Modules supports inter-module calls, enabling complex task decomposition and composition.
+Cognitive Modules supports **inter-module calls** via `@call:` directives in prompts.
 
 ## @call Syntax
 
-Use `@call:module-name` in MODULE.md to call other modules:
-
 ```markdown
-## Processing Flow
-
+# Processing Flow
 1. Analyze user requirements
 2. Call UI spec generator:
    @call:ui-spec-generator($ARGUMENTS)
@@ -24,95 +21,48 @@ Use `@call:module-name` in MODULE.md to call other modules:
 | Syntax | Description |
 |--------|-------------|
 | `@call:module-name` | Pass parent module input |
-| `@call:module-name($ARGUMENTS)` | Pass parent's $ARGUMENTS |
-| `@call:module-name(custom args)` | Pass custom arguments |
+| `@call:module-name($ARGUMENTS)` | Pass parent args string |
+| `@call:module-name(custom args)` | Pass custom args |
 
 ## context Configuration
 
-### fork (Isolated Execution)
+In v2.2, use `context` in `module.yaml`:
 
 ```yaml
----
 name: parent-module
-context: fork
----
+context: fork   # fork | main (default)
 ```
 
-- Child module has independent context
-- Child results don't affect other children
-- Suitable for parallel execution of independent tasks
+- **fork**: child runs with isolated context
+- **main**: child shares context with parent
 
-### main (Shared Execution)
+## How to Run
 
-```yaml
----
-name: parent-module
-context: main  # Default
----
+Sub-agent orchestration is available via the **programmatic API**:
+
+```ts
+import { runWithSubagents, loadModule, getProvider } from 'cognitive-modules-cli';
+
+const provider = getProvider('openai', 'gpt-4o');
+const result = await runWithSubagents('product-analyzer', provider, {
+  args: 'health product website'
+});
 ```
 
-- Child modules share parent context
-- Child results accessible to other children
-
-## Running
-
-Sub-agent functionality is automatic. When module prompt contains `@call:` directive, runtime parses and executes:
-
-```bash
-# Run directly (@call handled automatically)
-cog run parent-module --args "requirements"
-```
+> The CLI `cog run` does **not** automatically resolve `@call` directives.
 
 ## Execution Flow
 
 ```
-Parent Module Prompt
-    ↓
-Parse @call:child-module
-    ↓
-Execute child-module
-    ↓
-Inject result [Result from @call:child-module]: {...}
-    ↓
+Parent Prompt
+  ↓
+Parse @call directives
+  ↓
+Execute child modules
+  ↓
+Inject results
+  ↓
 Execute parent module
-    ↓
-Final output
-```
-
-## Example: product-analyzer
-
-```yaml
----
-name: product-analyzer
-version: 1.0.0
-responsibility: Analyze product requirements and call UI spec generator
-context: fork
----
-
-# Product Analyzer
-
-## Input
-
-User product description: $ARGUMENTS
-
-## Processing Flow
-
-1. Requirements analysis
-2. Call UI spec generator:
-   @call:ui-spec-generator($ARGUMENTS)
-3. Integrate output
-
-## Output
-
-- analysis: Product analysis
-- ui_spec: UI spec from @call
-- recommendations: Recommendations
-```
-
-Run:
-
-```bash
-cog run product-analyzer --args "health product website" --pretty
 ```
 
 ## Limitations

@@ -67,6 +67,45 @@ const sidebars: SidebarsConfig = {
       ],
     },
     {
+      type: 'category',
+      label: 'Conformance',
+      collapsed: true,
+      items: [
+        'conformance/index',
+        'conformance/levels',
+        'conformance/testing',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Registry',
+      collapsed: true,
+      items: [
+        'registry/index',
+        'registry/protocol',
+        'registry/schema',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Release Notes',
+      collapsed: true,
+      items: [
+        'release-notes/index',
+        'release-notes/v2.2.5',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Community',
+      collapsed: true,
+      items: [
+        'community/contributing',
+        'community/governance',
+        'community/cmep-process',
+      ],
+    },
+    {
       type: 'doc',
       id: 'spec',
       label: 'Specification',

@@ -2,107 +2,33 @@
 sidebar_position: 1
 ---
 
-# Installation
+# Installation (Node.js)
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+Cognitive Modules 2.2 is distributed via npm. The CLI command is `cog`.
 
-## Python (pip)
-
-```bash
-# Basic installation
-pip install cognitive-modules
-
-# With OpenAI support
-pip install cognitive-modules[openai]
-
-# With Anthropic support
-pip install cognitive-modules[anthropic]
-
-# All LLM support
-pip install cognitive-modules[all]
-```
-
-## Node.js (npm)
+## Install
 
 ```bash
+# Zero-install quick start
+npx cogn@2.2.5 --help
+
 # Global installation
-npm install -g cogn
-
-# Or use npx for zero-install (recommended)
-npx cogn --help
+npm install -g cogn@2.2.5
+# or: npm install -g cognitive-modules-cli@2.2.5
 ```
-
-## Command Reference
-
-| Platform | Package | Command |
-|----------|---------|---------|
-| pip | `cognitive-modules` | `cogn` |
-| npm | `cogn` | `cog` |
 
 ## Verify Installation
 
-<Tabs>
-<TabItem value="npm" label="Node.js (cog) - Recommended" default>
-
 ```bash
 cog --version
-# Output: Cognitive Runtime v1.3.0
+# Output: Cognitive Runtime v2.2.5
 
 cog doctor
 ```
 
-</TabItem>
-<TabItem value="pip" label="Python (cogn)">
-
-```bash
-cogn --version
-# Output: cog version 0.5.1
-
-cogn doctor
-```
-
-</TabItem>
-</Tabs>
-
-`cogn doctor` / `cog doctor` displays environment status:
-
-```
-Cognitive Modules - Environment Check
-
-            LLM Providers             
-┏━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┓
-┃ Provider  ┃ Installed ┃ Configured ┃
-┡━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━┩
-│ openai    │ ✓         │ ✓          │
-│ anthropic │ ✗         │ –          │
-│ minimax   │ ✓         │ –          │
-│ ollama    │ ✗         │ –          │
-└───────────┴───────────┴────────────┘
-
-Installed Modules: 5
-```
+`cog doctor` shows provider configuration status.
 
 ## Installing Modules
-
-After installing the CLI, you can add modules from GitHub:
-
-<Tabs>
-<TabItem value="pip" label="Python (cogn)">
-
-```bash
-# Install module from GitHub (recommended)
-cogn add ziel-io/cognitive-modules -m code-simplifier
-
-# Install specific version
-cogn add ziel-io/cognitive-modules -m code-reviewer --tag v1.0.0
-
-# List installed modules
-cogn list
-```
-
-</TabItem>
-<TabItem value="npm" label="Node.js (cog)">
 
 ```bash
 # Install module from GitHub (recommended)
@@ -115,68 +41,25 @@ cog add ziel-io/cognitive-modules -m code-reviewer --tag v1.0.0
 cog list
 ```
 
-</TabItem>
-<TabItem value="npx" label="npx (zero-install)">
-
-```bash
-# No installation needed, use directly
-npx cogn add ziel-io/cognitive-modules -m code-simplifier
-```
-
-</TabItem>
-</Tabs>
-
-### Version Management
+## Version Management
 
 ```bash
 # Update module to latest version
-cogn update code-simplifier  # or cog update
+cog update code-simplifier
 
 # Update to specific version
-cogn update code-simplifier --tag v2.0.0
+cog update code-simplifier --tag v2.0.0
 
 # List available versions
-cogn versions ziel-io/cognitive-modules
+cog versions ziel-io/cognitive-modules
 
 # Remove module
-cogn remove code-simplifier
+cog remove code-simplifier
 ```
 
-### Module Locations
+## Module Locations
 
 Modules are loaded from these locations in priority order:
 
-1. `./cognitive/modules/` - Project local
-2. `~/.cognitive/modules/` - User global (`cogn add` / `cog add` installation location)
-3. Built-in package modules
-
-### Other Installation Methods
-
-```bash
-# Git repository
-cogn install github:user/repo/path/to/module
-
-# Public registry
-cogn install registry:module-name
-
-# Local path
-cogn install ./path/to/module
-```
-
-## Install from Source
-
-```bash
-git clone https://github.com/ziel-io/cognitive-modules.git
-cd cognitive-modules
-
-# Install dev dependencies
-pip install ".[dev]"
-
-# Run tests
-pytest tests/ -v
-```
-
-## Next Steps
-
-- [Configure LLM](./llm-config) - Configure AI backend
-- [First Module](./first-module) - Create your first module
+1. `./cognitive/modules/` (project local)
+2. `~/.cognitive/modules/` (user global, installed by `cog add`)

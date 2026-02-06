@@ -23,6 +23,22 @@
     "message": "集成",
     "description": "The label for category 'Integration' in sidebar 'docsSidebar'"
   },
+  "sidebar.docsSidebar.category.Conformance": {
+    "message": "一致性",
+    "description": "The label for category 'Conformance' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.Registry": {
+    "message": "Registry",
+    "description": "The label for category 'Registry' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.Release Notes": {
+    "message": "发布说明",
+    "description": "The label for category 'Release Notes' in sidebar 'docsSidebar'"
+  },
+  "sidebar.docsSidebar.category.Community": {
+    "message": "社区",
+    "description": "The label for category 'Community' in sidebar 'docsSidebar'"
+  },
   "sidebar.docsSidebar.doc.Specification": {
     "message": "规范",
     "description": "The label for the doc item 'Specification' in sidebar 'docsSidebar', linking to the doc spec"

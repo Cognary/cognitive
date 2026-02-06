@@ -4,87 +4,50 @@ sidebar_position: 3
 
 # Configure LLM
 
-Cognitive Modules supports multiple LLM backends.
+Cognitive Modules (Node CLI) supports multiple LLM providers. The CLI auto-selects a provider based on which API key is present, or you can force one with `--provider`.
 
-## Supported LLMs
+## Supported Providers
 
-| Provider | Environment Variable | Description |
-|----------|---------------------|-------------|
-| OpenAI | `OPENAI_API_KEY` | GPT-4o, etc. |
-| Anthropic | `ANTHROPIC_API_KEY` | Claude series |
-| MiniMax | `MINIMAX_API_KEY` | Chinese LLM |
-| Ollama | - | Local running |
-| Stub | - | For testing, returns examples |
+| Provider | Environment Variable |
+|----------|----------------------|
+| OpenAI | `OPENAI_API_KEY` |
+| Anthropic | `ANTHROPIC_API_KEY` |
+| Gemini | `GEMINI_API_KEY` |
+| DeepSeek | `DEEPSEEK_API_KEY` |
+| MiniMax | `MINIMAX_API_KEY` |
+| Moonshot (Kimi) | `MOONSHOT_API_KEY` |
+| Qwen (DashScope) | `DASHSCOPE_API_KEY` or `QWEN_API_KEY` |
+| Ollama (local) | `OLLAMA_HOST` |
 
-## OpenAI
+## Example: OpenAI
 
 ```bash
-pip install cognitive-modules[openai]
-
-export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-xxx
-export LLM_MODEL=gpt-4o  # Optional, default gpt-4o
+cog run code-reviewer --args "your code" --provider openai --model gpt-4o
 ```
 
-## Anthropic Claude
+## Example: Anthropic
 
 ```bash
-pip install cognitive-modules[anthropic]
-
-export LLM_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-xxx
-export LLM_MODEL=claude-sonnet-4-20250514  # Optional
+cog run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
 ```
 
-## MiniMax
+## Example: Ollama (Local)
 
 ```bash
-pip install cognitive-modules[openai]  # Uses OpenAI SDK
-
-export LLM_PROVIDER=minimax
-export MINIMAX_API_KEY=sk-xxx
-export LLM_MODEL=MiniMax-Text-01  # Optional
+# Install and start Ollama separately
+export OLLAMA_HOST=http://localhost:11434
+cog run code-reviewer --args "your code" --provider ollama --model llama3.1
 ```
 
-## Ollama (Local)
+## Model Override
 
-```bash
-# First install Ollama: https://ollama.ai
-ollama pull llama3.1
-
-export LLM_PROVIDER=ollama
-export OLLAMA_HOST=http://localhost:11434  # Optional
-export LLM_MODEL=llama3.1  # Optional
-```
-
-## Stub (Testing)
-
-When no environment variables are configured, Stub is used automatically:
-
-```bash
-cog run my-module input.json
-# Returns example output (if available)
-```
+- CLI: `--model <name>`
+- Env: `COG_MODEL` (global override)
 
 ## Check Configuration
 
 ```bash
 cog doctor
-```
-
-## Runtime Switching
-
-```bash
-# Use OpenAI
-LLM_PROVIDER=openai cog run code-reviewer --args "code"
-
-# Use Anthropic
-LLM_PROVIDER=anthropic cog run code-reviewer --args "code"
-```
-
-## Model Override
-
-```bash
-# Use specific model
-cog run code-reviewer --args "code" --model gpt-4-turbo
 ```

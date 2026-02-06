@@ -4,187 +4,94 @@ sidebar_position: 1
 
 # HTTP API
 
-REST API for running Cognitive Modules.
+Run Cognitive Modules via a simple REST API.
 
-## Starting the Server
+## Start Server
 
 ```bash
-# Basic
-cog serve
+cog serve --host 0.0.0.0 --port 8000
+```
 
-# With options
-cog serve --port 8000 --host 0.0.0.0 --cors
+## Authentication (Optional)
+
+If `COGNITIVE_API_KEY` is set, requests must include:
+
+```
+Authorization: Bearer <your-api-key>
 ```
 
 ## Endpoints
 
-### Run Module
+### `GET /`
 
-```
-POST /api/run/:module
-```
+Returns API info and version.
 
-Request:
+### `GET /health`
+
+Returns health info and provider availability.
+
+### `GET /modules`
+
+List available modules.
+
+### `GET /modules/:name`
+
+Module metadata.
+
+### `POST /run`
+
+Run a module.
+
+**Request**
+
 ```json
 {
-  "code": "def foo(): pass",
-  "language": "python"
+  "module": "code-reviewer",
+  "args": "def foo(): pass",
+  "provider": "openai",
+  "model": "gpt-4o"
 }
 ```
 
-Response (v2.2):
+**Response**
+
 ```json
 {
   "ok": true,
-  "meta": {
-    "confidence": 0.95,
-    "risk": "low",
-    "explain": "Code review complete, 1 issue found"
-  },
-  "data": {
-    "issues": [...],
-    "rationale": "..."
-  }
+  "version": "2.2",
+  "module": "code-reviewer",
+  "provider": "openai",
+  "meta": { "confidence": 0.92, "risk": "low", "explain": "..." },
+  "data": { "...": "..." }
 }
 ```
 
-### List Modules
-
-```
-GET /api/modules
-```
-
-Response:
-```json
-{
-  "modules": [
-    {
-      "name": "code-reviewer",
-      "version": "1.0.0",
-      "description": "Review code and provide suggestions"
-    }
-  ]
-}
-```
-
-### Module Info
-
-```
-GET /api/modules/:name
-```
-
-Response:
-```json
-{
-  "name": "code-reviewer",
-  "version": "1.0.0",
-  "responsibility": "Review code...",
-  "schema": {
-    "input": {...},
-    "output": {...}
-  }
-}
-```
-
-### Health Check
-
-```
-GET /health
-```
-
-Response:
-```json
-{
-  "status": "ok",
-  "version": "1.3.0",
-  "modules_count": 5
-}
-```
-
-## cURL Examples
-
-### Run Code Review
-
-```bash
-curl -X POST http://localhost:8000/api/run/code-reviewer \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "def login(u,p): return db.query(f\"SELECT * FROM users WHERE name={u}\")"
-  }'
-```
-
-### With Arguments
-
-```bash
-curl -X POST http://localhost:8000/api/run/code-reviewer \
-  -H "Content-Type: application/json" \
-  -d '{
-    "$ARGUMENTS": "def foo(): pass"
-  }'
-```
-
-## SDK Examples
-
-### JavaScript/TypeScript
-
-```typescript
-const response = await fetch('http://localhost:8000/api/run/code-reviewer', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ code: '...' })
-});
-
-const result = await response.json();
-console.log(result.data.issues);
-```
-
-### Python
-
-```python
-import requests
-
-response = requests.post(
-    'http://localhost:8000/api/run/code-reviewer',
-    json={'code': 'def foo(): pass'}
-)
-
-result = response.json()
-print(result['data']['issues'])
-```
-
-## Error Responses
-
-### Validation Error
+**Error Response**
 
 ```json
 {
   "ok": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Input validation failed: 'code' is required"
-  }
+  "version": "2.2",
+  "module": "code-reviewer",
+  "provider": "openai",
+  "meta": { "confidence": 0.0, "risk": "high", "explain": "Module 'code-reviewer' not found" },
+  "error": { "code": "E4006", "message": "Module 'code-reviewer' not found" }
 }
 ```
 
-### Module Not Found
+## cURL Example
 
-```json
-{
-  "ok": false,
-  "error": {
-    "code": "MODULE_NOT_FOUND",
-    "message": "Module 'unknown-module' not found"
-  }
-}
+```bash
+curl -X POST http://localhost:8000/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "module": "code-reviewer",
+    "args": "def foo(): pass"
+  }'
 ```
 
-## Configuration
+## Notes
 
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | 8000 |
-| `HOST` | Server host | 127.0.0.1 |
-| `CORS_ORIGINS` | Allowed origins | * |
-| `LLM_PROVIDER` | LLM backend | openai |
+- Payload limit: 1MB
+- Provider selection follows the same rules as CLI (`--provider`/API keys)
+- `/run` responses always include `module` and `provider` (may be `"unknown"` if not resolved)

@@ -7,7 +7,6 @@ sidebar_position: 100
 完整的 Cognitive Modules 规范请参阅项目文件：
 
 - [SPEC-v2.2.md](https://github.com/ziel-io/cognitive-modules/blob/main/SPEC-v2.2.md) - **v2.2 规范（最新）**
-- [SPEC.md](https://github.com/ziel-io/cognitive-modules/blob/main/SPEC.md) - v0.1 规范（历史）
 
 ---
 
@@ -182,13 +181,13 @@ meta:
 
 ```bash
 # 迁移单个模块
-cogn migrate code-reviewer
+cog migrate code-reviewer
 
 # 迁移所有模块
-cogn migrate --all
+cog migrate --all
 
 # 验证 v2.2 格式
-cogn validate code-reviewer --v22
+cog validate code-reviewer --v22
 ```
 
 ---

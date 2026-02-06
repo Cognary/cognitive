@@ -2,101 +2,73 @@
 sidebar_position: 6
 ---
 
-# Programmatic API
+# Programmatic API (Node.js)
 
-Besides CLI, you can also call Cognitive Modules directly in code.
+The CLI package also exposes a runtime API for programmatic use.
 
-## Python API
+## Install
 
-### Basic Usage
-
-```python
-from cognitive import run_module, find_module, load_module
-
-# Method 1: Direct run (recommended)
-result = run_module('code-reviewer', {
-    'code': 'def foo(): pass',
-    'language': 'python'
-})
-
-print(result['issues'])
-print(result['confidence'])
-print(result['rationale'])
+```bash
+npm install cognitive-modules-cli
 ```
 
-### Step-by-step Call
+## Basic Usage
 
-```python
-from cognitive.loader import load_module, find_module
-from cognitive.runtime import execute
+```ts
+import { loadModule, runModule, getProvider } from 'cognitive-modules-cli';
 
-# Find module
-module_path = find_module('code-reviewer')
+const provider = getProvider('openai', 'gpt-4o');
+const module = await loadModule('./cognitive/modules/code-reviewer');
 
-# Load module
-module = load_module(module_path)
-
-# Execute
-result = execute(module, {
-    'code': 'your code',
-    'language': 'python'
-})
-```
-
-### Async Support
-
-```python
-import asyncio
-from cognitive import run_module_async
-
-async def main():
-    result = await run_module_async('code-reviewer', {
-        'code': 'async def foo(): pass'
-    })
-    print(result)
-
-asyncio.run(main())
-```
-
-## TypeScript/JavaScript API
-
-### Basic Usage
-
-```typescript
-import { runModule, findModule } from 'cognitive-runtime';
-
-// Direct run
-const result = await runModule('code-reviewer', {
-  code: 'function foo() {}',
-  language: 'javascript'
+const result = await runModule(module, provider, {
+  args: 'def foo(): pass'
 });
 
-console.log(result.issues);
-console.log(result.confidence);
+if (result.ok) {
+  console.log(result.data);
+} else {
+  console.error(result.error);
+}
 ```
 
-### Configuration
+## Streaming
 
-```typescript
-import { CognitiveRuntime } from 'cognitive-runtime';
+```ts
+import { loadModule, runModuleStream, getProvider } from 'cognitive-modules-cli';
 
-const runtime = new CognitiveRuntime({
-  modulesPath: './cognitive/modules',
-  provider: 'openai',
-  model: 'gpt-4o'
-});
+const provider = getProvider('openai', 'gpt-4o');
+const module = await loadModule('./cognitive/modules/code-reviewer');
 
-const result = await runtime.run('code-reviewer', {
-  code: '...'
+for await (const event of runModuleStream(module, provider, { args: 'code' })) {
+  if (event.type === 'chunk') process.stdout.write(event.chunk);
+  if (event.type === 'complete') console.log(event.result);
+}
+```
+
+## Subagents
+
+```ts
+import { runWithSubagents, getProvider } from 'cognitive-modules-cli';
+
+const provider = getProvider('openai', 'gpt-4o');
+const result = await runWithSubagents('product-analyzer', provider, {
+  args: 'health product website'
 });
 ```
 
-## Response Format
+## Composition
 
-### v2.2 Envelope
+```ts
+import { executeComposition, getProvider } from 'cognitive-modules-cli';
 
-```typescript
-interface CognitiveResponse<T> {
+const provider = getProvider('openai', 'gpt-4o');
+const result = await executeComposition('code-review-pipeline', { query: 'code' }, provider);
+```
+
+## Response Format (v2.2)
+
+```ts
+interface Envelope<T> {
   ok: boolean;
   meta: {
     confidence: number;
@@ -104,55 +76,7 @@ interface CognitiveResponse<T> {
     explain: string;
   };
   data?: T;
-  error?: {
-    code: string;
-    message: string;
-  };
+  error?: { code: string; message: string };
+  partial_data?: unknown;
 }
-```
-
-### Handling Results
-
-```python
-result = run_module('code-reviewer', input_data)
-
-if result['ok']:
-    # Success
-    print(f"Confidence: {result['meta']['confidence']}")
-    print(f"Issues: {result['data']['issues']}")
-else:
-    # Error
-    print(f"Error: {result['error']['code']}")
-    print(f"Message: {result['error']['message']}")
-```
-
-## Provider Configuration
-
-```python
-from cognitive import configure
-
-# Set provider
-configure(
-    provider='anthropic',
-    api_key='sk-ant-xxx',
-    model='claude-sonnet-4-20250514'
-)
-
-# Or use environment variables
-# LLM_PROVIDER=anthropic
-# ANTHROPIC_API_KEY=sk-ant-xxx
-```
-
-## Error Handling
-
-```python
-from cognitive import run_module, CognitiveError
-
-try:
-    result = run_module('code-reviewer', {'code': '...'})
-except CognitiveError as e:
-    print(f"Module error: {e.code}")
-    print(f"Message: {e.message}")
-except ValidationError as e:
-    print(f"Input validation failed: {e}")
 ```
