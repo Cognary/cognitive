@@ -1,26 +1,24 @@
 # cogn
 
-Cognitive Modules CLI - 结构化 AI 任务执行工具。
-
-这是 `cognitive-modules-cli` 的短名别名包，安装后提供 `cog` 命令。
+Cognitive Modules CLI 的短名别名包，安装后提供 `cog` 命令。
 
 ## 一行代码使用
 
 ```bash
 # 零安装运行
-npx cogn run code-reviewer --args "def login(u,p): pass"
+npx cogn@2.2.5 run code-reviewer --args "def login(u,p): pass"
 
 # 列出模块
-npx cogn list
+npx cogn@2.2.5 list
 
 # 查看帮助
-npx cogn --help
+npx cogn@2.2.5 --help
 ```
 
 ## 全局安装
 
 ```bash
-npm install -g cogn
+npm install -g cogn@2.2.5
 
 # 然后直接使用
 cog run code-reviewer --args "..."
@@ -29,5 +27,10 @@ cog run code-reviewer --args "..."
 ## 更多信息
 
 - GitHub: https://github.com/ziel-io/cognitive-modules
-- 文档: https://ziel-io.github.io/cognitive-modules/
-- PyPI: https://pypi.org/project/cognitive-modules/
+- 文档（仓库内）：README.md
+
+## 发布前检查
+
+```bash
+npm run pack:check
+```

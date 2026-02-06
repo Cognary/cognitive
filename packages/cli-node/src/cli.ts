@@ -16,10 +16,10 @@
 
 import { parseArgs } from 'node:util';
 import { getProvider, listProviders } from './providers/index.js';
-import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo } from './commands/index.js';
+import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo, validate, validateAll, migrate, migrateAll, test, testAll, search, listCategories, info } from './commands/index.js';
+import { listModules, getDefaultSearchPaths } from './modules/loader.js';
 import type { CommandContext } from './types.js';
-
-const VERSION = '1.3.0';
+import { VERSION } from './version.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -36,7 +36,7 @@ async function main() {
   }
 
   // Parse common options
-  const { values } = parseArgs({
+  const { values, positionals } = parseArgs({
     args: args.slice(1),
     options: {
       args: { type: 'string', short: 'a' },
@@ -59,6 +59,14 @@ async function main() {
       'max-depth': { type: 'string', short: 'd' },
       timeout: { type: 'string', short: 'T' },
       trace: { type: 'boolean', default: false },
+      // Validate/migrate options
+      v22: { type: 'boolean', default: false },
+      'dry-run': { type: 'boolean', default: false },
+      'no-backup': { type: 'boolean', default: false },
+      all: { type: 'boolean', default: false },
+      format: { type: 'string', short: 'f' },
+      // Search options
+      category: { type: 'string', short: 'c' },
     },
     allowPositionals: true,
   });
@@ -96,7 +104,11 @@ async function main() {
         });
         
         if (!result.success) {
-          console.error(`Error: ${result.error}`);
+          if (result.data) {
+            console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+          } else {
+            console.error(`Error: ${result.error}`);
+          }
           process.exit(1);
         }
         
@@ -164,36 +176,146 @@ async function main() {
       }
 
       case 'doctor': {
-        console.log('Cognitive Runtime - Environment Check\n');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log(`Cognitive Runtime v${VERSION} - Environment Diagnostics`);
+        console.log('═══════════════════════════════════════════════════════════\n');
         
-        console.log('Providers:');
-        for (const p of listProviders()) {
-          const status = p.configured ? '✓ configured' : '– not configured';
-          console.log(`  ${p.name}: ${status} (${p.model})`);
+        // 1. Version info
+        console.log('Version Information:');
+        console.log(`  Runtime: v${VERSION}`);
+        console.log(`  Spec: v2.2`);
+        console.log('');
+        
+        // 2. Provider configuration
+        console.log('LLM Providers:');
+        const providers = listProviders();
+        let hasConfiguredProvider = false;
+        for (const p of providers) {
+          const status = p.configured ? '✓' : '–';
+          const apiKeyStatus = p.configured ? 'API key set' : 'not configured';
+          console.log(`  ${status} ${p.name}`);
+          console.log(`      Model: ${p.model}`);
+          console.log(`      Status: ${apiKeyStatus}`);
+          if (p.configured) hasConfiguredProvider = true;
         }
         console.log('');
         
+        // 3. Active provider
+        console.log('Active Provider:');
         try {
           const provider = getProvider();
-          console.log(`Active provider: ${provider.name}`);
+          console.log(`  ✓ ${provider.name} (ready to use)`);
         } catch {
-          console.log('Active provider: none (set an API key)');
+          console.log('  ✗ None configured');
+          console.log('    → Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.');
         }
+        console.log('');
+        
+        // 4. Module scan
+        console.log('Module Search Paths:');
+        const searchPaths = getDefaultSearchPaths(ctx.cwd);
+        for (const p of searchPaths) {
+          console.log(`  • ${p}`);
+        }
+        console.log('');
+        
+        // 5. Installed modules
+        console.log('Installed Modules:');
+        try {
+          const modules = await listModules(searchPaths);
+          if (modules.length === 0) {
+            console.log('  – No modules found');
+            console.log('    → Use `cog add <repo> -m <module>` to install modules');
+          } else {
+            let v22Count = 0;
+            let legacyCount = 0;
+            
+            for (const m of modules) {
+              const isV22 = m.tier !== undefined || m.formatVersion === 'v2.2';
+              if (isV22) v22Count++;
+              else legacyCount++;
+              
+              const versionBadge = isV22 ? '[v2.2]' : '[legacy]';
+              const tierBadge = m.tier ? `tier:${m.tier}` : '';
+              console.log(`  ✓ ${m.name} ${versionBadge} ${tierBadge}`);
+              console.log(`      ${m.responsibility || 'No description'}`);
+            }
+            
+            console.log('');
+            console.log(`  Total: ${modules.length} modules (${v22Count} v2.2, ${legacyCount} legacy)`);
+            
+            if (legacyCount > 0) {
+              console.log('');
+              console.log('  ⚠ Legacy modules detected');
+              console.log('    → Use `cog migrate --all` to upgrade to v2.2');
+            }
+          }
+        } catch (e) {
+          console.log(`  ✗ Error scanning modules: ${e instanceof Error ? e.message : e}`);
+        }
+        console.log('');
+        
+        // 6. Recommendations
+        console.log('Recommendations:');
+        const recommendations: string[] = [];
+        
+        if (!hasConfiguredProvider) {
+          recommendations.push('Configure at least one LLM provider (e.g., OPENAI_API_KEY)');
+        }
+        
+        try {
+          const modules = await listModules(searchPaths);
+          if (modules.length === 0) {
+            recommendations.push('Install some modules with `cog add`');
+          }
+          
+          // Check for modules without tests
+          let modulesWithoutTests = 0;
+          for (const m of modules) {
+            const testsConfig = (m as unknown as { tests?: string[] }).tests;
+            if (!testsConfig || testsConfig.length === 0) {
+              modulesWithoutTests++;
+            }
+          }
+          if (modulesWithoutTests > 0) {
+            recommendations.push(`${modulesWithoutTests} module(s) have no tests - consider adding golden tests`);
+          }
+        } catch {
+          // Ignore
+        }
+        
+        if (recommendations.length === 0) {
+          console.log('  ✓ All good! Your environment is properly configured.');
+        } else {
+          for (const rec of recommendations) {
+            console.log(`  → ${rec}`);
+          }
+        }
+        
+        console.log('');
+        console.log('───────────────────────────────────────────────────────────');
+        console.log('For more help: cog --help');
         break;
       }
 
       case 'add': {
         const url = args[1];
         if (!url || url.startsWith('-')) {
-          console.error('Usage: cog add <url> [--module <name>] [--tag <version>]');
+          console.error('Usage: cog add <source> [--module <name>] [--tag <version>]');
+          console.error('');
+          console.error('Source can be:');
+          console.error('  - GitHub: org/repo (e.g., ziel-io/cognitive-modules)');
+          console.error('  - Registry: module-name[@version] (e.g., code-simplifier)');
           console.error('');
           console.error('Examples:');
+          console.error('  cog add code-simplifier                 # From registry');
+          console.error('  cog add code-reviewer@1.2.0             # Specific version');
           console.error('  cog add ziel-io/cognitive-modules -m code-simplifier');
           console.error('  cog add org/repo --module my-module --tag v1.0.0');
           process.exit(1);
         }
         
-        console.log(`→ Adding module from: ${url}`);
+        console.log(`→ Adding module: ${url}`);
         if (values.module) console.log(`  Module path: ${values.module}`);
         if (values.tag) console.log(`  Version: ${values.tag}`);
         
@@ -313,9 +435,10 @@ async function main() {
         });
         
         if (!result.success) {
-          console.error(`Error: ${result.error}`);
           if (result.data) {
-            console.error('Partial results:', JSON.stringify(result.data, null, 2));
+            console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+          } else {
+            console.error(`Error: ${result.error}`);
           }
           process.exit(1);
         }
@@ -366,6 +489,431 @@ async function main() {
         break;
       }
 
+      case 'validate': {
+        const target = args[1];
+        
+        if (values.all) {
+          // Validate all modules
+          console.log('→ Validating all modules...\n');
+          
+          const result = await validateAll(ctx, {
+            v22: values.v22,
+            format: (values.format as 'text' | 'json') || 'text',
+          });
+          
+          const data = result.data as { total: number; valid: number; invalid: number; results: Array<{ moduleName?: string; valid: boolean; errors: string[]; warnings: string[] }> };
+          
+          if (values.format === 'json') {
+            console.log(JSON.stringify(data, null, 2));
+          } else {
+            console.log(`Total: ${data.total}, Valid: ${data.valid}, Invalid: ${data.invalid}\n`);
+            
+            for (const r of data.results) {
+              const status = r.valid ? '✓' : '✗';
+              console.log(`${status} ${r.moduleName || 'unknown'}`);
+              
+              for (const err of r.errors) {
+                console.log(`    Error: ${err}`);
+              }
+              for (const warn of r.warnings) {
+                console.log(`    Warning: ${warn}`);
+              }
+            }
+          }
+          
+          process.exit(result.success ? 0 : 1);
+        }
+        
+        if (!target || target.startsWith('-')) {
+          console.error('Usage: cog validate <module> [--v22] [--all]');
+          process.exit(1);
+        }
+        
+        console.log(`→ Validating module: ${target}`);
+        if (values.v22) console.log('  Using strict v2.2 validation');
+        console.log('');
+        
+        const result = await validate(target, ctx, {
+          v22: values.v22,
+          format: (values.format as 'text' | 'json') || 'text',
+        });
+        
+        const data = result.data as { valid: boolean; modulePath: string; moduleName?: string; errors: string[]; warnings: string[] };
+        
+        if (values.format === 'json') {
+          console.log(JSON.stringify(data, null, 2));
+        } else {
+          if (data.valid) {
+            console.log('✓ Module is valid');
+          } else {
+            console.log('✗ Validation failed');
+            console.log('');
+            for (const err of data.errors) {
+              console.log(`  Error: ${err}`);
+            }
+          }
+          
+          if (data.warnings.length > 0) {
+            console.log('');
+            console.log('Warnings:');
+            for (const warn of data.warnings) {
+              console.log(`  ${warn}`);
+            }
+          }
+        }
+        
+        process.exit(result.success ? 0 : 1);
+      }
+
+      case 'migrate': {
+        const target = args[1];
+        const dryRun = values['dry-run'];
+        const backup = !values['no-backup'];
+        
+        if (values.all) {
+          // Migrate all modules
+          console.log('→ Migrating all modules to v2.2...');
+          if (dryRun) console.log('  (Dry run - no changes will be made)');
+          console.log('');
+          
+          const result = await migrateAll(ctx, { dryRun, backup });
+          
+          const data = result.data as { total: number; migrated: number; skipped: number; failed: number; results: Array<{ moduleName: string; success: boolean; changes: string[]; warnings: string[] }> };
+          
+          console.log(`Total: ${data.total}, Migrated: ${data.migrated}, Skipped: ${data.skipped}, Failed: ${data.failed}\n`);
+          
+          for (const r of data.results) {
+            const status = r.success ? (r.changes.length > 0 ? '✓' : '–') : '✗';
+            console.log(`${status} ${r.moduleName}`);
+            
+            for (const change of r.changes) {
+              console.log(`    ${change}`);
+            }
+            for (const warn of r.warnings) {
+              console.log(`    Warning: ${warn}`);
+            }
+          }
+          
+          process.exit(result.success ? 0 : 1);
+        }
+        
+        if (!target || target.startsWith('-')) {
+          console.error('Usage: cog migrate <module> [--dry-run] [--no-backup] [--all]');
+          process.exit(1);
+        }
+        
+        console.log(`→ Migrating module to v2.2: ${target}`);
+        if (dryRun) console.log('  (Dry run - no changes will be made)');
+        console.log('');
+        
+        const result = await migrate(target, ctx, { dryRun, backup });
+        
+        const data = result.data as { moduleName: string; success: boolean; changes: string[]; warnings: string[] };
+        
+        if (data.success) {
+          if (data.changes.length > 0) {
+            console.log('✓ Migration completed');
+            console.log('');
+            for (const change of data.changes) {
+              console.log(`  ${change}`);
+            }
+          } else {
+            console.log('– No changes needed');
+          }
+        } else {
+          console.log('✗ Migration failed');
+        }
+        
+        if (data.warnings.length > 0) {
+          console.log('');
+          console.log('Warnings:');
+          for (const warn of data.warnings) {
+            console.log(`  ${warn}`);
+          }
+        }
+        
+        process.exit(result.success ? 0 : 1);
+      }
+
+      case 'test': {
+        const target = args[1];
+        
+        if (values.all) {
+          // Test all modules
+          console.log('→ Running tests for all modules...\n');
+          
+          const result = await testAll(ctx, {
+            verbose: values.verbose,
+            timeout: values.timeout ? parseInt(values.timeout as string, 10) : undefined,
+          });
+          
+          const data = result.data as {
+            total: number;
+            passed: number;
+            failed: number;
+            skipped: number;
+            duration_ms: number;
+            modules: Array<{
+              moduleName: string;
+              total: number;
+              passed: number;
+              failed: number;
+              results: Array<{ name: string; passed: boolean; error?: string }>;
+            }>;
+          };
+          
+          // Summary
+          console.log('═══════════════════════════════════════════════════════════');
+          console.log('Test Summary');
+          console.log('═══════════════════════════════════════════════════════════');
+          console.log(`Total: ${data.total}, Passed: ${data.passed}, Failed: ${data.failed}, Skipped: ${data.skipped}`);
+          console.log(`Duration: ${data.duration_ms}ms\n`);
+          
+          // Per-module results
+          for (const m of data.modules) {
+            if (m.total === 0) {
+              console.log(`– ${m.moduleName}: no tests`);
+              continue;
+            }
+            
+            const status = m.failed === 0 ? '✓' : '✗';
+            console.log(`${status} ${m.moduleName}: ${m.passed}/${m.total} passed`);
+            
+            for (const r of m.results) {
+              if (!r.passed) {
+                console.log(`    ✗ ${r.name}: ${r.error}`);
+              }
+            }
+          }
+          
+          process.exit(result.success ? 0 : 1);
+        }
+        
+        if (!target || target.startsWith('-')) {
+          console.error('Usage: cog test <module> [--all] [--verbose] [--timeout <ms>]');
+          process.exit(1);
+        }
+        
+        console.log(`→ Running tests for module: ${target}\n`);
+        
+        const result = await test(target, ctx, {
+          verbose: values.verbose,
+          timeout: values.timeout ? parseInt(values.timeout as string, 10) : undefined,
+        });
+        
+        if (!result.success && !result.data) {
+          console.error(`✗ ${result.error}`);
+          process.exit(1);
+        }
+        
+        const data = result.data as {
+          moduleName: string;
+          total: number;
+          passed: number;
+          failed: number;
+          duration_ms: number;
+          results: Array<{
+            name: string;
+            passed: boolean;
+            duration_ms: number;
+            error?: string;
+            diff?: Array<{ field: string; expected: unknown; actual: unknown }>;
+          }>;
+        };
+        
+        if (data.total === 0) {
+          console.log('– No tests found for this module');
+          console.log('');
+          console.log('To add tests, create a tests/ directory with:');
+          console.log('  - tests/case1.input.json');
+          console.log('  - tests/case1.expected.json');
+          console.log('');
+          console.log('Or define in module.yaml:');
+          console.log('  tests:');
+          console.log('    - tests/case1.input.json -> tests/case1.expected.json');
+          process.exit(0);
+        }
+        
+        // Results
+        console.log(`Module: ${data.moduleName}`);
+        console.log(`Total: ${data.total}, Passed: ${data.passed}, Failed: ${data.failed}`);
+        console.log(`Duration: ${data.duration_ms}ms\n`);
+        
+        for (const r of data.results) {
+          const status = r.passed ? '✓' : '✗';
+          console.log(`${status} ${r.name} (${r.duration_ms}ms)`);
+          
+          if (!r.passed) {
+            if (r.error) {
+              console.log(`    Error: ${r.error}`);
+            }
+            if (r.diff && r.diff.length > 0) {
+              console.log('    Differences:');
+              for (const d of r.diff.slice(0, 5)) {
+                console.log(`      ${d.field}:`);
+                console.log(`        expected: ${JSON.stringify(d.expected)}`);
+                console.log(`        actual:   ${JSON.stringify(d.actual)}`);
+              }
+              if (r.diff.length > 5) {
+                console.log(`      ... and ${r.diff.length - 5} more`);
+              }
+            }
+          }
+        }
+        
+        process.exit(result.success ? 0 : 1);
+      }
+
+      case 'search': {
+        // Use positionals for query (excludes options)
+        const query = positionals.join(' ');
+        const limit = values.limit ? parseInt(values.limit, 10) : 20;
+        const category = values.category as string | undefined;
+        
+        const result = await search(query, ctx, { limit, category });
+        
+        if (!result.success) {
+          console.error(`✗ ${result.error}`);
+          process.exit(1);
+        }
+        
+        const data = result.data as {
+          query: string;
+          total: number;
+          results: Array<{ name: string; description: string; version: string; keywords: string[] }>;
+        };
+        
+        if (data.results.length === 0) {
+          if (query) {
+            console.log(`No modules found for: "${query}"`);
+          } else {
+            console.log('No modules available in registry.');
+          }
+          console.log('');
+          console.log('Try:');
+          console.log('  cog search code review');
+          console.log('  cog search task management');
+        } else {
+          if (query) {
+            console.log(`Search results for "${query}" (${data.total} total):\n`);
+          } else {
+            console.log(`Available modules (${data.total} total):\n`);
+          }
+          
+          for (const mod of data.results) {
+            console.log(`  ${mod.name} (v${mod.version})`);
+            console.log(`    ${mod.description}`);
+            if (mod.keywords.length > 0) {
+              console.log(`    Tags: ${mod.keywords.join(', ')}`);
+            }
+            console.log('');
+          }
+          
+          console.log('Install with:');
+          console.log(`  cog add <module-name>`);
+        }
+        break;
+      }
+
+      case 'registry': {
+        // positionals[0] is the subcommand, positionals[1] is the argument
+        const subCommand = positionals[0];
+        
+        if (!subCommand || subCommand === 'list') {
+          // List all modules
+          const result = await search('', ctx, {});
+          
+          if (!result.success) {
+            console.error(`✗ ${result.error}`);
+            process.exit(1);
+          }
+          
+          const data = result.data as {
+            total: number;
+            results: Array<{ name: string; description: string; version: string }>;
+          };
+          
+          console.log(`Registry modules (${data.total} total):\n`);
+          
+          for (const mod of data.results) {
+            console.log(`  ${mod.name} (v${mod.version})`);
+            console.log(`    ${mod.description}`);
+            console.log('');
+          }
+        } else if (subCommand === 'categories') {
+          const result = await listCategories(ctx, {});
+          
+          if (!result.success) {
+            console.error(`✗ ${result.error}`);
+            process.exit(1);
+          }
+          
+          const data = result.data as {
+            categories: Array<{ key: string; name: string; description: string; moduleCount: number }>;
+          };
+          
+          console.log('Registry categories:\n');
+          
+          for (const cat of data.categories) {
+            console.log(`  ${cat.key} - ${cat.name} (${cat.moduleCount} modules)`);
+            console.log(`    ${cat.description}`);
+            console.log('');
+          }
+        } else if (subCommand === 'info') {
+          // positionals[1] is the module name (positionals[0] is 'info')
+          const moduleName = positionals[1];
+          
+          if (!moduleName) {
+            console.error('Usage: cog registry info <module>');
+            process.exit(1);
+          }
+          
+          const result = await info(moduleName, ctx, {});
+          
+          if (!result.success) {
+            console.error(`✗ ${result.error}`);
+            process.exit(1);
+          }
+          
+          const data = result.data as { module: { name: string; version: string; description: string; author: string; source: string; keywords: string[]; tier?: string; license?: string; repository?: string; conformance_level?: number; verified?: boolean; deprecated?: boolean } };
+          const mod = data.module;
+          
+          console.log(`Module: ${mod.name}\n`);
+          console.log(`  Version: ${mod.version}`);
+          console.log(`  Description: ${mod.description}`);
+          console.log(`  Author: ${mod.author}`);
+          console.log(`  Source: ${mod.source}`);
+          
+          if (mod.tier) console.log(`  Tier: ${mod.tier}`);
+          if (mod.license) console.log(`  License: ${mod.license}`);
+          if (mod.repository) console.log(`  Repository: ${mod.repository}`);
+          if (mod.keywords.length > 0) console.log(`  Keywords: ${mod.keywords.join(', ')}`);
+          if (mod.conformance_level) console.log(`  Conformance Level: ${mod.conformance_level}`);
+          if (mod.verified !== undefined) console.log(`  Verified: ${mod.verified ? 'Yes' : 'No'}`);
+          if (mod.deprecated) console.log(`  DEPRECATED: This module is deprecated`);
+          
+          console.log('');
+          console.log('Install with:');
+          console.log(`  cog add ${mod.name}`);
+        } else if (subCommand === 'refresh') {
+          // Force refresh the registry cache
+          const { RegistryClient } = await import('./registry/client.js');
+          const client = new RegistryClient();
+          await client.fetchRegistry(true);
+          console.log('✓ Registry cache refreshed');
+        } else {
+          console.error(`Unknown registry subcommand: ${subCommand}`);
+          console.error('');
+          console.error('Usage:');
+          console.error('  cog registry list        List all modules');
+          console.error('  cog registry categories  List categories');
+          console.error('  cog registry info <mod>  Show module details');
+          console.error('  cog registry refresh     Refresh cache');
+          process.exit(1);
+        }
+        break;
+      }
+
       default:
         console.error(`Unknown command: ${command}`);
         console.error('Run "cog --help" for usage.');
@@ -390,18 +938,23 @@ USAGE:
 
 COMMANDS:
   run <module>        Run a Cognitive Module
+  test <module>       Run golden tests for a module
   compose <module>    Execute a composed module workflow
   compose-info <mod>  Show composition configuration
-  list                List available modules
-  add <url>           Add module from GitHub
+  list                List available (installed) modules
+  add <source>        Add module from Registry or GitHub
   update <module>     Update module to latest version
   remove <module>     Remove installed module
   versions <url>      List available versions
+  search [query]      Search modules in registry
+  registry <cmd>      Registry commands (list, categories, info, refresh)
+  validate <module>   Validate module structure
+  migrate <module>    Migrate module to v2.2 format
   pipe                Pipe mode (stdin/stdout)
   init [name]         Initialize project or create module
   serve               Start HTTP API server
   mcp                 Start MCP server (for Claude Code, Cursor)
-  doctor              Check configuration
+  doctor              Check environment and configuration
 
 OPTIONS:
   -a, --args <str>      Arguments to pass to module
@@ -420,18 +973,45 @@ OPTIONS:
   -d, --max-depth <n>   Max composition depth (default: 5)
   -T, --timeout <ms>    Composition timeout in milliseconds
   --trace               Include execution trace (for compose)
+  --v22                 Use strict v2.2 validation (for validate)
+  --dry-run             Show what would be done without changes (for migrate)
+  --no-backup           Skip backup before migration (for migrate)
+  --all                 Process all modules (for validate/migrate)
+  -f, --format <fmt>    Output format: text or json (for validate)
+  -c, --category <cat>  Filter by category (for search)
+  -l, --limit <n>       Limit results (for search, versions)
   -v, --version         Show version
   -h, --help            Show this help
 
 EXAMPLES:
-  # Add modules from GitHub
-  npx cognitive-modules-cli add ziel-io/cognitive-modules -m code-simplifier
+  # Search and discover modules
+  cog search code review           # Search by keywords
+  cog search                       # List all available modules
+  cog search --category code-quality  # Search within category
+  cog registry categories          # View module categories
+  cog registry info code-simplifier  # Module details
+
+  # Add modules from registry or GitHub
+  cog add code-simplifier                  # From registry
+  cog add code-reviewer@1.2.0              # Specific version from registry
+  cog add ziel-io/cognitive-modules -m code-simplifier  # From GitHub
   cog add org/repo --module my-module --tag v1.0.0
 
   # Version management
   cog update code-simplifier
   cog versions ziel-io/cognitive-modules
   cog remove code-simplifier
+
+  # Validation, testing, and migration
+  cog validate code-reviewer
+  cog validate code-reviewer --v22
+  cog validate --all
+  cog test code-simplifier              # Run golden tests
+  cog test code-simplifier --verbose    # With detailed output
+  cog test --all                        # Test all modules
+  cog migrate code-reviewer --dry-run
+  cog migrate code-reviewer
+  cog migrate --all --no-backup
 
   # Run modules
   cog run code-reviewer --args "def foo(): pass"
@@ -447,10 +1027,10 @@ EXAMPLES:
   cog serve --port 8080
   cog mcp
 
-  # Other
+  # Environment check
+  cog doctor                            # Full diagnostics
   echo "review this code" | cog pipe --module code-reviewer
   cog init my-module
-  cog doctor
 
 ENVIRONMENT:
   GEMINI_API_KEY      Google Gemini

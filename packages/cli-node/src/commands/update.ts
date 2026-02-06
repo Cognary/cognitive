@@ -7,22 +7,48 @@
 
 import { existsSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep, isAbsolute } from 'node:path';
 import { homedir } from 'node:os';
 import type { CommandContext, CommandResult } from '../types.js';
-import { add, getInstallInfo } from './add.js';
+import { add, addFromRegistry, getInstallInfo, type InstallInfo } from './add.js';
+import { RegistryClient } from '../registry/client.js';
 
 const USER_MODULES_DIR = join(homedir(), '.cognitive', 'modules');
 
 export interface UpdateOptions {
   tag?: string;
+  registry?: string;
+}
+
+function assertSafeModuleName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Invalid module name: empty');
+  }
+  if (trimmed.includes('..') || trimmed.includes('/') || trimmed.includes('\\')) {
+    throw new Error(`Invalid module name: ${name}`);
+  }
+  if (isAbsolute(trimmed)) {
+    throw new Error(`Invalid module name (absolute path not allowed): ${name}`);
+  }
+  return trimmed;
+}
+
+function resolveModuleTarget(moduleName: string): string {
+  const safeName = assertSafeModuleName(moduleName);
+  const targetPath = resolve(USER_MODULES_DIR, safeName);
+  const root = resolve(USER_MODULES_DIR) + sep;
+  if (!targetPath.startsWith(root)) {
+    throw new Error(`Invalid module name (path traversal): ${moduleName}`);
+  }
+  return targetPath;
 }
 
 /**
  * Get module version from installed module
  */
 async function getInstalledVersion(moduleName: string): Promise<string | undefined> {
-  const modulePath = join(USER_MODULES_DIR, moduleName);
+  const modulePath = resolveModuleTarget(moduleName);
   
   if (!existsSync(modulePath)) {
     return undefined;
@@ -65,25 +91,100 @@ export async function update(
   ctx: CommandContext,
   options: UpdateOptions = {}
 ): Promise<CommandResult> {
+  let safeName: string;
+  try {
+    safeName = assertSafeModuleName(moduleName);
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+
   // Get installation info
-  const info = await getInstallInfo(moduleName);
+  const info = await getInstallInfo(safeName);
   
   if (!info) {
     return {
       success: false,
-      error: `Module not found or not installed from GitHub: ${moduleName}. Only modules installed with 'cog add' can be updated.`,
-    };
-  }
-  
-  if (!info.githubUrl) {
-    return {
-      success: false,
-      error: `Module was not installed from GitHub: ${moduleName}`,
+      error: `Module not found or not installed with 'cog add': ${safeName}. Only modules installed with 'cog add' can be updated.`,
     };
   }
   
   // Get current version
-  const oldVersion = await getInstalledVersion(moduleName);
+  const oldVersion = await getInstalledVersion(safeName);
+  
+  // Check if module was installed from registry
+  if (info.registryModule) {
+    const registryModule = info.registryModule;
+    // Use undefined instead of empty string for default registry URL
+    const registryUrl = info.registryUrl || undefined;
+    
+    // Check registry for latest version
+    const client = new RegistryClient(registryUrl);
+    const registryInfo = await client.getModule(registryModule);
+    
+    if (!registryInfo) {
+      return {
+        success: false,
+        error: `Module '${registryModule}' is no longer available in the registry.`,
+      };
+    }
+    
+    // Warn if deprecated
+    if (registryInfo.deprecated) {
+      console.warn(`Warning: Module '${registryModule}' is deprecated.`);
+    }
+    
+    const targetVersion = options.tag || registryInfo.version;
+    
+    // Re-install from registry with optional version
+    const moduleSpec = options.tag ? `${registryModule}@${options.tag}` : registryModule;
+    const result = await addFromRegistry(moduleSpec, ctx, {
+      name: safeName,
+      registry: registryUrl,
+    });
+    
+    if (!result.success) {
+      return result;
+    }
+    
+    const data = result.data as { version?: string };
+    const newVersion = data.version || targetVersion;
+    
+    // Determine message
+    let message: string;
+    if (oldVersion && newVersion) {
+      if (oldVersion === newVersion) {
+        message = `Already up to date: ${safeName} v${newVersion}`;
+      } else {
+        message = `Updated: ${safeName} v${oldVersion} → v${newVersion}`;
+      }
+    } else if (newVersion) {
+      message = `Updated: ${safeName} to v${newVersion}`;
+    } else {
+      message = `Updated: ${safeName}`;
+    }
+    
+    return {
+      success: true,
+      data: {
+        message,
+        name: safeName,
+        oldVersion,
+        newVersion,
+        source: 'registry',
+      },
+    };
+  }
+  
+  // GitHub-based update
+  if (!info.githubUrl) {
+    return {
+      success: false,
+      error: `Module was not installed from GitHub or registry: ${moduleName}`,
+    };
+  }
   
   // Determine what ref to use
   const tag = options.tag || info.tag;
@@ -92,7 +193,7 @@ export async function update(
   // Re-install from source
   const result = await add(info.githubUrl, ctx, {
     module: info.modulePath,
-    name: moduleName,
+    name: safeName,
     tag,
     branch: tag ? undefined : branch,
   });
@@ -108,23 +209,24 @@ export async function update(
   let message: string;
   if (oldVersion && newVersion) {
     if (oldVersion === newVersion) {
-      message = `Already up to date: ${moduleName} v${newVersion}`;
+      message = `Already up to date: ${safeName} v${newVersion}`;
     } else {
-      message = `Updated: ${moduleName} v${oldVersion} → v${newVersion}`;
+      message = `Updated: ${safeName} v${oldVersion} → v${newVersion}`;
     }
   } else if (newVersion) {
-    message = `Updated: ${moduleName} to v${newVersion}`;
+    message = `Updated: ${safeName} to v${newVersion}`;
   } else {
-    message = `Updated: ${moduleName}`;
+    message = `Updated: ${safeName}`;
   }
   
   return {
     success: true,
     data: {
       message,
-      name: moduleName,
+      name: safeName,
       oldVersion,
       newVersion,
+      source: 'github',
     },
   };
 }

@@ -17,8 +17,7 @@ services:
       - COGNITIVE_API_KEY=${COGNITIVE_API_KEY:-}
       
       # LLM 提供商配置
-      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
-      - LLM_MODEL=${LLM_MODEL:-gpt-4o}
+      - COG_MODEL=${COG_MODEL:-}
       
       # LLM API Keys（至少配置一个）
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -50,18 +49,18 @@ services:
 # ============================================================
 # 1. 复制 .env.example 为 .env 并填写配置
 # 2. docker-compose up -d
-# 3. 访问 http://localhost:8000/docs 查看 API 文档
+# 3. 访问 http://localhost:8000/ 查看 API 信息
 #
 # ============================================================
 # 模块更新方法
 # ============================================================
 # 方法1: 本地目录热更新（推荐）
 #   mkdir -p modules/my-module
-#   # 添加 MODULE.md 和 schema.json
+#   # 添加 module.yaml / prompt.md / schema.json
 #   # 无需重启，立即可用
 #
 # 方法2: 容器内安装
-#   docker exec -it cognitive-api cogn add github-url -m module-name
+#   docker exec -it cognitive-api cog add github-url -m module-name
 #
 # 方法3: 重新构建
 #   docker-compose up -d --build

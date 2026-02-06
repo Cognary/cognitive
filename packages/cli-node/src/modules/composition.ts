@@ -609,13 +609,12 @@ export function aggregateResults(
         ? allMeta.reduce((sum, m) => sum + m.confidence, 0) / allMeta.length
         : 0.5;
       
-      const maxRisk = allMeta.length > 0
-        ? (['none', 'low', 'medium', 'high'] as RiskLevel[])[
-            Math.max(...allMeta.map(m => 
-              ['none', 'low', 'medium', 'high'].indexOf(m.risk)
-            ))
-          ]
-        : 'medium';
+      const riskLevels: Record<RiskLevel, number> = { none: 0, low: 1, medium: 2, high: 3 };
+      const riskNames: RiskLevel[] = ['none', 'low', 'medium', 'high'];
+      const maxRiskLevel = allMeta.length > 0
+        ? Math.max(...allMeta.map(m => riskLevels[m.risk as RiskLevel] ?? 2))
+        : 2;
+      const maxRisk = riskNames[maxRiskLevel];
       
       return {
         ok: true,
@@ -721,6 +720,26 @@ export function versionMatches(version: string, pattern: string): boolean {
     for (let i = 0; i < 3; i++) {
       if (vParts[i] > pParts[i]) return true;
       if (vParts[i] < pParts[i]) return false;
+    }
+    return false;
+  }
+  
+  // <= match
+  if (pattern.startsWith('<=')) {
+    const pParts = parseVersion(pattern.slice(2));
+    for (let i = 0; i < 3; i++) {
+      if (vParts[i] < pParts[i]) return true;
+      if (vParts[i] > pParts[i]) return false;
+    }
+    return true;
+  }
+  
+  // < match
+  if (pattern.startsWith('<') && !pattern.startsWith('<=')) {
+    const pParts = parseVersion(pattern.slice(1));
+    for (let i = 0; i < 3; i++) {
+      if (vParts[i] < pParts[i]) return true;
+      if (vParts[i] > pParts[i]) return false;
     }
     return false;
   }
@@ -1119,16 +1138,25 @@ export class CompositionOrchestrator {
       let sourceData: unknown = context.input;
       if (step.from) {
         const sources = Array.isArray(step.from) ? step.from : [step.from];
+        const sourceDataArray: unknown[] = [];
         for (const source of sources) {
           if (source === 'input') {
-            sourceData = context.input;
+            sourceDataArray.push(context.input);
           } else {
             const moduleName = source.replace('.output', '');
             const moduleResult = context.results[moduleName];
             if (moduleResult && 'data' in moduleResult) {
-              sourceData = (moduleResult as { data: unknown }).data;
+              sourceDataArray.push((moduleResult as { data: unknown }).data);
             }
           }
+        }
+        
+        if (sourceDataArray.length === 1) {
+          sourceData = sourceDataArray[0];
+        } else if (sourceDataArray.length > 1) {
+          sourceData = { sources: sourceDataArray };
+        } else {
+          sourceData = context.input;
         }
       }
       
@@ -1184,6 +1212,33 @@ export class CompositionOrchestrator {
       // Store results
       for (let i = 0; i < parallelModules.length; i++) {
         context.results[parallelModules[i]] = parallelResults[i];
+      }
+      
+      // Attempt fallbacks for failed modules
+      for (let i = 0; i < parallelModules.length; i++) {
+        const result = parallelResults[i];
+        if (result.ok) continue;
+        
+        const name = parallelModules[i];
+        const depConfig = composition.requires?.find(d => d.name === name);
+        const fallbackName = depConfig?.fallback;
+        if (!fallbackName) continue;
+        
+        const fallbackModule = await findModule(fallbackName, this.searchPaths);
+        if (!fallbackModule) continue;
+        
+        const depTimeout = depConfig?.timeout_ms;
+        const fallbackResult = await this.executeModuleWithTimeout(
+          fallbackModule,
+          sourceData as ModuleInput,
+          context,
+          trace,
+          depTimeout
+        );
+        
+        parallelResults[i] = fallbackResult;
+        context.results[fallbackName] = fallbackResult;
+        context.results[name] = fallbackResult;
       }
       
       // Check for failures
@@ -1533,38 +1588,55 @@ export class CompositionOrchestrator {
   ): Promise<ModuleResult> {
     const timeout = timeoutMs ?? context.timeoutMs;
     
+    const localTrace: ExecutionTrace[] = [];
+    const localContext: CompositionContext = {
+      ...context,
+      running: new Set(context.running),
+      results: { ...context.results },
+    };
+    const startTime = Date.now();
+    const execPromise = this.executeModule(module, input, localContext, localTrace);
+    
     if (!timeout) {
-      return this.executeModule(module, input, context, trace);
+      const result = await execPromise;
+      trace.push(...localTrace);
+      return result;
     }
     
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    
-    const timeoutPromise = new Promise<ModuleResult>((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error(`Module ${module.name} timed out after ${timeout}ms`));
-      }, timeout);
+    const timeoutPromise = new Promise<{ type: 'timeout' }>((resolve) => {
+      timeoutId = setTimeout(() => resolve({ type: 'timeout' }), timeout);
     });
     
-    try {
-      const result = await Promise.race([
-        this.executeModule(module, input, context, trace),
-        timeoutPromise
-      ]);
-      // Clear timeout on success to prevent memory leak
-      if (timeoutId) clearTimeout(timeoutId);
-      return result;
-    } catch (error) {
-      // Clear timeout on error too
-      if (timeoutId) clearTimeout(timeoutId);
-      return {
-        ok: false,
-        meta: { confidence: 0, risk: 'high', explain: `Timeout: ${module.name}` },
-        error: { 
-          code: COMPOSITION_ERRORS.E4008, 
-          message: (error as Error).message 
-        }
-      } as ModuleResult;
+    const raceResult = await Promise.race([
+      execPromise.then(result => ({ type: 'result' as const, result })),
+      timeoutPromise
+    ]);
+    
+    if (timeoutId) clearTimeout(timeoutId);
+    
+    if ('result' in raceResult) {
+      trace.push(...localTrace);
+      return raceResult.result;
     }
+    
+    trace.push({
+      module: module.name,
+      startTime,
+      endTime: Date.now(),
+      durationMs: Date.now() - startTime,
+      success: false,
+      reason: `Timeout after ${timeout}ms`
+    });
+    
+    return {
+      ok: false,
+      meta: { confidence: 0, risk: 'high', explain: `Timeout: ${module.name}` },
+      error: { 
+        code: COMPOSITION_ERRORS.E4008, 
+        message: `Module ${module.name} timed out after ${timeout}ms` 
+      }
+    } as ModuleResult;
   }
   
   /**

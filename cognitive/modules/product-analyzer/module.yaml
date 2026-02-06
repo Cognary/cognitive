@@ -72,3 +72,7 @@ compat:
 constraints:
   no_network: true
   no_side_effects: true
+
+# Golden tests
+tests:
+  - tests/health_product.input.json -> tests/health_product.expected.json

@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "version": "2.2",
+  "meta": {
+    "confidence": 0.92,
+    "risk": "high",
+    "explain": "Critical SQL injection vulnerability found. Immediate fix required."
+  },
+  "data": {
+    "issues": [
+      {
+        "severity": "critical",
+        "category": "security",
+        "location": "get_user function, line 2",
+        "description": "SQL injection vulnerability: user input directly concatenated into SQL query using f-string",
+        "suggestion": "Use parameterized queries: db.query(\"SELECT * FROM users WHERE id = ?\", [id])",
+        "risk": "high"
+      },
+      {
+        "severity": "high",
+        "category": "correctness",
+        "location": "get_user function",
+        "description": "Missing input validation: id parameter has no type checking",
+        "suggestion": "Add type hints and validation: def get_user(id: int) -> Optional[User]",
+        "risk": "medium"
+      },
+      {
+        "severity": "high",
+        "category": "security",
+        "location": "delete_all_users function",
+        "description": "Dangerous operation without protection: bulk delete has no confirmation mechanism or permission check",
+        "suggestion": "Add permission validation decorator requiring admin privileges",
+        "risk": "high"
+      }
+    ],
+    "highlights": [
+      "Clear function naming following Python conventions",
+      "Concise code structure"
+    ],
+    "summary": "Code has serious security issues. Most urgent is the SQL injection vulnerability. Recommend immediate security fixes and adding input validation and error handling.",
+    "rationale": "Prioritized security review as requested. SQL injection marked critical due to remote exploitation risk and potential data breach. The delete_all_users function poses additional risk without proper access controls."
+  }
+}

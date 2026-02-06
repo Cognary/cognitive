@@ -113,8 +113,8 @@ components:
           example: "def foo(x): return x+1"
         provider:
           type: string
-          description: LLM 提供商（可选，默认使用服务器配置）
-          enum: [openai, anthropic, deepseek, minimax]
+          description: LLM 提供商（可选，默认自动选择）
+          enum: [openai, anthropic, gemini, deepseek, minimax, moonshot, qwen, ollama]
         model:
           type: string
           description: 模型名称（可选）
@@ -125,12 +125,16 @@ components:
       type: object
       required:
         - ok
+        - version
         - meta
         - module
       properties:
         ok:
           type: boolean
           description: 是否执行成功
+        version:
+          type: string
+          description: 协议版本（如 2.2）
         meta:
           $ref: '#/components/schemas/EnvelopeMeta'
         data:
@@ -144,24 +148,40 @@ components:
               $ref: '#/components/schemas/Extensions'
           additionalProperties: true
         error:
-          type: object
-          description: 执行失败时的错误信息
-          properties:
-            code:
-              type: string
-              description: 错误代码
-            message:
-              type: string
-              description: 错误描述
+          $ref: '#/components/schemas/EnvelopeError'
         partial_data:
           type: object
           description: 部分成功的数据
         module:
           type: string
-          description: 执行的模块名称
         provider:
           type: string
           description: 使用的 LLM 提供商
+
+    EnvelopeError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: 错误码（E 格式）
+        message:
+          type: string
+          description: 错误信息
+        recoverable:
+          type: boolean
+          description: 是否可恢复
+        suggestion:
+          type: string
+          description: 修复建议
+        retry_after_ms:
+          type: integer
+          description: 建议重试等待毫秒数
+        details:
+          type: object
+          description: 错误详情
 
     # 模块信息
     ModuleInfo:
@@ -272,11 +292,11 @@ paths:
                   summary: 成功响应 (v2.2)
                   value:
                     ok: true
+                    version: "2.2"
                     meta:
                       confidence: 0.95
                       risk: high
                       explain: "检测到 1 个严重安全问题：SQL 注入风险"
-                      latency_ms: 1234
                     data:
                       issues:
                         - severity: critical
@@ -293,17 +313,19 @@ paths:
                     module: code-reviewer
                     provider: openai
                 error:
-                  summary: 错误响应 (v2.2)
+                  summary: 错误响应
                   value:
                     ok: false
+                    version: "2.2"
                     meta:
-                      confidence: 1.0
-                      risk: none
-                      explain: "模块 'unknown-module' 不存在"
+                      confidence: 0.0
+                      risk: high
+                      explain: "Module 'unknown-module' not found"
                     error:
-                      code: MODULE_NOT_FOUND
+                      code: E4006
                       message: "Module 'unknown-module' not found"
                     module: unknown-module
+                    provider: unknown
         '404':
           description: 模块不存在
 

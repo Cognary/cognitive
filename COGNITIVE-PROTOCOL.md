@@ -122,10 +122,10 @@ AI IDE 应该：
 
 | 平台 | 状态 |
 |------|------|
-| PyPI | `pip install cognitive-modules` ✅ |
-| npm | `npx cogn` ✅ |
-| MCP | `cog mcp` (Claude Desktop) ✅ |
+| npm | `npx cogn@2.2.5` ✅ |
+| MCP | `cog mcp` ✅ |
 | HTTP API | `cog serve` ✅ |
+| PyPI | 旧版遗留（非主要维护） |
 
 ---
 

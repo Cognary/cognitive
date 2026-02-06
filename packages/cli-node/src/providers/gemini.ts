@@ -1,5 +1,7 @@
 /**
  * Gemini Provider - Google Gemini API
+ * 
+ * Supports both streaming and non-streaming invocation.
  */
 
 import { BaseProvider } from './base.js';
@@ -19,6 +21,13 @@ export class GeminiProvider extends BaseProvider {
 
   isConfigured(): boolean {
     return !!this.apiKey;
+  }
+
+  /**
+   * Gemini supports streaming.
+   */
+  supportsStreaming(): boolean {
+    return true;
   }
 
   /**
@@ -47,13 +56,10 @@ export class GeminiProvider extends BaseProvider {
     return clean(schema) as object;
   }
 
-  async invoke(params: InvokeParams): Promise<InvokeResult> {
-    if (!this.isConfigured()) {
-      throw new Error('Gemini API key not configured. Set GEMINI_API_KEY environment variable.');
-    }
-
-    const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
-
+  /**
+   * Build request body for Gemini API
+   */
+  private buildRequestBody(params: InvokeParams): Record<string, unknown> {
     // Convert messages to Gemini format
     const contents = params.messages
       .filter(m => m.role !== 'system')
@@ -87,6 +93,17 @@ export class GeminiProvider extends BaseProvider {
       };
     }
 
+    return body;
+  }
+
+  async invoke(params: InvokeParams): Promise<InvokeResult> {
+    if (!this.isConfigured()) {
+      throw new Error('Gemini API key not configured. Set GEMINI_API_KEY environment variable.');
+    }
+
+    const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`;
+    const body = this.buildRequestBody(params);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -112,6 +129,126 @@ export class GeminiProvider extends BaseProvider {
         completionTokens: data.usageMetadata.candidatesTokenCount || 0,
         totalTokens: data.usageMetadata.totalTokenCount || 0,
       } : undefined,
+    };
+  }
+
+  /**
+   * Stream-based invoke using Gemini's streaming API.
+   * Yields content chunks as they arrive from the API.
+   */
+  async *invokeStream(params: InvokeParams): AsyncGenerator<string, InvokeResult, unknown> {
+    if (!this.isConfigured()) {
+      throw new Error('Gemini API key not configured. Set GEMINI_API_KEY environment variable.');
+    }
+
+    // Use streamGenerateContent endpoint
+    const url = `${this.baseUrl}/models/${this.model}:streamGenerateContent?key=${this.apiKey}&alt=sse`;
+    const body = this.buildRequestBody(params);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Gemini API error: ${response.status} - ${error}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Gemini API returned no body for streaming request');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    const collectedChunks: string[] = [];
+    let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Process complete lines from the buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          
+          if (trimmed.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(trimmed.slice(6)) as {
+                candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+                usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
+              };
+              
+              // Extract content chunk
+              const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) {
+                collectedChunks.push(text);
+                yield text;
+              }
+              
+              // Extract usage info (usually in the last chunk)
+              if (data.usageMetadata) {
+                usage = {
+                  promptTokens: data.usageMetadata.promptTokenCount || 0,
+                  completionTokens: data.usageMetadata.candidatesTokenCount || 0,
+                  totalTokens: data.usageMetadata.totalTokenCount || 0,
+                };
+              }
+            } catch {
+              // Skip invalid JSON chunks
+            }
+          }
+        }
+      }
+
+      // Flush decoder and process trailing buffered data even without trailing newline.
+      buffer += decoder.decode();
+      for (const line of buffer.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(trimmed.slice(6)) as {
+              candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+              usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
+            };
+
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              collectedChunks.push(text);
+              yield text;
+            }
+
+            if (data.usageMetadata) {
+              usage = {
+                promptTokens: data.usageMetadata.promptTokenCount || 0,
+                completionTokens: data.usageMetadata.candidatesTokenCount || 0,
+                totalTokens: data.usageMetadata.totalTokenCount || 0,
+              };
+            }
+          } catch {
+            // Skip invalid JSON chunks
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    const fullContent = collectedChunks.join('');
+    return {
+      content: fullContent,
+      usage,
     };
   }
 }

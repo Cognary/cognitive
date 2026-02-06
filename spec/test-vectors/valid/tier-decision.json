@@ -1,0 +1,37 @@
+{
+  "$test": {
+    "name": "tier-decision-module",
+    "description": "Valid response from decision tier module with structured choice",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.88,
+      "risk": "low",
+      "explain": "Recommended approach A based on performance requirements",
+      "trace_id": "tr-dec-001",
+      "tier": "decision"
+    },
+    "data": {
+      "recommendation": "approach_a",
+      "alternatives": [
+        {
+          "id": "approach_a",
+          "score": 0.88,
+          "pros": ["Better performance", "Easier maintenance"],
+          "cons": ["Higher initial complexity"]
+        },
+        {
+          "id": "approach_b",
+          "score": 0.72,
+          "pros": ["Simpler implementation"],
+          "cons": ["Performance concerns at scale"]
+        }
+      ],
+      "rationale": "Given the stated requirement for high throughput, approach A is recommended despite its initial complexity.",
+      "decision_factors": ["performance", "scalability", "maintainability"]
+    }
+  }
+}

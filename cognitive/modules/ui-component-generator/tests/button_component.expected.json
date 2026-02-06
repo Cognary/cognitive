@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "version": "2.2",
+  "meta": {
+    "confidence": 0.95,
+    "risk": "none",
+    "explain": "Generated React Button component with TypeScript types and Tailwind styling."
+  },
+  "data": {
+    "component_name": "Button",
+    "framework": "react",
+    "language": "typescript",
+    "code": "import React from 'react';\n\ninterface ButtonProps {\n  variant?: 'primary' | 'secondary' | 'outline';\n  size?: 'sm' | 'md' | 'lg';\n  disabled?: boolean;\n  onClick?: () => void;\n  children: React.ReactNode;\n}\n\nconst variantStyles = {\n  primary: 'bg-blue-600 text-white hover:bg-blue-700',\n  secondary: 'bg-gray-600 text-white hover:bg-gray-700',\n  outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50',\n};\n\nconst sizeStyles = {\n  sm: 'px-3 py-1.5 text-sm',\n  md: 'px-4 py-2 text-base',\n  lg: 'px-6 py-3 text-lg',\n};\n\nexport const Button: React.FC<ButtonProps> = ({\n  variant = 'primary',\n  size = 'md',\n  disabled = false,\n  onClick,\n  children,\n}) => {\n  return (\n    <button\n      type=\"button\"\n      className={`\n        rounded-md font-medium transition-colors\n        ${variantStyles[variant]}\n        ${sizeStyles[size]}\n        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}\n      `}\n      disabled={disabled}\n      onClick={onClick}\n    >\n      {children}\n    </button>\n  );\n};",
+    "types_included": true,
+    "styling_approach": "tailwind",
+    "behavior_equivalence": true,
+    "rationale": "Generated a fully typed React functional component following best practices. Used TypeScript interface for props, implemented variant and size variations through Tailwind utility classes, and included proper disabled state handling. The component is self-contained and ready for use."
+  }
+}

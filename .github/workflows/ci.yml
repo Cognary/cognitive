@@ -43,9 +43,52 @@ jobs:
           print('✅ module.yaml.schema.json is valid')
           "
 
-      - name: Run test vector validation
+      - name: Run test vector validation (Python)
         run: |
           python scripts/validate-test-vectors.py --level 3 --verbose
+
+  # Validate with TypeScript validator
+  validate-schemas-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          npm install -g tsx
+          npm install ajv
+
+      - name: Run test vector validation (TypeScript)
+        run: |
+          npx tsx scripts/validate-test-vectors.ts --level 3 --verbose
+
+  # Build and test Node.js CLI
+  test-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: packages/cli-node
+        run: npm ci
+
+      - name: Run TypeScript type check
+        working-directory: packages/cli-node
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        working-directory: packages/cli-node
+        run: npm test
 
   test:
     runs-on: ${{ matrix.os }}

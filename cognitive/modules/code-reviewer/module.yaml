@@ -76,3 +76,8 @@ constraints:
   no_inventing_data: true
   require_confidence: true
   require_rationale: true
+
+# Golden tests
+tests:
+  - tests/sql_injection.input.json -> tests/sql_injection.expected.json
+  - tests/clean_code.input.json -> tests/clean_code.expected.json

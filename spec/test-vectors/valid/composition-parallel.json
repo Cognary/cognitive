@@ -1,0 +1,39 @@
+{
+  "$test": {
+    "name": "composition-parallel",
+    "description": "Valid response from parallel composition (fan-out/fan-in)",
+    "expects": "accept",
+    "conformance_level": 3
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.79,
+      "risk": "medium",
+      "explain": "Parallel analysis complete: security + performance + maintainability",
+      "trace_id": "tr-para-001",
+      "composition": {
+        "pattern": "parallel",
+        "modules_executed": ["security-analyzer", "perf-analyzer", "maintainability-analyzer"],
+        "aggregation": "merge",
+        "total_latency_ms": 2800
+      }
+    },
+    "data": {
+      "security": {
+        "score": 0.85,
+        "vulnerabilities": 1
+      },
+      "performance": {
+        "score": 0.72,
+        "bottlenecks": 2
+      },
+      "maintainability": {
+        "score": 0.90,
+        "technical_debt_hours": 4
+      },
+      "aggregate_health": 0.82,
+      "rationale": "Ran three specialized analyzers in parallel and merged results for comprehensive assessment."
+    }
+  }
+}

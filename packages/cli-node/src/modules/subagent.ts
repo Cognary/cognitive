@@ -38,6 +38,7 @@ export interface CallDirective {
 
 export interface SubagentRunOptions {
   input?: ModuleInput;
+  args?: string;
   validateInput?: boolean;
   validateOutput?: boolean;
   maxDepth?: number;
@@ -119,16 +120,20 @@ export function parseCalls(text: string): CallDirective[] {
  */
 export function substituteCallResults(
   text: string, 
-  callResults: Record<string, unknown>
+  callResults: Array<{ match: string; module: string; result: unknown }>
 ): string {
   let result = text;
   
-  for (const [callStr, callResult] of Object.entries(callResults)) {
-    const resultStr = typeof callResult === 'object' 
-      ? JSON.stringify(callResult, null, 2)
-      : String(callResult);
+  for (const entry of callResults) {
+    const resultStr = typeof entry.result === 'object' 
+      ? JSON.stringify(entry.result, null, 2)
+      : String(entry.result);
     
-    result = result.replace(callStr, `[Result from ${callStr}]:\n${resultStr}`);
+    const replacement = `[Result from ${entry.module}]:\n${resultStr}`;
+    const idx = result.indexOf(entry.match);
+    if (idx !== -1) {
+      result = result.slice(0, idx) + replacement + result.slice(idx + entry.match.length);
+    }
   }
   
   return result;
@@ -159,6 +164,7 @@ export class SubagentOrchestrator {
   ): Promise<ModuleResult> {
     const { 
       input = {}, 
+      args,
       validateInput = true, 
       validateOutput = true,
       maxDepth = 5
@@ -195,7 +201,7 @@ export class SubagentOrchestrator {
       
       // Parse @call directives from prompt
       const calls = parseCalls(module.prompt);
-      const callResults: Record<string, unknown> = {};
+      const callResults: Array<{ match: string; module: string; result: unknown }> = [];
       
       // Resolve each @call directive
       for (const call of calls) {
@@ -203,9 +209,8 @@ export class SubagentOrchestrator {
         const childArgs = call.args;
         
         // Prepare child input
-        const childInput: ModuleInput = childArgs 
-          ? { query: childArgs, code: childArgs }
-          : { ...input };
+        const hasChildArgs = childArgs.length > 0;
+        const childInput: ModuleInput = hasChildArgs ? {} : { ...input };
         
         // Determine child context
         const childContext = moduleContextMode === 'fork'
@@ -217,6 +222,7 @@ export class SubagentOrchestrator {
           childModule,
           {
             input: childInput,
+            args: hasChildArgs ? childArgs : undefined,
             validateInput: false, // Skip validation for @call args
             validateOutput
           },
@@ -225,15 +231,15 @@ export class SubagentOrchestrator {
         
         // Store result
         if (childResult.ok && 'data' in childResult) {
-          callResults[call.match] = childResult.data;
+          callResults.push({ match: call.match, module: call.module, result: childResult.data });
         } else if ('error' in childResult) {
-          callResults[call.match] = { error: childResult.error };
+          callResults.push({ match: call.match, module: call.module, result: { error: childResult.error } });
         }
       }
       
       // Substitute call results into prompt
       let modifiedModule = module;
-      if (Object.keys(callResults).length > 0) {
+      if (callResults.length > 0) {
         const modifiedPrompt = substituteCallResults(module.prompt, callResults);
         modifiedModule = {
           ...module,
@@ -244,6 +250,7 @@ export class SubagentOrchestrator {
       // Run the module
       const result = await runModule(modifiedModule, this.provider, {
         input,
+        args,
         validateInput,
         validateOutput,
         verbose: false,

@@ -6,6 +6,30 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { CommandContext, CommandResult } from '../types.js';
 
+function assertSafeModuleName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Invalid module name: empty');
+  }
+  if (trimmed.includes('..') || trimmed.includes('/') || trimmed.includes('\\')) {
+    throw new Error(`Invalid module name: ${name}`);
+  }
+  if (path.isAbsolute(trimmed)) {
+    throw new Error(`Invalid module name (absolute path not allowed): ${name}`);
+  }
+  return trimmed;
+}
+
+function resolveModuleDir(rootDir: string, moduleName: string): string {
+  const safeName = assertSafeModuleName(moduleName);
+  const targetPath = path.resolve(rootDir, safeName);
+  const root = path.resolve(rootDir) + path.sep;
+  if (!targetPath.startsWith(root)) {
+    throw new Error(`Invalid module name (path traversal): ${moduleName}`);
+  }
+  return targetPath;
+}
+
 const EXAMPLE_MODULE_MD = `---
 name: my-module
 version: 1.0.0
@@ -53,7 +77,7 @@ export async function init(ctx: CommandContext, moduleName?: string): Promise<Co
     
     // If module name provided, create a new module
     if (moduleName) {
-      const moduleDir = path.join(cognitiveDir, moduleName);
+      const moduleDir = resolveModuleDir(cognitiveDir, moduleName);
       await fs.mkdir(moduleDir, { recursive: true });
       
       await fs.writeFile(

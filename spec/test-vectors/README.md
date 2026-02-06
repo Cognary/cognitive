@@ -10,16 +10,20 @@ These test vectors allow any implementation of a Cognitive Modules runtime to ve
 
 ```
 test-vectors/
-├── valid/                    # Valid responses that MUST be accepted
-│   ├── minimal.json          # Minimal valid envelope
-│   ├── full-featured.json    # Complete envelope with all optional fields
-│   ├── success-*.json        # Various success scenarios
-│   └── failure-*.json        # Valid failure responses
-├── invalid/                  # Invalid responses that MUST be rejected
-│   ├── missing-*.json        # Missing required fields
-│   ├── wrong-type-*.json     # Type violations
-│   └── constraint-*.json     # Constraint violations
-└── README.md                 # This file
+├── valid/                         # Valid responses that MUST be accepted
+│   ├── minimal.json               # Minimal valid envelope
+│   ├── full-featured.json         # Complete envelope with all optional fields
+│   ├── tier-*.json                # Tier-specific responses (exec, decision, exploration)
+│   ├── composition-*.json         # Composition pattern responses
+│   ├── context-*.json             # Context protocol responses
+│   ├── overflow-extensions.json   # Overflow handling
+│   └── failure-*.json             # Valid failure responses
+├── invalid/                       # Invalid responses that MUST be rejected
+│   ├── missing-*.json             # Missing required fields
+│   ├── wrong-*.json               # Type violations
+│   ├── extensions-*.json          # Extension constraint violations
+│   └── *.json                     # Other constraint violations
+└── README.md                      # This file
 ```
 
 ## Test Vector Format

@@ -19,7 +19,8 @@ import type {
   EnvelopeMeta,
   ModuleResultData,
   RiskLevel,
-  RiskRule
+  RiskRule,
+  InvokeResult,
 } from '../types.js';
 import { aggregateRisk, isV22Envelope } from '../types.js';
 
@@ -592,8 +593,8 @@ export function validateEnumStrategy(
       } else if (typeof obj === 'object') {
         const record = obj as Record<string, unknown>;
         
-        // Check if this is a custom enum object
-        if ('custom' in record && 'reason' in record && Object.keys(record).length === 2) {
+        // Check if this is a custom enum object (any presence of 'custom' is disallowed in strict mode)
+        if ('custom' in record) {
           errors.push(`Custom enum not allowed in strict mode at ${path}: { custom: "${record.custom}" }`);
           return;
         }
@@ -785,11 +786,137 @@ function _invokeErrorHooks(moduleName: string, error: Error, partialResult: unkn
 // Error Response Builder
 // =============================================================================
 
+/**
+ * Error code taxonomy following CONFORMANCE.md E1xxx-E4xxx structure.
+ * 
+ * E1xxx: Input errors (caller errors, fixable by modifying input)
+ * E2xxx: Processing errors (module understood input but couldn't complete)
+ * E3xxx: Output errors (generated output doesn't meet requirements)
+ * E4xxx: Runtime errors (infrastructure/system-level failures)
+ */
+
+/** Standard error codes with E-format (as per ERROR-CODES.md) */
+export const ERROR_CODES = {
+  // E1xxx: Input errors
+  E1000: 'PARSE_ERROR',
+  E1001: 'INVALID_INPUT',
+  E1002: 'MISSING_REQUIRED_FIELD',
+  E1003: 'TYPE_MISMATCH',
+  E1004: 'UNSUPPORTED_VALUE',
+  E1005: 'INPUT_TOO_LARGE',
+  E1006: 'INVALID_REFERENCE',
+  
+  // E2xxx: Processing errors
+  E2001: 'LOW_CONFIDENCE',
+  E2002: 'TIMEOUT',
+  E2003: 'TOKEN_LIMIT',
+  E2004: 'NO_ACTION_POSSIBLE',
+  E2005: 'SEMANTIC_CONFLICT',
+  E2006: 'AMBIGUOUS_INPUT',
+  E2007: 'INSUFFICIENT_CONTEXT',
+  
+  // E3xxx: Output errors
+  E3001: 'OUTPUT_SCHEMA_VIOLATION',
+  E3002: 'PARTIAL_RESULT',
+  E3003: 'MISSING_RATIONALE',
+  E3004: 'OVERFLOW_LIMIT',
+  E3005: 'INVALID_ENUM',
+  E3006: 'CONSTRAINT_VIOLATION',
+  
+  // E4xxx: Runtime errors
+  E4000: 'INTERNAL_ERROR',
+  E4001: 'PROVIDER_UNAVAILABLE',
+  E4002: 'RATE_LIMITED',
+  E4003: 'CONTEXT_OVERFLOW',
+  E4004: 'CIRCULAR_DEPENDENCY',
+  E4005: 'MAX_DEPTH_EXCEEDED',
+  E4006: 'MODULE_NOT_FOUND',
+  E4007: 'PERMISSION_DENIED',
+} as const;
+
+/** Reverse mapping: legacy code -> E-format code */
+export const LEGACY_TO_E_CODE: Record<string, string> = {
+  PARSE_ERROR: 'E1000',
+  INVALID_INPUT: 'E1001',
+  MISSING_REQUIRED_FIELD: 'E1002',
+  TYPE_MISMATCH: 'E1003',
+  UNSUPPORTED_VALUE: 'E1004',
+  INPUT_TOO_LARGE: 'E1005',
+  INVALID_REFERENCE: 'E1006',
+  
+  LOW_CONFIDENCE: 'E2001',
+  TIMEOUT: 'E2002',
+  TOKEN_LIMIT: 'E2003',
+  NO_ACTION_POSSIBLE: 'E2004',
+  SEMANTIC_CONFLICT: 'E2005',
+  AMBIGUOUS_INPUT: 'E2006',
+  INSUFFICIENT_CONTEXT: 'E2007',
+  
+  OUTPUT_SCHEMA_VIOLATION: 'E3001',
+  SCHEMA_VALIDATION_FAILED: 'E3001', // Alias
+  PARTIAL_RESULT: 'E3002',
+  MISSING_RATIONALE: 'E3003',
+  OVERFLOW_LIMIT: 'E3004',
+  INVALID_ENUM: 'E3005',
+  CONSTRAINT_VIOLATION: 'E3006',
+  META_VALIDATION_FAILED: 'E3001', // Alias (output validation)
+  
+  INTERNAL_ERROR: 'E4000',
+  PROVIDER_UNAVAILABLE: 'E4001',
+  LLM_ERROR: 'E4001', // Alias
+  RATE_LIMITED: 'E4002',
+  CONTEXT_OVERFLOW: 'E4003',
+  CIRCULAR_DEPENDENCY: 'E4004',
+  MAX_DEPTH_EXCEEDED: 'E4005',
+  MODULE_NOT_FOUND: 'E4006',
+  PERMISSION_DENIED: 'E4007',
+  POLICY_VIOLATION: 'E4007', // Alias
+  TOOL_NOT_ALLOWED: 'E4007', // Alias
+  UNKNOWN: 'E4000', // Fallback to internal error
+};
+
 /** Error codes and their default properties */
 export const ERROR_PROPERTIES: Record<string, { recoverable: boolean; retry_after_ms: number | null }> = {
-  MODULE_NOT_FOUND: { recoverable: false, retry_after_ms: null },
-  INVALID_INPUT: { recoverable: false, retry_after_ms: null },
-  PARSE_ERROR: { recoverable: true, retry_after_ms: 1000 },
+  // E1xxx: Input errors (mostly recoverable by fixing input)
+  E1000: { recoverable: false, retry_after_ms: null }, // PARSE_ERROR
+  E1001: { recoverable: true, retry_after_ms: null },  // INVALID_INPUT
+  E1002: { recoverable: true, retry_after_ms: null },  // MISSING_REQUIRED_FIELD
+  E1003: { recoverable: true, retry_after_ms: null },  // TYPE_MISMATCH
+  E1004: { recoverable: false, retry_after_ms: null }, // UNSUPPORTED_VALUE
+  E1005: { recoverable: true, retry_after_ms: null },  // INPUT_TOO_LARGE
+  E1006: { recoverable: true, retry_after_ms: null },  // INVALID_REFERENCE
+  
+  // E2xxx: Processing errors (may have partial results)
+  E2001: { recoverable: true, retry_after_ms: null },  // LOW_CONFIDENCE
+  E2002: { recoverable: true, retry_after_ms: 5000 },  // TIMEOUT
+  E2003: { recoverable: true, retry_after_ms: null },  // TOKEN_LIMIT
+  E2004: { recoverable: false, retry_after_ms: null }, // NO_ACTION_POSSIBLE
+  E2005: { recoverable: false, retry_after_ms: null }, // SEMANTIC_CONFLICT
+  E2006: { recoverable: true, retry_after_ms: null },  // AMBIGUOUS_INPUT
+  E2007: { recoverable: true, retry_after_ms: null },  // INSUFFICIENT_CONTEXT
+  
+  // E3xxx: Output errors (schema violations)
+  E3001: { recoverable: true, retry_after_ms: 1000 },  // OUTPUT_SCHEMA_VIOLATION
+  E3002: { recoverable: true, retry_after_ms: null },  // PARTIAL_RESULT
+  E3003: { recoverable: false, retry_after_ms: null }, // MISSING_RATIONALE
+  E3004: { recoverable: false, retry_after_ms: null }, // OVERFLOW_LIMIT
+  E3005: { recoverable: false, retry_after_ms: null }, // INVALID_ENUM
+  E3006: { recoverable: false, retry_after_ms: null }, // CONSTRAINT_VIOLATION
+  
+  // E4xxx: Runtime errors (infrastructure failures)
+  E4000: { recoverable: false, retry_after_ms: null },   // INTERNAL_ERROR
+  E4001: { recoverable: true, retry_after_ms: 5000 },    // PROVIDER_UNAVAILABLE
+  E4002: { recoverable: true, retry_after_ms: 10000 },   // RATE_LIMITED
+  E4003: { recoverable: false, retry_after_ms: null },   // CONTEXT_OVERFLOW
+  E4004: { recoverable: false, retry_after_ms: null },   // CIRCULAR_DEPENDENCY
+  E4005: { recoverable: false, retry_after_ms: null },   // MAX_DEPTH_EXCEEDED
+  E4006: { recoverable: true, retry_after_ms: null },    // MODULE_NOT_FOUND
+  E4007: { recoverable: false, retry_after_ms: null },   // PERMISSION_DENIED
+  
+  // Legacy codes (for backward compatibility)
+  MODULE_NOT_FOUND: { recoverable: true, retry_after_ms: null },
+  INVALID_INPUT: { recoverable: true, retry_after_ms: null },
+  PARSE_ERROR: { recoverable: false, retry_after_ms: null },
   SCHEMA_VALIDATION_FAILED: { recoverable: true, retry_after_ms: 1000 },
   META_VALIDATION_FAILED: { recoverable: true, retry_after_ms: 1000 },
   POLICY_VIOLATION: { recoverable: false, retry_after_ms: null },
@@ -800,7 +927,45 @@ export const ERROR_PROPERTIES: Record<string, { recoverable: boolean; retry_afte
   UNKNOWN: { recoverable: false, retry_after_ms: null },
 };
 
+/**
+ * Normalize error code to E-format.
+ * Accepts both E-format (E1001) and legacy format (INVALID_INPUT).
+ * 
+ * @param code Error code in any format
+ * @returns E-format code (e.g., "E1001")
+ */
+export function normalizeErrorCode(code: string): string {
+  // Already E-format
+  if (/^E\d{4}$/.test(code)) {
+    return code;
+  }
+  
+  // Map legacy to E-format
+  const eCode = LEGACY_TO_E_CODE[code];
+  return eCode || 'E4000'; // Default to INTERNAL_ERROR
+}
+
+/**
+ * Get error category from E-format code.
+ * 
+ * @param code E-format error code (e.g., "E1001")
+ * @returns Category: 'input' | 'processing' | 'output' | 'runtime'
+ */
+export function getErrorCategory(code: string): 'input' | 'processing' | 'output' | 'runtime' {
+  const normalized = normalizeErrorCode(code);
+  const category = normalized.charAt(1);
+  
+  switch (category) {
+    case '1': return 'input';
+    case '2': return 'processing';
+    case '3': return 'output';
+    case '4': return 'runtime';
+    default: return 'runtime';
+  }
+}
+
 export interface MakeErrorResponseOptions {
+  /** Error code - accepts both E-format (E1001) and legacy format (INVALID_INPUT) */
   code: string;
   message: string;
   explain?: string;
@@ -810,10 +975,18 @@ export interface MakeErrorResponseOptions {
   retryAfterMs?: number;
   confidence?: number;
   risk?: RiskLevel;
+  /** Suggestion for how to fix the error */
+  suggestion?: string;
+  /** Whether to use E-format codes in output (default: true) */
+  useEFormat?: boolean;
 }
 
 /**
  * Build a standardized error response with enhanced taxonomy.
+ * Supports both E-format (E1001) and legacy format (INVALID_INPUT) error codes.
+ * 
+ * @param options Error response options
+ * @returns Standardized error envelope
  */
 export function makeErrorResponse(options: MakeErrorResponseOptions): EnvelopeResponseV22<unknown> {
   const {
@@ -826,10 +999,15 @@ export function makeErrorResponse(options: MakeErrorResponseOptions): EnvelopeRe
     retryAfterMs,
     confidence = 0.0,
     risk = 'high',
+    suggestion,
+    useEFormat = true,
   } = options;
 
-  // Get default properties from error code
-  const defaults = ERROR_PROPERTIES[code] || ERROR_PROPERTIES.UNKNOWN;
+  // Normalize error code to E-format if requested
+  const normalizedCode = useEFormat ? normalizeErrorCode(code) : code;
+  
+  // Get default properties from error code (try normalized first, then original)
+  const defaults = ERROR_PROPERTIES[normalizedCode] || ERROR_PROPERTIES[code] || ERROR_PROPERTIES.UNKNOWN || { recoverable: false, retry_after_ms: null };
 
   const errorObj: {
     code: string;
@@ -837,8 +1015,9 @@ export function makeErrorResponse(options: MakeErrorResponseOptions): EnvelopeRe
     recoverable?: boolean;
     retry_after_ms?: number;
     details?: Record<string, unknown>;
+    suggestion?: string;
   } = {
-    code,
+    code: normalizedCode,
     message,
   };
 
@@ -850,8 +1029,13 @@ export function makeErrorResponse(options: MakeErrorResponseOptions): EnvelopeRe
 
   // Add retry suggestion
   const retryMs = retryAfterMs ?? defaults.retry_after_ms;
-  if (retryMs !== null) {
+  if (retryMs !== null && retryMs !== undefined) {
     errorObj.retry_after_ms = retryMs;
+  }
+
+  // Add suggestion if provided
+  if (suggestion) {
+    errorObj.suggestion = suggestion;
   }
 
   // Add details if provided
@@ -859,11 +1043,21 @@ export function makeErrorResponse(options: MakeErrorResponseOptions): EnvelopeRe
     errorObj.details = details;
   }
 
+  // Determine confidence based on error category (if not explicitly provided)
+  let finalConfidence = confidence;
+  if (confidence === 0.0 && partialData) {
+    // If we have partial data, may have some confidence
+    const category = getErrorCategory(normalizedCode);
+    if (category === 'processing') {
+      finalConfidence = 0.3; // Some partial understanding
+    }
+  }
+
   return {
     ok: false,
     version: ENVELOPE_VERSION,
     meta: {
-      confidence,
+      confidence: finalConfidence,
       risk,
       explain: (explain || message).slice(0, 280),
     },
@@ -992,13 +1186,13 @@ function repairEnvelope(
   if (!meta.risk) {
     meta.risk = aggregateRisk(data, riskRule);
   }
-  // Trim whitespace only (lossless), validate is valid RiskLevel
+  // Trim whitespace only (lossless). Do NOT repair invalid enum values.
   if (typeof meta.risk === 'string') {
     const trimmedRisk = meta.risk.trim().toLowerCase();
     const validRisks = ['none', 'low', 'medium', 'high'];
-    meta.risk = validRisks.includes(trimmedRisk) ? trimmedRisk : 'medium';
-  } else {
-    meta.risk = 'medium'; // Default for invalid type
+    if (validRisks.includes(trimmedRisk)) {
+      meta.risk = trimmedRisk;
+    }
   }
   
   // Repair explain
@@ -1024,7 +1218,8 @@ function repairEnvelope(
     ok: false,
     version: ENVELOPE_VERSION,
     meta: builtMeta,
-    error: (repaired.error as { code: string; message: string }) ?? { code: 'UNKNOWN', message: 'Unknown error' },
+    // E4000 is an internal/runtime error fallback (should rarely happen after repair).
+    error: (repaired.error as { code: string; message: string }) ?? { code: 'E4000', message: 'Unknown error' },
     partial_data: repaired.partial_data
   } : {
     ok: true,
@@ -1075,7 +1270,8 @@ function repairErrorEnvelope(
       risk: meta.risk as RiskLevel,
       explain: meta.explain as string,
     },
-    error: (repaired.error as { code: string; message: string }) ?? { code: 'UNKNOWN', message: 'Unknown error' },
+    // E4000 is an internal/runtime error fallback (should rarely happen after repair).
+    error: (repaired.error as { code: string; message: string }) ?? { code: 'E4000', message: 'Unknown error' },
     partial_data: repaired.partial_data,
   };
 }
@@ -1120,7 +1316,7 @@ function wrapV21ToV22(
         risk: 'high',
         explain: errorMsg.slice(0, 280)
       },
-      error: response.error ?? { code: 'UNKNOWN', message: errorMsg },
+      error: response.error ?? { code: 'E4000', message: errorMsg }, // INTERNAL_ERROR fallback
       partial_data: response.partial_data
     };
   }
@@ -1130,11 +1326,14 @@ function wrapV21ToV22(
  * Convert legacy format (no envelope) to v2.2 envelope.
  */
 function convertLegacyToEnvelope(
-  data: Record<string, unknown>,
+  data: unknown,
   isError: boolean = false
 ): EnvelopeResponseV22<unknown> {
-  if (isError || 'error' in data) {
-    const error = (data.error ?? {}) as Record<string, unknown>;
+  const isPlainObject = typeof data === 'object' && data !== null && !Array.isArray(data);
+  const dataObj = isPlainObject ? (data as Record<string, unknown>) : { result: data };
+  
+  if (isError || (isPlainObject && 'error' in dataObj)) {
+    const error = (dataObj.error ?? {}) as Record<string, unknown>;
     const errorMsg = typeof error === 'object' 
       ? ((error.message as string) ?? String(error))
       : String(error);
@@ -1154,18 +1353,18 @@ function convertLegacyToEnvelope(
       partial_data: undefined,
     };
   } else {
-    const confidence = (data.confidence as number) ?? 0.5;
-    const rationale = (data.rationale as string) ?? '';
+    const confidence = (dataObj.confidence as number) ?? 0.5;
+    const rationale = (dataObj.rationale as string) ?? '';
     
     return {
       ok: true,
       version: ENVELOPE_VERSION,
       meta: {
         confidence,
-        risk: aggregateRisk(data),
+        risk: aggregateRisk(dataObj),
         explain: rationale.slice(0, 280) || 'No explanation provided',
       },
-      data,
+      data: dataObj,
     };
   }
 }
@@ -1213,12 +1412,13 @@ export async function runModule(
     const inputErrors = validateData(inputData, module.inputSchema, 'Input');
     if (inputErrors.length > 0) {
       const errorResult = makeErrorResponse({
-        code: 'INVALID_INPUT',
+        code: 'E1001', // INVALID_INPUT
         message: inputErrors.join('; '),
         explain: 'Input validation failed.',
         confidence: 1.0,
         risk: 'none',
         details: { validation_errors: inputErrors },
+        suggestion: 'Check input against the module schema and fix validation errors.',
       });
       _invokeErrorHooks(module.name, new Error(inputErrors.join('; ')), null);
       return errorResult as ModuleResult;
@@ -1327,10 +1527,11 @@ export async function runModule(
       parsed = JSON.parse(jsonStr.trim());
     } catch (e) {
       const errorResult = makeErrorResponse({
-        code: 'PARSE_ERROR',
+        code: 'E1000', // PARSE_ERROR
         message: `Failed to parse JSON response: ${(e as Error).message}`,
         explain: 'Failed to parse LLM response as JSON.',
         details: { raw_response: result.content.substring(0, 500) },
+        suggestion: 'The LLM response was not valid JSON. Try again or adjust the prompt.',
       });
       _invokeErrorHooks(module.name, e as Error, null);
       return errorResult as ModuleResult;
@@ -1343,7 +1544,7 @@ export async function runModule(
     } else if (isEnvelopeResponse(parsed)) {
       response = wrapV21ToV22(parsed as EnvelopeResponse<unknown>, riskRule);
     } else {
-      response = convertLegacyToEnvelope(parsed as Record<string, unknown>);
+      response = convertLegacyToEnvelope(parsed);
     }
 
     // Add version and meta fields
@@ -1383,7 +1584,7 @@ export async function runModule(
         
         if (dataErrors.length > 0) {
           const errorResult = makeErrorResponse({
-            code: 'SCHEMA_VALIDATION_FAILED',
+            code: 'E3001', // OUTPUT_SCHEMA_VIOLATION
             message: dataErrors.join('; '),
             explain: 'Schema validation failed after repair attempt.',
             partialData: (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data,
@@ -1398,7 +1599,7 @@ export async function runModule(
       const overflowErrors = validateOverflowLimits(dataToValidate as Record<string, unknown>, module);
       if (overflowErrors.length > 0) {
         const errorResult = makeErrorResponse({
-          code: 'SCHEMA_VALIDATION_FAILED',
+          code: 'E3001', // OUTPUT_SCHEMA_VIOLATION
           message: overflowErrors.join('; '),
           explain: 'Overflow validation failed.',
           partialData: dataToValidate,
@@ -1412,7 +1613,7 @@ export async function runModule(
       const enumErrors = validateEnumStrategy(dataToValidate as Record<string, unknown>, module);
       if (enumErrors.length > 0) {
         const errorResult = makeErrorResponse({
-          code: 'SCHEMA_VALIDATION_FAILED',
+          code: 'E3001', // OUTPUT_SCHEMA_VIOLATION
           message: enumErrors.join('; '),
           explain: 'Enum strategy validation failed.',
           partialData: dataToValidate,
@@ -1438,7 +1639,7 @@ export async function runModule(
           
           if (metaErrors.length > 0) {
             const errorResult = makeErrorResponse({
-              code: 'META_VALIDATION_FAILED',
+              code: 'E3001', // META_VALIDATION_FAILED (maps to OUTPUT_SCHEMA_VIOLATION)
               message: metaErrors.join('; '),
               explain: 'Meta schema validation failed after repair attempt.',
               partialData: (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data,
@@ -1464,7 +1665,7 @@ export async function runModule(
   } catch (e) {
     const latencyMs = Date.now() - startTime;
     const errorResult = makeErrorResponse({
-      code: 'UNKNOWN',
+      code: 'E4000', // INTERNAL_ERROR
       message: (e as Error).message,
       explain: `Unexpected error: ${(e as Error).name}`,
       details: { exception_type: (e as Error).name },
@@ -1557,16 +1758,20 @@ export async function* runModuleStream(
       }
     }
 
+    _invokeBeforeHooks(module.name, inputData, module);
+
     // Validate input if enabled
     if (validateInput && module.inputSchema && Object.keys(module.inputSchema).length > 0) {
       const inputErrors = validateData(inputData, module.inputSchema, 'Input');
       if (inputErrors.length > 0) {
         const errorResult = makeErrorResponse({
-          code: 'INVALID_INPUT',
+          code: 'E1001', // INVALID_INPUT
           message: inputErrors.join('; '),
           confidence: 1.0,
           risk: 'none',
+          suggestion: 'Check input against the module schema and fix validation errors.',
         });
+        _invokeErrorHooks(module.name, new Error(inputErrors.join('; ')), null);
         const errorObj = (errorResult as { error: { code: string; message: string } }).error;
         yield makeEvent('error', { error: errorObj });
         yield makeEvent('complete', { result: errorResult });
@@ -1599,27 +1804,52 @@ export async function* runModuleStream(
       { role: 'user', content: prompt },
     ];
 
-    // Invoke provider (streaming not yet supported in provider interface, so we fallback)
-    const result = await provider.invoke({
-      messages,
-      jsonSchema: module.outputSchema,
-      temperature: 0.3,
-    });
-
-    // Emit chunk event with full response
-    yield makeEvent('chunk', { chunk: result.content });
+    // Invoke provider with streaming if supported
+    let fullContent: string;
+    
+    if (provider.supportsStreaming?.() && provider.invokeStream) {
+      // Use true streaming
+      const stream = provider.invokeStream({
+        messages,
+        jsonSchema: module.outputSchema,
+        temperature: 0.3,
+      });
+      
+      // Iterate through the async generator, yielding chunks as they arrive
+      let streamResult: IteratorResult<string, InvokeResult>;
+      while (!(streamResult = await stream.next()).done) {
+        const chunk = streamResult.value;
+        yield makeEvent('chunk', { chunk });
+      }
+      
+      // Get the final result (returned from the generator)
+      fullContent = streamResult.value.content;
+    } else {
+      // Fallback to non-streaming invoke
+      const result = await provider.invoke({
+        messages,
+        jsonSchema: module.outputSchema,
+        temperature: 0.3,
+      });
+      fullContent = result.content;
+      
+      // Emit chunk event with full response
+      yield makeEvent('chunk', { chunk: result.content });
+    }
 
     // Parse response
     let parsed: unknown;
     try {
-      const jsonMatch = result.content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : result.content;
+      const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : fullContent;
       parsed = JSON.parse(jsonStr.trim());
     } catch (e) {
       const errorResult = makeErrorResponse({
-        code: 'PARSE_ERROR',
+        code: 'E1000', // PARSE_ERROR
         message: `Failed to parse JSON: ${(e as Error).message}`,
+        suggestion: 'The LLM response was not valid JSON. Try again or adjust the prompt.',
       });
+      _invokeErrorHooks(module.name, e as Error, null);
       // errorResult is always an error response from makeErrorResponse
       const errorObj = (errorResult as { error: { code: string; message: string } }).error;
       yield makeEvent('error', { error: errorObj });
@@ -1634,7 +1864,7 @@ export async function* runModuleStream(
     } else if (isEnvelopeResponse(parsed)) {
       response = wrapV21ToV22(parsed as EnvelopeResponse<unknown>, riskRule);
     } else {
-      response = convertLegacyToEnvelope(parsed as Record<string, unknown>);
+      response = convertLegacyToEnvelope(parsed);
     }
 
     // Add version and meta
@@ -1658,7 +1888,7 @@ export async function* runModuleStream(
       const metaSchema = module.metaSchema;
       
       if (dataSchema && Object.keys(dataSchema).length > 0) {
-        const dataToValidate = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
+        let dataToValidate = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
         let dataErrors = validateData(dataToValidate, dataSchema, 'Data');
         
         if (dataErrors.length > 0 && enableRepair) {
@@ -1666,17 +1896,51 @@ export async function* runModuleStream(
           response.version = ENVELOPE_VERSION;
           // Re-validate after repair
           const repairedData = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
+          dataToValidate = repairedData;
           dataErrors = validateData(repairedData, dataSchema, 'Data');
         }
         
         if (dataErrors.length > 0) {
           const errorResult = makeErrorResponse({
-            code: 'SCHEMA_VALIDATION_FAILED',
+            code: 'E3001', // OUTPUT_SCHEMA_VIOLATION
             message: dataErrors.join('; '),
             explain: 'Schema validation failed after repair attempt.',
             partialData: (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data,
             details: { validation_errors: dataErrors },
           });
+          _invokeErrorHooks(module.name, new Error(dataErrors.join('; ')), (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data);
+          const errorObj = (errorResult as { error: { code: string; message: string } }).error;
+          yield makeEvent('error', { error: errorObj });
+          yield makeEvent('complete', { result: errorResult });
+          return;
+        }
+
+        const overflowErrors = validateOverflowLimits(dataToValidate as Record<string, unknown>, module);
+        if (overflowErrors.length > 0) {
+          const errorResult = makeErrorResponse({
+            code: 'E3001', // OUTPUT_SCHEMA_VIOLATION
+            message: overflowErrors.join('; '),
+            explain: 'Overflow validation failed.',
+            partialData: dataToValidate,
+            details: { overflow_errors: overflowErrors },
+          });
+          _invokeErrorHooks(module.name, new Error(overflowErrors.join('; ')), dataToValidate);
+          const errorObj = (errorResult as { error: { code: string; message: string } }).error;
+          yield makeEvent('error', { error: errorObj });
+          yield makeEvent('complete', { result: errorResult });
+          return;
+        }
+
+        const enumErrors = validateEnumStrategy(dataToValidate as Record<string, unknown>, module);
+        if (enumErrors.length > 0) {
+          const errorResult = makeErrorResponse({
+            code: 'E3001', // OUTPUT_SCHEMA_VIOLATION
+            message: enumErrors.join('; '),
+            explain: 'Enum strategy validation failed.',
+            partialData: dataToValidate,
+            details: { enum_errors: enumErrors },
+          });
+          _invokeErrorHooks(module.name, new Error(enumErrors.join('; ')), dataToValidate);
           const errorObj = (errorResult as { error: { code: string; message: string } }).error;
           yield makeEvent('error', { error: errorObj });
           yield makeEvent('complete', { result: errorResult });
@@ -1695,12 +1959,13 @@ export async function* runModuleStream(
           
           if (metaErrors.length > 0) {
             const errorResult = makeErrorResponse({
-              code: 'META_VALIDATION_FAILED',
+              code: 'E3001', // META_VALIDATION_FAILED (maps to OUTPUT_SCHEMA_VIOLATION)
               message: metaErrors.join('; '),
               explain: 'Meta validation failed after repair attempt.',
               partialData: (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data,
               details: { validation_errors: metaErrors },
             });
+            _invokeErrorHooks(module.name, new Error(metaErrors.join('; ')), (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data);
             const errorObj = (errorResult as { error: { code: string; message: string } }).error;
             yield makeEvent('error', { error: errorObj });
             yield makeEvent('complete', { result: errorResult });
@@ -1713,12 +1978,16 @@ export async function* runModuleStream(
       response.version = ENVELOPE_VERSION;
     }
 
+    const finalLatencyMs = Date.now() - startTime;
+    _invokeAfterHooks(module.name, response, finalLatencyMs);
+
     // Emit complete event
     yield makeEvent('complete', { result: response });
 
   } catch (e) {
+    _invokeErrorHooks(module.name, e as Error, null);
     const errorResult = makeErrorResponse({
-      code: 'UNKNOWN',
+      code: 'E4000', // INTERNAL_ERROR
       message: (e as Error).message,
       explain: `Unexpected error: ${(e as Error).name}`,
     });
@@ -1793,6 +2062,19 @@ function parseEnvelopeResponse(response: EnvelopeResponse<unknown>, raw: string)
  * Parse legacy (non-envelope) format response
  */
 function parseLegacyResponse(output: unknown, raw: string): ModuleResult {
+  const isPlainObject = typeof output === 'object' && output !== null && !Array.isArray(output);
+  if (!isPlainObject) {
+    return {
+      ok: true,
+      data: {
+        result: output,
+        confidence: 0.5,
+        rationale: '',
+      },
+      raw,
+    } as ModuleResultV21;
+  }
+  
   const outputObj = output as Record<string, unknown>;
   const confidence = typeof outputObj.confidence === 'number' ? outputObj.confidence : 0.5;
   const rationale = typeof outputObj.rationale === 'string' ? outputObj.rationale : '';
@@ -1929,7 +2211,7 @@ export async function runModuleLegacy(
   if (result.ok && 'data' in result) {
     return result.data;
   } else {
-    const error = 'error' in result ? result.error : { code: 'UNKNOWN', message: 'Unknown error' };
+    const error = 'error' in result ? result.error : { code: 'E4000', message: 'Unknown error' }; // INTERNAL_ERROR fallback
     throw new Error(`${error?.code ?? 'UNKNOWN'}: ${error?.message ?? 'Unknown error'}`);
   }
 }

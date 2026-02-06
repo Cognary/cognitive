@@ -1,0 +1,24 @@
+{
+  "$test": {
+    "name": "context-with-custom-mode",
+    "description": "Valid envelope with context metadata - context mode validation is extensible",
+    "expects": "accept",
+    "conformance_level": 3
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.9,
+      "risk": "none",
+      "explain": "Context operation",
+      "context": {
+        "mode": "custom_mode",
+        "fork_id": "fork-123"
+      }
+    },
+    "data": {
+      "result": "test",
+      "rationale": "Test rationale"
+    }
+  }
+}

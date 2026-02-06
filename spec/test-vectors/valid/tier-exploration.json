@@ -1,0 +1,37 @@
+{
+  "$test": {
+    "name": "tier-exploration-module",
+    "description": "Valid response from exploration tier module with insights",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.75,
+      "risk": "none",
+      "explain": "Analyzed codebase architecture patterns and dependencies",
+      "trace_id": "tr-exp-001",
+      "tier": "exploration"
+    },
+    "data": {
+      "findings": [
+        {
+          "category": "architecture",
+          "observation": "Service layer uses repository pattern consistently",
+          "evidence": ["UserService.ts", "OrderService.ts", "ProductService.ts"]
+        },
+        {
+          "category": "dependencies",
+          "observation": "Heavy reliance on external API for user authentication",
+          "evidence": ["auth/provider.ts imports external-auth-sdk"]
+        }
+      ],
+      "questions_raised": [
+        "Is the authentication dependency a potential single point of failure?",
+        "Should we consider caching for frequently accessed repository data?"
+      ],
+      "rationale": "Performed static analysis of import statements and class structures to identify patterns."
+    }
+  }
+}

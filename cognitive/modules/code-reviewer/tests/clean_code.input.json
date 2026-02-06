@@ -1,0 +1,5 @@
+{
+  "code": "from typing import Optional\nfrom dataclasses import dataclass\n\n@dataclass\nclass User:\n    id: int\n    name: str\n    email: str\n\ndef get_user_by_id(user_id: int) -> Optional[User]:\n    \"\"\"Retrieve a user by their ID.\n    \n    Args:\n        user_id: The unique identifier of the user.\n        \n    Returns:\n        User object if found, None otherwise.\n    \"\"\"\n    if not isinstance(user_id, int) or user_id <= 0:\n        return None\n    \n    try:\n        result = db.query(\"SELECT * FROM users WHERE id = ?\", [user_id])\n        if result:\n            return User(**result)\n        return None\n    except DatabaseError as e:\n        logger.error(f\"Database error fetching user {user_id}: {e}\")\n        return None",
+  "language": "python",
+  "focus": ["correctness", "readability"]
+}

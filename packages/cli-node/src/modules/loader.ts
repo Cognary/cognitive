@@ -5,6 +5,7 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { homedir } from 'node:os';
 import yaml from 'js-yaml';
 import type { 
   CognitiveModule, 
@@ -80,7 +81,8 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
 
   // Read module.yaml
   const manifestContent = await fs.readFile(manifestFile, 'utf-8');
-  const manifest = yaml.load(manifestContent) as Record<string, unknown>;
+  const loaded = yaml.load(manifestContent);
+  const manifest = loaded && typeof loaded === 'object' ? (loaded as Record<string, unknown>) : {};
 
   // Detect v2.x version
   const formatVersion = detectV2Version(manifest);
@@ -460,7 +462,7 @@ export async function listModules(searchPaths: string[]): Promise<CognitiveModul
 }
 
 export function getDefaultSearchPaths(cwd: string): string[] {
-  const home = process.env.HOME || '';
+  const home = homedir();
   return [
     path.join(cwd, 'cognitive', 'modules'),
     path.join(cwd, '.cognitive', 'modules'),

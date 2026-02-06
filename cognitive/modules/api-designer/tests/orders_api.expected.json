@@ -1,0 +1,74 @@
+{
+  "ok": true,
+  "version": "2.2",
+  "meta": {
+    "confidence": 0.90,
+    "risk": "low",
+    "explain": "Designed 4 RESTful endpoints for orders resource with proper authentication and relationships."
+  },
+  "data": {
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/v1/orders",
+        "summary": "Create a new order",
+        "auth": true,
+        "request_body": {
+          "user_id": "integer (required)",
+          "product_ids": "array of integers (required)",
+          "quantity": "object mapping product_id to quantity"
+        },
+        "responses": {
+          "201": "Order created successfully",
+          "400": "Invalid request body",
+          "401": "Unauthorized"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/v1/orders/{id}",
+        "summary": "Get order by ID",
+        "auth": true,
+        "parameters": {
+          "id": "Order ID (path parameter)"
+        },
+        "responses": {
+          "200": "Order details",
+          "401": "Unauthorized",
+          "404": "Order not found"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/v1/orders",
+        "summary": "List orders",
+        "auth": true,
+        "parameters": {
+          "user_id": "Filter by user (optional)",
+          "page": "Page number (optional)",
+          "limit": "Items per page (optional)"
+        },
+        "responses": {
+          "200": "Paginated list of orders",
+          "401": "Unauthorized"
+        }
+      },
+      {
+        "method": "PUT",
+        "path": "/v1/orders/{id}",
+        "summary": "Update order",
+        "auth": true,
+        "parameters": {
+          "id": "Order ID (path parameter)"
+        },
+        "responses": {
+          "200": "Order updated",
+          "400": "Invalid request",
+          "401": "Unauthorized",
+          "404": "Order not found"
+        }
+      }
+    ],
+    "rationale": "Designed RESTful API following standard conventions. Used plural resource names, proper HTTP methods, and included authentication on all endpoints as required. Relationships handled via IDs in request bodies and nested routes where appropriate."
+  }
+}

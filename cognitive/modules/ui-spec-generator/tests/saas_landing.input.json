@@ -1,0 +1,28 @@
+{
+  "page_context": {
+    "page_type": "product-landing",
+    "purpose": "Convert visitors into trial signups for a project management SaaS tool",
+    "target_audience": ["startup founders", "product managers", "team leads"],
+    "platform": "web"
+  },
+  "features": [
+    {
+      "name": "Hero Section",
+      "description": "Eye-catching hero with value proposition headline and CTA button",
+      "priority": "must-have"
+    },
+    {
+      "name": "Feature Highlights",
+      "description": "Display 3-4 key product features with icons and brief descriptions",
+      "priority": "must-have"
+    },
+    {
+      "name": "Social Proof",
+      "description": "Show customer testimonials to build trust",
+      "priority": "should-have"
+    }
+  ],
+  "constraints": {
+    "accessibility_level": "WCAG-AA"
+  }
+}

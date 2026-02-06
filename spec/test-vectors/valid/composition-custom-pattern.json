@@ -1,0 +1,24 @@
+{
+  "$test": {
+    "name": "composition-custom-pattern",
+    "description": "Valid envelope with composition metadata - composition pattern validation is module-specific",
+    "expects": "accept",
+    "conformance_level": 3
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.82,
+      "risk": "low",
+      "explain": "Composition completed",
+      "composition": {
+        "pattern": "custom_pattern",
+        "modules_executed": ["module-a"]
+      }
+    },
+    "data": {
+      "result": "test",
+      "rationale": "Test rationale"
+    }
+  }
+}

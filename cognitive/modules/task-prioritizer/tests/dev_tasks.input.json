@@ -1,0 +1,36 @@
+{
+  "tasks": [
+    {
+      "id": "t1",
+      "title": "Fix login page crash",
+      "description": "Users cannot login, affecting all users",
+      "deadline": "today"
+    },
+    {
+      "id": "t2",
+      "title": "Optimize database queries",
+      "description": "Homepage loads slowly, need SQL optimization",
+      "depends_on": ["t4"]
+    },
+    {
+      "id": "t3",
+      "title": "Add new feature: export reports",
+      "description": "New feature requested by product manager"
+    },
+    {
+      "id": "t4",
+      "title": "Upgrade database version",
+      "description": "Current version will soon be unsupported"
+    },
+    {
+      "id": "t5",
+      "title": "Update documentation",
+      "description": "API documentation needs updating"
+    }
+  ],
+  "criteria": {
+    "weight_urgency": 0.4,
+    "weight_importance": 0.4,
+    "weight_effort": 0.2
+  }
+}
