@@ -20,8 +20,8 @@ sidebar_label: Overview
 ## 从 GitHub 安装
 
 ```bash
-cog add ziel-io/cognitive-modules -m code-reviewer
-cog add ziel-io/cognitive-modules -m code-simplifier
+cog add Cognary/cognitive -m code-reviewer
+cog add Cognary/cognitive -m code-simplifier
 ```
 
 ## 快速使用

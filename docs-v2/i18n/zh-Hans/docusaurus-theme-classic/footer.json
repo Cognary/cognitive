@@ -49,7 +49,7 @@
   },
   "link.item.label.GitHub": {
     "message": "GitHub",
-    "description": "The label of footer link with label=GitHub linking to https://github.com/ziel-io/cognitive-modules"
+    "description": "The label of footer link with label=GitHub linking to https://github.com/Cognary/cognitive"
   },
   "link.item.label.Release Notes": {
     "message": "发布说明",

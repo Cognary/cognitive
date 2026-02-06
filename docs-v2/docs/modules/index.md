@@ -20,8 +20,8 @@ This repository includes several example modules. You can install them via GitHu
 ## Install From GitHub
 
 ```bash
-cog add ziel-io/cognitive-modules -m code-reviewer
-cog add ziel-io/cognitive-modules -m code-simplifier
+cog add Cognary/cognitive -m code-reviewer
+cog add Cognary/cognitive -m code-simplifier
 ```
 
 ## Quick Usage

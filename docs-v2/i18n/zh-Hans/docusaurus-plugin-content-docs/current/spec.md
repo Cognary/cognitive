@@ -6,7 +6,7 @@ sidebar_position: 100
 
 完整的 Cognitive Modules 规范请参阅项目文件：
 
-- [SPEC-v2.2.md](https://github.com/ziel-io/cognitive-modules/blob/main/SPEC-v2.2.md) - **v2.2 规范（最新）**
+- [SPEC-v2.2.md](https://github.com/Cognary/cognitive/blob/main/SPEC-v2.2.md) - **v2.2 规范（最新）**
 
 ---
 
