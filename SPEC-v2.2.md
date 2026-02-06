@@ -30,7 +30,7 @@ Cognitive Modules follows [Semantic Versioning](https://semver.org/):
 |--------------|---------|-------------|-------------------|
 | **Major** | 3.0.0 | Breaking changes to envelope or core contracts | 12 months |
 | **Minor** | 2.3.0 | New features, backward compatible | - |
-| **Patch** | 2.2.5 | Bug fixes, clarifications only | - |
+| **Patch** | 2.2.7 | Bug fixes, clarifications only | - |
 
 ### Compatibility Guarantees
 

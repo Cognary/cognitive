@@ -1,5 +1,5 @@
 {
-  "version": "2.2.5",
+  "version": "2.2.7",
   "baseUrl": "/cognitive/",
   "docsRouteBasePath": "/docs",
   "locales": ["en", "zh-Hans"],
@@ -49,7 +49,7 @@
     "/docs/registry/protocol",
     "/docs/registry/schema",
     "/docs/release-notes",
-    "/docs/release-notes/v2.2.5",
+    "/docs/release-notes/v2.2.7",
     "/docs/community/contributing",
     "/docs/community/governance",
     "/docs/community/cmep-process"

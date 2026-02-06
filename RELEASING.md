@@ -3,14 +3,14 @@
 This repo publishes:
 
 - Node runtime (npm): `cognitive-modules-cli` and `cogn`
-- Python package (PyPI, legacy): `cognitive-modules` (separate cadence)
+- Python package (PyPI): `cognitive-modules`
 - Registry distribution (GitHub Release assets): module tarballs referenced by `cognitive-registry.v2.json`
 
 ## Versioning
 
-- npm: `2.2.5`
+- npm: `2.2.7`
 - registry module versions: aligned to the repo release tag (recommended)
-- PyPI: may lag (for example `2.2.3`) and MUST be documented as intentional.
+- PyPI: `2.2.7` (keep consistent with npm + registry assets)
 
 ## Registry v2 (tarballs + checksums)
 
@@ -37,7 +37,7 @@ Tarball layout is strict:
 2. Regenerate registry v2 + tarballs locally
 
 ```bash
-python3 scripts/build-registry-assets.py --tag v2.2.5 --timestamp 2026-02-06T00:00:00Z
+python3 scripts/build-registry-assets.py --tag v2.2.7 --timestamp 2026-02-06T00:00:00Z
 ```
 
 Outputs:
@@ -60,7 +60,7 @@ In CI, the TypeScript validators also run:
 4. Commit and tag
 
 - Commit the updated `cognitive-registry.v2.json` and any module/version changes.
-- Create a tag like `v2.2.5` and publish a GitHub Release.
+- Create a tag like `v2.2.7` and publish a GitHub Release.
 
 5. Upload registry tarballs to the GitHub Release
 
@@ -71,6 +71,5 @@ Upload the files from `dist/registry-assets/` as release assets:
 The registry tarball URLs follow:
 
 ```
-https://github.com/Cognary/cognitive/releases/download/v2.2.5/<module>-<version>.tar.gz
+https://github.com/Cognary/cognitive/releases/download/v2.2.7/<module>-<version>.tar.gz
 ```
-

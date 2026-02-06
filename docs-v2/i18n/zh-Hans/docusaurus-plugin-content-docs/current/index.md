@@ -26,10 +26,10 @@ Cognitive Modules 是一套用于 **结构化、可验证、可审计** AI 任�
 
 ```bash
 # 零安装
-npx cogn@2.2.5 run code-reviewer --args "your code" --pretty
+npx cogn@2.2.7 run code-reviewer --args "your code" --pretty
 
 # 全局安装
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 ```
 
 运行第一个模块：

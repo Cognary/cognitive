@@ -10,18 +10,18 @@ Cognitive Modules 2.2 is distributed via npm. The CLI command is `cog`.
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.5 --help
+npx cogn@2.2.7 --help
 
 # Global installation
-npm install -g cogn@2.2.5
-# or: npm install -g cognitive-modules-cli@2.2.5
+npm install -g cogn@2.2.7
+# or: npm install -g cognitive-modules-cli@2.2.7
 ```
 
 ## Verify Installation
 
 ```bash
 cog --version
-# Output: Cognitive Runtime v2.2.5
+# Output: Cognitive Runtime v2.2.7
 
 cog doctor
 ```

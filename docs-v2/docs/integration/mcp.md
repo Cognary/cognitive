@@ -9,7 +9,7 @@ MCP (Model Context Protocol) integration for Claude Code, Cursor, etc.
 ## Install
 
 ```bash
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 npm install @modelcontextprotocol/sdk
 ```
 

@@ -92,7 +92,7 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       items: [
         'release-notes/index',
-        'release-notes/v2.2.5',
+        'release-notes/v2.2.7',
       ],
     },
     {

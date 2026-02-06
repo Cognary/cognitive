@@ -9,9 +9,9 @@ Cognitive Modules CLI 通过 npm 分发，命令为 `cog`。
 ## 安装
 
 ```bash
-npx cogn@2.2.5 --help
-npm install -g cogn@2.2.5
-# 或：npm install -g cognitive-modules-cli@2.2.5
+npx cogn@2.2.7 --help
+npm install -g cogn@2.2.7
+# 或：npm install -g cognitive-modules-cli@2.2.7
 ```
 
 ## 命令列表

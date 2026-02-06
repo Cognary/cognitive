@@ -10,18 +10,18 @@ Cognitive Modules 2.2 通过 npm 分发，命令为 `cog`。
 
 ```bash
 # 零安装
-npx cogn@2.2.5 --help
+npx cogn@2.2.7 --help
 
 # 全局安装
-npm install -g cogn@2.2.5
-# 或：npm install -g cognitive-modules-cli@2.2.5
+npm install -g cogn@2.2.7
+# 或：npm install -g cognitive-modules-cli@2.2.7
 ```
 
 ## 验证安装
 
 ```bash
 cog --version
-# 输出：Cognitive Runtime v2.2.5
+# 输出：Cognitive Runtime v2.2.7
 
 cog doctor
 ```

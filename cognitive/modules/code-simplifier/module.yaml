@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: code-simplifier
-version: 2.2.5
+version: 2.2.7
 responsibility: Simplify code while preserving behavior
 
 # 模块分级

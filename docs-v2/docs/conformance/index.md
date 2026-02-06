@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Conformance Center
 
-Conformance defines how strictly a runtime implements Cognitive 2.2.5 behavior.
+Conformance defines how strictly a runtime implements Cognitive 2.2.7 behavior.
 
 ## Scope
 

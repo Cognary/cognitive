@@ -1,4 +1,4 @@
-# Cognitive 2.2.5 文档站点目录与路由清单（信息架构落地版）
+# Cognitive 2.2.7 文档站点目录与路由清单（信息架构落地版）
 
 ## 1) 站点基线
 
@@ -80,7 +80,7 @@ docs-v2/
 
     release-notes/                             # 已新增
       index.md
-      v2.2.5.md
+      v2.2.7.md
 
     community/                                 # 已新增
       contributing.md
@@ -143,7 +143,7 @@ docs-v2/
 | `/docs/registry/protocol` | `docs/registry/protocol.md` | `REGISTRY-PROTOCOL.md` |
 | `/docs/registry/schema` | `docs/registry/schema.md` | `spec/registry-entry.schema.json` |
 | `/docs/release-notes` | `docs/release-notes/index.md` | `packages/cli-node/CHANGELOG.md`, `packages/cogn/CHANGELOG.md` |
-| `/docs/release-notes/v2.2.5` | `docs/release-notes/v2.2.5.md` | `packages/cli-node/CHANGELOG.md` |
+| `/docs/release-notes/v2.2.7` | `docs/release-notes/v2.2.7.md` | `packages/cli-node/CHANGELOG.md` |
 | `/docs/community/contributing` | `docs/community/contributing.md` | `README.md`（贡献部分） |
 | `/docs/community/governance` | `docs/community/governance.md` | `GOVERNANCE.md` |
 | `/docs/community/cmep-process` | `docs/community/cmep-process.md` | `CMEP-PROCESS.md` |

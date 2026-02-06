@@ -19,22 +19,22 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ## Version
 
-- **Runtime (npm)**: `2.2.5`
-- **Python package (PyPI, legacy)**: `2.2.3` (intentional mismatch; independent cadence)
+- **Runtime (npm)**: `2.2.7`
+- **Python package (PyPI, legacy)**: `2.2.7` (unified versioning across channels)
 - **Spec**: v2.2
 
 ## Installation (Node.js)
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.5 --help
+npx cogn@2.2.7 --help
 
 # Or use the full package name
-npx cognitive-modules-cli@2.2.5 --help
+npx cognitive-modules-cli@2.2.7 --help
 
 # Global installation
-npm install -g cogn@2.2.5
-# or: npm install -g cognitive-modules-cli@2.2.5
+npm install -g cogn@2.2.7
+# or: npm install -g cognitive-modules-cli@2.2.7
 ```
 
 > `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.

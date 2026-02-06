@@ -8,7 +8,7 @@
       "identity": {
         "name": "api-designer",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -31,8 +31,8 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/api-designer-2.2.5.tar.gz",
-        "checksum": "sha256:a264529a4a8b5e038c3f8abe070c81d8fd07946a116e8efc26e3fc6992fe128b",
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/api-designer-2.2.7.tar.gz",
+        "checksum": "sha256:235f4d5e3d133eccaf837950aab1576ca28a7edb9ecdf89438ddcbbf5a1d4d86",
         "size_bytes": 5225,
         "files": [
           "MODULE.md",
@@ -56,7 +56,7 @@
       "identity": {
         "name": "code-reviewer",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -79,8 +79,8 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/code-reviewer-2.2.5.tar.gz",
-        "checksum": "sha256:886aff4318ab52815fc330bd6f0e866c13eeccf5f69572dc9343150e786e4421",
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/code-reviewer-2.2.7.tar.gz",
+        "checksum": "sha256:7e93336438cd97d174035d24bf4f281b1757103ebfe9bd6294f359b1a08c7645",
         "size_bytes": 5912,
         "files": [
           "MODULE.md",
@@ -106,7 +106,7 @@
       "identity": {
         "name": "code-simplifier",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -129,9 +129,9 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/code-simplifier-2.2.5.tar.gz",
-        "checksum": "sha256:17df4390f5ef744e5a5b0ae0f0d8e53a95e6e33c9309187742b9849c4b37d33d",
-        "size_bytes": 6482,
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/code-simplifier-2.2.7.tar.gz",
+        "checksum": "sha256:04712b5c486cf9905a68129b812db389da03b846d515a587349e56c2d35d74df",
+        "size_bytes": 6483,
         "files": [
           "MODULE.md",
           "module.yaml",
@@ -160,7 +160,7 @@
       "identity": {
         "name": "product-analyzer",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -182,8 +182,8 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/product-analyzer-2.2.5.tar.gz",
-        "checksum": "sha256:2bf0c135b7fa0866ce0110db1336ca0ea610cb47f7814a1902359058594f3c90",
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/product-analyzer-2.2.7.tar.gz",
+        "checksum": "sha256:6c13b7d7104629df1618e07e2cbe155f1752e91c8849c2ef9c7c617e9014b028",
         "size_bytes": 4136,
         "files": [
           "MODULE.md",
@@ -205,7 +205,7 @@
       "identity": {
         "name": "task-prioritizer",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -228,8 +228,8 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/task-prioritizer-2.2.5.tar.gz",
-        "checksum": "sha256:0a9ca8b87b1f55b7682a9e02bab798e5a9e6cddf8841f9a9f968e9aa33b00ff3",
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/task-prioritizer-2.2.7.tar.gz",
+        "checksum": "sha256:3f15cd81afe405f1aeee95a8054c4a81a472e475d41f51cd227cdece4a9dd360",
         "size_bytes": 5169,
         "files": [
           "MODULE.md",
@@ -253,7 +253,7 @@
       "identity": {
         "name": "ui-component-generator",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -271,8 +271,8 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/ui-component-generator-2.2.5.tar.gz",
-        "checksum": "sha256:4e945408434a2b0b958751c0fb2cb9a0944a1eee8d64240d2533acd479cedeca",
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/ui-component-generator-2.2.7.tar.gz",
+        "checksum": "sha256:a76acdfea34cb1cab72b80c84f73280932ee971727bba6844c037b72b765b297",
         "size_bytes": 9588,
         "files": [
           "MODULE.md",
@@ -297,7 +297,7 @@
       "identity": {
         "name": "ui-spec-generator",
         "namespace": "official",
-        "version": "2.2.5",
+        "version": "2.2.7",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -320,8 +320,8 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/ui-spec-generator-2.2.5.tar.gz",
-        "checksum": "sha256:2908e76a6667ca4023ade4e6eab60d2b744b4866dc742a62ff010b408843a1f0",
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/ui-spec-generator-2.2.7.tar.gz",
+        "checksum": "sha256:150f84d9be1bc469e257060d13769c2b5523d0eb94e7b4bf875330a551032b08",
         "size_bytes": 23928,
         "files": [
           "MODULE.md",

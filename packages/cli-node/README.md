@@ -10,12 +10,12 @@ Node.js/TypeScript 版本的 Cognitive Modules CLI，提供 `cog` 命令。
 
 ```bash
 # 全局安装（推荐）
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 # 或使用完整包名（同样提供 `cog` 命令）
-# npm install -g cognitive-modules-cli@2.2.5
+# npm install -g cognitive-modules-cli@2.2.7
 
 # 或使用 npx 零安装
-npx cogn@2.2.5 --help
+npx cogn@2.2.7 --help
 ```
 
 ## 快速开始

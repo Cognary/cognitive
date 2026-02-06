@@ -2,7 +2,7 @@
 
 All notable changes to this package are documented in this file.
 
-## 2.2.5 - 2026-02-06
+## 2.2.7 - 2026-02-06
 
 - Standardized v2.2 runtime behavior and cross-surface error envelope consistency (CLI/HTTP/MCP).
 - Clarified `compose` output contract: default/pretty output returns full v2.2 envelope, while `compose --trace` returns a debug wrapper object (`result/moduleResults/trace/totalTimeMs`) for diagnostics.

@@ -122,7 +122,7 @@ AI IDE 应该：
 
 | 平台 | 状态 |
 |------|------|
-| npm | `npx cogn@2.2.5` ✅ |
+| npm | `npx cogn@2.2.7` ✅ |
 | MCP | `cog mcp` ✅ |
 | HTTP API | `cog serve` ✅ |
 | PyPI | 旧版遗留（非主要维护） |

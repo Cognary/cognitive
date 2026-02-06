@@ -19,22 +19,22 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 
 ## 版本
 
-- **运行时（npm）**：`2.2.5`
-- **Python 包（PyPI，遗留）**：`2.2.3`（刻意不一致；独立节奏）
+- **运行时（npm）**：`2.2.7`
+- **Python 包（PyPI，遗留）**：`2.2.7`（全渠道统一版本）
 - **规范**：v2.2
 
 ## 安装（Node.js）
 
 ```bash
 # 零安装快速体验
-npx cogn@2.2.5 --help
+npx cogn@2.2.7 --help
 
 # 或使用完整包名
-npx cognitive-modules-cli@2.2.5 --help
+npx cognitive-modules-cli@2.2.7 --help
 
 # 全局安装
-npm install -g cogn@2.2.5
-# 或：npm install -g cognitive-modules-cli@2.2.5
+npm install -g cogn@2.2.7
+# 或：npm install -g cognitive-modules-cli@2.2.7
 ```
 
 > `cogn` 是 `cognitive-modules-cli` 的别名包，两者提供相同的 `cog` 命令。

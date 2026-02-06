@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: code-reviewer
-version: 2.2.5
+version: 2.2.7
 responsibility: Reviews code and provides structured improvement suggestions
 
 # 模块分级

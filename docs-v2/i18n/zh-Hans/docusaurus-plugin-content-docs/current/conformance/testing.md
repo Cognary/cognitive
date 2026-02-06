@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # 一致性测试
 
-使用官方测试向量验证运行时是否符合 Cognitive 2.2.5。
+使用官方测试向量验证运行时是否符合 Cognitive 2.2.7。
 
 ## 测试重点
 

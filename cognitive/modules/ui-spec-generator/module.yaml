@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: ui-spec-generator
-version: 2.2.5
+version: 2.2.7
 responsibility: 将产品需求转换为前端可实现的 UI 规范
 
 # 模块分级 - exploration 因为需要较多创意

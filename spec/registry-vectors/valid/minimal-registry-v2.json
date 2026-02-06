@@ -15,7 +15,7 @@
         "identity": {
           "name": "code-reviewer",
           "namespace": "official",
-          "version": "2.2.5",
+          "version": "2.2.7",
           "spec_version": "2.2"
         },
         "metadata": {
@@ -30,7 +30,7 @@
           "modules": []
         },
         "distribution": {
-          "tarball": "https://example.com/code-reviewer-2.2.5.tar.gz",
+          "tarball": "https://example.com/code-reviewer-2.2.7.tar.gz",
           "checksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "size_bytes": 15360,
           "files": [

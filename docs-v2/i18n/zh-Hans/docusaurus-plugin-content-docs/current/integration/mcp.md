@@ -9,7 +9,7 @@ sidebar_position: 2
 ## 安装
 
 ```bash
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 npm install @modelcontextprotocol/sdk
 ```
 

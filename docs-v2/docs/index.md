@@ -26,10 +26,10 @@ Cognitive Modules is a specification and runtime for **structured, verifiable AI
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.5 run code-reviewer --args "your code" --pretty
+npx cogn@2.2.7 run code-reviewer --args "your code" --pretty
 
 # Global installation
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 ```
 
 Run your first module:

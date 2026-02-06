@@ -1,4 +1,4 @@
-# Cognitive Modules 集成指南（Node 2.2.5）
+# Cognitive Modules 集成指南（Node 2.2.7）
 
 本文档面向 AI Agent 工具（如 Cursor、Claude Code、工作流平台）集成 Cognitive Modules。
 
@@ -22,7 +22,7 @@ MCP 是 Anthropic 推出的标准协议，Claude Desktop 和 Cursor 原生支持
 
 ```bash
 # 安装 CLI
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 
 # MCP 依赖为可选依赖，如果提示缺失则单独安装
 npm install @modelcontextprotocol/sdk

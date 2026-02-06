@@ -255,10 +255,10 @@ function HomepageQuickStart() {
         <div className={styles.codeBlock}>
           <pre>
             <code>{`# Zero-install run
-npx cogn@2.2.5 run code-reviewer --args "your code" --pretty
+npx cogn@2.2.7 run code-reviewer --args "your code" --pretty
 
 # Or install globally
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 cog run code-reviewer --args "your code" --pretty`}</code>
           </pre>
         </div>

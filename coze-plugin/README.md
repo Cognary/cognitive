@@ -42,7 +42,7 @@ curl http://localhost:8000/health
 #### 方式 B：直接运行
 
 ```bash
-npm install -g cogn@2.2.5
+npm install -g cogn@2.2.7
 
 export COGNITIVE_API_KEY="your-secret-key"
 export OPENAI_API_KEY="sk-..."

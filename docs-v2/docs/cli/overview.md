@@ -10,11 +10,11 @@ Cognitive Modules CLI is distributed via npm and provides the `cog` command.
 
 ```bash
 # Zero-install
-npx cogn@2.2.5 --help
+npx cogn@2.2.7 --help
 
 # Global
-npm install -g cogn@2.2.5
-# or: npm install -g cognitive-modules-cli@2.2.5
+npm install -g cogn@2.2.7
+# or: npm install -g cognitive-modules-cli@2.2.7
 ```
 
 ## Command List

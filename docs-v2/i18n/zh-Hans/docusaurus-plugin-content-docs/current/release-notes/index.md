@@ -8,18 +8,18 @@ sidebar_position: 1
 
 ## 最新版本
 
-- [v2.2.5](./v2.2.5)
+- [v2.2.7](./v2.2.7)
 
 ## 说明
 
 默认 CLI/HTTP/MCP/compose 输出使用统一 envelope。
 `compose --trace` 属于调试包装输出，不是纯 envelope 模式。
 
-## 不同渠道版本号（刻意不一致）
+## 不同渠道版本号（统一）
 
-各发行渠道的版本号不要求严格一致，这是刻意设计：
+本发布线下，npm、PyPI 与 registry tarball 的版本号保持一致：
 
-- npm（主运行时）：`cognitive-modules-cli@2.2.5` 与 `cogn@2.2.5`
-- PyPI（Python 遗留包）：`cognitive-modules@2.2.3`
+- npm（主运行时）：`cognitive-modules-cli@2.2.7` 与 `cogn@2.2.7`
+- PyPI：`cognitive-modules@2.2.7`
 
-原因：Node.js 运行时是 Cognitive 2.2.x 的主要维护对象；Python 包单独发布，可能存在滞后或独立补丁节奏。
+原因：统一版本号能显著降低用户理解成本，避免“Release tag vs 资产文件名”不一致造成的困惑。

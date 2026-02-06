@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Conformance Testing
 
-Use official test vectors to validate runtime behavior against Cognitive 2.2.5.
+Use official test vectors to validate runtime behavior against Cognitive 2.2.7.
 
 ## What to Validate
 

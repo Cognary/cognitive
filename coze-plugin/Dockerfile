@@ -5,7 +5,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Install CLI
-RUN npm install -g cogn@2.2.5
+RUN npm install -g cogn@2.2.7
 
 EXPOSE 8000
 

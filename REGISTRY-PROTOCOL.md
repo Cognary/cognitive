@@ -223,7 +223,7 @@ https://github.com/<owner>/<repo>/releases/download/<tag>/<module>-<version>.tar
 Example:
 
 ```
-https://github.com/Cognary/cognitive/releases/download/v2.2.5/code-reviewer-2.2.5.tar.gz
+https://github.com/Cognary/cognitive/releases/download/v2.2.7/code-reviewer-2.2.7.tar.gz
 ```
 
 This keeps module installs content-addressable via `distribution.checksum` and avoids requiring a dedicated registry server.
