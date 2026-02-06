@@ -61,11 +61,12 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g tsx
-          npm install ajv
+          # scripts/validate-test-vectors.ts imports both ajv and ajv-formats
+          npm install ajv ajv-formats
 
       - name: Run test vector validation (TypeScript)
         run: |
-          npx tsx scripts/validate-test-vectors.ts --level 3 --verbose
+          tsx scripts/validate-test-vectors.ts --level 3 --verbose
 
   # Build and test Node.js CLI
   test-node:
