@@ -1,6 +1,6 @@
 # Cognitive Modules
 
-[![CI](https://github.com/ziel-io/cognitive-modules/actions/workflows/ci.yml/badge.svg)](https://github.com/ziel-io/cognitive-modules/actions/workflows/ci.yml)
+[![CI](https://github.com/Cognary/cognitive/actions/workflows/ci.yml/badge.svg)](https://github.com/Cognary/cognitive/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/cognitive-modules-cli.svg)](https://www.npmjs.com/package/cognitive-modules-cli)
 [![npm downloads](https://img.shields.io/npm/dm/cognitive-modules-cli.svg)](https://www.npmjs.com/package/cognitive-modules-cli)
 [![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
@@ -20,6 +20,7 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 ## Version
 
 - **Runtime (npm)**: `2.2.5`
+- **Python package (PyPI, legacy)**: `2.2.3` (intentional mismatch; independent cadence)
 - **Spec**: v2.2
 
 ## Installation (Node.js)
@@ -213,7 +214,7 @@ cog doctor
 
 ```bash
 # Clone
-git clone https://github.com/ziel-io/cognitive-modules.git
+git clone https://github.com/Cognary/cognitive.git
 cd cognitive-modules
 
 # Install
