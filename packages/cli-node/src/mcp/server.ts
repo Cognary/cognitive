@@ -7,22 +7,57 @@
  *   cog mcp
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  ListResourcesRequestSchema,
-  ReadResourceRequestSchema,
-  ListPromptsRequestSchema,
-  GetPromptRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { createRequire } from 'node:module';
 
 import { findModule, listModules, getDefaultSearchPaths } from '../modules/loader.js';
 import { runModule } from '../modules/runner.js';
 import { getProvider } from '../providers/index.js';
 import { VERSION } from '../version.js';
 import { ErrorCodes, attachContext, makeErrorEnvelope, makeMcpError, makeMcpSuccess } from '../errors/index.js';
+
+type McpSdkTypes = {
+  CallToolRequestSchema: unknown;
+  ListToolsRequestSchema: unknown;
+  ListResourcesRequestSchema: unknown;
+  ReadResourceRequestSchema: unknown;
+  ListPromptsRequestSchema: unknown;
+  GetPromptRequestSchema: unknown;
+};
+
+function loadMcpSdk(): {
+  Server: new (...args: unknown[]) => { setRequestHandler: (...args: unknown[]) => void };
+  StdioServerTransport: new (...args: unknown[]) => unknown;
+  types: McpSdkTypes;
+} {
+  // We intentionally avoid static imports so the CLI can be installed without MCP deps.
+  // `cog mcp` will fail fast with a clear message if the user hasn't installed the SDK.
+  const require = createRequire(import.meta.url);
+  try {
+    const { Server } = require('@modelcontextprotocol/sdk/server/index.js') as { Server: new (...args: unknown[]) => unknown };
+    const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js') as { StdioServerTransport: new (...args: unknown[]) => unknown };
+    const types = require('@modelcontextprotocol/sdk/types.js') as McpSdkTypes;
+    return {
+      Server: Server as unknown as new (...args: unknown[]) => { setRequestHandler: (...args: unknown[]) => void },
+      StdioServerTransport: StdioServerTransport as unknown as new (...args: unknown[]) => unknown,
+      types,
+    };
+  } catch (e) {
+    // Keep the error message stable so cli.ts can display an actionable hint.
+    const err = new Error('MCP dependencies not installed. Install with: npm install @modelcontextprotocol/sdk');
+    (err as { cause?: unknown }).cause = e;
+    throw err;
+  }
+}
+
+const { Server, StdioServerTransport, types } = loadMcpSdk();
+const {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
+} = types;
 
 // =============================================================================
 // Server Setup

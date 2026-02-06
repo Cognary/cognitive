@@ -484,7 +484,10 @@ async function main() {
           const { serve: serveMcp } = await import('./mcp/server.js');
           await serveMcp();
         } catch (e) {
-          if (e instanceof Error && e.message.includes('Cannot find module')) {
+          if (
+            e instanceof Error &&
+            (e.message.includes('Cannot find module') || e.message.includes('MCP dependencies not installed'))
+          ) {
             console.error('MCP dependencies not installed.');
             console.error('Install with: npm install @modelcontextprotocol/sdk');
             process.exit(1);
