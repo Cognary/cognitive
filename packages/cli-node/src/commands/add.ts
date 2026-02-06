@@ -551,12 +551,12 @@ export async function addFromRegistry(
     if (rootDirs.length === 0) {
       throw new Error('Tarball extraction produced no root directory');
     }
-    if (rootDirs.length !== 1 || rootFiles.length > 0) {
-      throw new Error(
-        `Tarball must contain exactly one module root directory and no other top-level entries. ` +
-        `dirs=${rootDirs.map(basename).join(',') || '(none)'} files=${rootFiles.map(basename).join(',') || '(none)'}`
-      );
-    }
+	    if (rootDirs.length !== 1 || rootFiles.length > 0) {
+	      throw new Error(
+	        `Tarball must contain exactly one module root directory and no other top-level entries. ` +
+	        `dirs=${rootDirs.map((p) => basename(p)).join(',') || '(none)'} files=${rootFiles.map((p) => basename(p)).join(',') || '(none)'}`
+	      );
+	    }
 
     // Strict mode: require root dir itself to be a valid module.
     const sourcePath = rootDirs[0];
