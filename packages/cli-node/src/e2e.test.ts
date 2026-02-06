@@ -432,9 +432,9 @@ describe('E2E: Streaming Execution', () => {
     let finalResult: StreamEvent['result'] = undefined;
     
     for await (const event of runModuleStream(module, mockProvider, { input: { query: 'test' } })) {
-      if (event.type === 'chunk' && event.chunk) {
-        chunks.push(event.chunk);
-      } else if (event.type === 'complete') {
+      if (event.type === 'delta' && event.delta) {
+        chunks.push(event.delta);
+      } else if (event.type === 'end') {
         finalResult = event.result;
       }
     }

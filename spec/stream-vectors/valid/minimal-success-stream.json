@@ -1,0 +1,57 @@
+{
+  "$test": {
+    "name": "minimal-success-stream",
+    "description": "A minimal stream that can reconstruct a success envelope via an end event.",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "events": [
+    {
+      "type": "start",
+      "version": "2.2",
+      "timestamp_ms": 0,
+      "module": "demo-module",
+      "provider": "demo-provider"
+    },
+    {
+      "type": "delta",
+      "version": "2.2",
+      "timestamp_ms": 1,
+      "module": "demo-module",
+      "provider": "demo-provider",
+      "delta": "{\"ok\":true"
+    },
+    {
+      "type": "meta",
+      "version": "2.2",
+      "timestamp_ms": 2,
+      "module": "demo-module",
+      "provider": "demo-provider",
+      "meta": {
+        "confidence": 0.9,
+        "risk": "low",
+        "explain": "Streaming success."
+      }
+    },
+    {
+      "type": "end",
+      "version": "2.2",
+      "timestamp_ms": 3,
+      "module": "demo-module",
+      "provider": "demo-provider",
+      "result": {
+        "ok": true,
+        "version": "2.2",
+        "meta": {
+          "confidence": 0.9,
+          "risk": "low",
+          "explain": "Streaming success."
+        },
+        "data": {
+          "rationale": "ok"
+        }
+      }
+    }
+  ]
+}
+

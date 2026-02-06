@@ -27,6 +27,7 @@
       ],
       "behavior_equivalence": true,
       "rationale": "The expensive computation was being called on every render. Adding useMemo caches the result and only recomputes when dependencies change."
-    }
+    },
+    "version": "2.2"
   }
 }

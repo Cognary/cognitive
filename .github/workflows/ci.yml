@@ -32,6 +32,29 @@ jobs:
           print('✅ response-envelope.schema.json is valid')
           "
 
+      - name: Validate stream-events.schema.json
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          with open('spec/stream-events.schema.json') as f:
+              schema = json.load(f)
+          jsonschema.Draft7Validator.check_schema(schema)
+          print('✅ stream-events.schema.json is valid')
+          "
+
+      - name: Validate registry schemas
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          for path in ['spec/registry-entry.schema.json', 'spec/registry.schema.json']:
+              with open(path) as f:
+                  schema = json.load(f)
+              jsonschema.Draft7Validator.check_schema(schema)
+              print(f'✅ {path} is valid')
+          "
+
       - name: Validate module.yaml.schema.json
         run: |
           python -c "
@@ -67,6 +90,10 @@ jobs:
       - name: Run test vector validation (TypeScript)
         run: |
           tsx scripts/validate-test-vectors.ts --level 3 --verbose
+          # CEP streaming vectors (events + terminal envelope)
+          tsx scripts/validate-stream-vectors.ts --level 3 --verbose
+          # CEP registry vectors (index + entries)
+          tsx scripts/validate-registry-vectors.ts --level 3 --verbose
 
   # Build and test Node.js CLI
   test-node:

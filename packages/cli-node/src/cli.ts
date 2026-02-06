@@ -47,6 +47,7 @@ async function main() {
       pretty: { type: 'boolean', default: false },
       verbose: { type: 'boolean', short: 'V', default: false },
       'no-validate': { type: 'boolean', default: false },
+      stream: { type: 'boolean', default: false },
       // Add/update options
       name: { type: 'string', short: 'n' },
       tag: { type: 'string', short: 't' },
@@ -101,6 +102,7 @@ async function main() {
           noValidate: values['no-validate'],
           pretty: values.pretty,
           verbose: values.verbose,
+          stream: values.stream,
         });
         
         if (!result.success) {
@@ -112,7 +114,10 @@ async function main() {
           process.exit(1);
         }
         
-        console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+        // Stream mode prints events as NDJSON already.
+        if (!values.stream) {
+          console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+        }
         break;
       }
 

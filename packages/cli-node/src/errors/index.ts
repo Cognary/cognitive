@@ -260,48 +260,48 @@ export function attachContext<T extends object>(envelope: T, context?: EnvelopeC
 }
 
 /**
+ * Map a CEP error code to an HTTP status code.
+ *
+ * This is used to keep HTTP behavior consistent with the error model while
+ * allowing callers to attach context without rebuilding envelopes.
+ */
+export function httpStatusForErrorCode(code: string): number {
+  const normalized = normalizeErrorCode(code);
+
+  const category = normalized.charAt(1);
+  switch (category) {
+    case '1': {
+      // Input errors -> Bad Request (with specific overrides)
+      if (normalized === ErrorCodes.INPUT_TOO_LARGE) return 413;
+      return 400;
+    }
+    case '2': return 422; // Processing errors -> Unprocessable Entity
+    case '3': return 500; // Output errors -> Internal Server Error
+    case '4': {
+      // Runtime errors -> map to appropriate HTTP status
+      if (
+        normalized === ErrorCodes.MODULE_NOT_FOUND ||
+        normalized === ErrorCodes.ENDPOINT_NOT_FOUND ||
+        normalized === ErrorCodes.RESOURCE_NOT_FOUND
+      ) {
+        return 404;
+      }
+      if (normalized === ErrorCodes.PERMISSION_DENIED) return 403;
+      if (normalized === ErrorCodes.RATE_LIMITED) return 429;
+      return 500;
+    }
+    default: return 500;
+  }
+}
+
+/**
  * Create error envelope for HTTP API responses.
  * 
  * @returns Tuple of [statusCode, body]
  */
 export function makeHttpError(options: ErrorEnvelopeOptions & EnvelopeContext): [number, ContextualErrorEnvelope] {
   const envelope = attachContext(makeErrorEnvelope(options), options);
-  const code = normalizeErrorCode(options.code);
-  
-  // Determine HTTP status code
-  let statusCode: number;
-  const category = code.charAt(1);
-  switch (category) {
-    case '1': {
-      // Input errors -> Bad Request (with specific overrides)
-      if (code === ErrorCodes.INPUT_TOO_LARGE) {
-        statusCode = 413; // Payload Too Large
-      } else {
-        statusCode = 400;
-      }
-      break;
-    }
-    case '2': statusCode = 422; break;  // Processing errors -> Unprocessable Entity
-    case '3': statusCode = 500; break;  // Output errors -> Internal Server Error
-    case '4': {
-      // Runtime errors - map to appropriate HTTP status
-      if (code === ErrorCodes.MODULE_NOT_FOUND || 
-          code === ErrorCodes.ENDPOINT_NOT_FOUND || 
-          code === ErrorCodes.RESOURCE_NOT_FOUND) {
-        statusCode = 404;  // Not Found
-      } else if (code === ErrorCodes.PERMISSION_DENIED) {
-        statusCode = 403;  // Forbidden
-      } else if (code === ErrorCodes.RATE_LIMITED) {
-        statusCode = 429;  // Too Many Requests
-      } else {
-        statusCode = 500;  // Internal Server Error
-      }
-      break;
-    }
-    default: statusCode = 500;
-  }
-  
-  // Add HTTP-specific fields
+  const statusCode = httpStatusForErrorCode(String(options.code));
   return [statusCode, envelope];
 }
 
@@ -423,16 +423,31 @@ export interface CognitiveSuccessEnvelope<T = unknown> {
  * Use this for consistent success responses across HTTP and MCP layers.
  */
 export function makeSuccessEnvelope<T>(options: SuccessEnvelopeOptions<T>): CognitiveSuccessEnvelope<T> {
+  const explain = (options.explain || 'Operation completed successfully').slice(0, 280);
+  // Envelope schema requires data to be an object with at least `rationale`.
+  // For non-module operations (list/info), we still emit a conforming envelope by
+  // injecting a minimal rationale if missing, or wrapping non-objects.
+  const normalizedData = (() => {
+    const d = options.data as unknown;
+    const isPlainObject = typeof d === 'object' && d !== null && !Array.isArray(d);
+    if (!isPlainObject) {
+      return { result: d, rationale: explain } as unknown as T;
+    }
+    const obj = d as Record<string, unknown>;
+    if (typeof obj.rationale === 'string') return options.data;
+    return { ...obj, rationale: explain } as unknown as T;
+  })();
+
   return {
     ok: true,
     version: options.version || '2.2',
     meta: {
       confidence: options.confidence ?? 1.0,
       risk: options.risk ?? 'none',
-      explain: (options.explain || 'Operation completed successfully').slice(0, 280),
+      explain,
       trace_id: options.trace_id,
     },
-    data: options.data,
+    data: normalizedData,
   };
 }
 

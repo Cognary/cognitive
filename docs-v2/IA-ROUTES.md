@@ -86,6 +86,16 @@ docs-v2/
       contributing.md
       governance.md
       cmep-process.md
+      spec-lifecycle.md
+
+    spec/                                      # 已新增（CEP 分层规范）
+      cep/
+        overview.md
+        module.md
+        envelope.md
+        events.md
+        conformance.md
+        registry.md
 ```
 
 ## 4) 路由清单
@@ -137,6 +147,18 @@ docs-v2/
 | `/docs/community/contributing` | `docs/community/contributing.md` | `README.md`（贡献部分） |
 | `/docs/community/governance` | `docs/community/governance.md` | `GOVERNANCE.md` |
 | `/docs/community/cmep-process` | `docs/community/cmep-process.md` | `CMEP-PROCESS.md` |
+| `/docs/community/spec-lifecycle` | `docs/community/spec-lifecycle.md` | `SPEC-LIFECYCLE.md` |
+
+### 4.3 CEP 规范新增路由（已落地）
+
+| 路由 | 目标文件 | 说明 |
+|---|---|---|
+| `/docs/spec/cep/overview` | `docs/spec/cep/overview.md` | `cep.*` 总览与版本线 |
+| `/docs/spec/cep/module` | `docs/spec/cep/module.md` | `cep.module.v2.2`：`module.yaml`、requires/composition 语义 |
+| `/docs/spec/cep/envelope` | `docs/spec/cep/envelope.md` | `cep.envelope.v2.2`：统一 envelope 与错误结构 |
+| `/docs/spec/cep/events` | `docs/spec/cep/events.md` | `cep.events.v2.2`：streaming 事件模型（可重建最终 envelope） |
+| `/docs/spec/cep/conformance` | `docs/spec/cep/conformance.md` | `cep.conformance.v2.2`：测试向量与一致性断言 |
+| `/docs/spec/cep/registry` | `docs/spec/cep/registry.md` | `cep.registry`（草案）：发现与分发（安全模型优先） |
 
 ## 5) 国际化路由规则
 

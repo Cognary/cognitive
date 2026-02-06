@@ -101,14 +101,19 @@ export interface RegistryEntryV2 {
   };
   dependencies: {
     runtime_min: string;
-    modules: string[];
+    modules: Array<{
+      name: string;
+      version?: string;
+      optional?: boolean;
+    }>;
   };
   distribution: {
-    tarball?: string;
-    checksum?: string;
+    tarball: string;
+    checksum: string;
     size_bytes?: number;
     files?: string[];
-    source?: string;  // GitHub source format
+    signature?: string;
+    signing_key?: string;
   };
   timestamps?: {
     created_at?: string;
@@ -124,6 +129,8 @@ export interface ModuleInfo {
   description: string;
   author: string;
   source: string;
+  tarball?: string;
+  checksum?: string;
   keywords: string[];
   tier?: string;
   namespace?: string;
@@ -147,7 +154,7 @@ export interface SearchResult {
 // Constants
 // =============================================================================
 
-const DEFAULT_REGISTRY_URL = 'https://raw.githubusercontent.com/ziel-io/cognitive-modules/main/cognitive-registry.json';
+const DEFAULT_REGISTRY_URL = 'https://raw.githubusercontent.com/Cognary/cognitive/main/cognitive-registry.v2.json';
 const CACHE_DIR = join(homedir(), '.cognitive', 'cache');
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const REGISTRY_FETCH_TIMEOUT_MS = 10_000; // 10s
@@ -318,7 +325,9 @@ export class RegistryClient {
         version: v2.identity.version,
         description: v2.metadata.description,
         author: v2.metadata.author,
-        source: v2.distribution.source || v2.distribution.tarball || '',
+        source: v2.distribution.tarball,
+        tarball: v2.distribution.tarball,
+        checksum: v2.distribution.checksum,
         keywords: v2.metadata.keywords || [],
         tier: v2.metadata.tier,
         namespace: v2.identity.namespace,
@@ -492,7 +501,12 @@ export class RegistryClient {
   /**
    * Get the download URL for a module
    */
-  async getDownloadUrl(moduleName: string): Promise<{ url: string; isGitHub: boolean; githubInfo?: { org: string; repo: string; path?: string; ref?: string } }> {
+  async getDownloadUrl(moduleName: string): Promise<{
+    url: string;
+    checksum?: string;
+    isGitHub: boolean;
+    githubInfo?: { org: string; repo: string; path?: string; ref?: string };
+  }> {
     const module = await this.getModule(moduleName);
     if (!module) {
       throw new Error(`Module not found in registry: ${moduleName}`);
@@ -514,6 +528,7 @@ export class RegistryClient {
     if (source.startsWith('http://') || source.startsWith('https://')) {
       return {
         url: source,
+        checksum: module.checksum,
         isGitHub: false,
       };
     }

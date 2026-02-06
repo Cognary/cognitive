@@ -1,0 +1,15 @@
+{
+  "$test": {
+    "name": "extra-top-level-field",
+    "description": "Registry index must reject unknown top-level fields (additionalProperties=false).",
+    "expects": "reject",
+    "conformance_level": 1
+  },
+  "registry": {
+    "version": "2.0.0",
+    "updated": "2026-02-06T00:00:00Z",
+    "modules": {},
+    "unknown": "nope"
+  }
+}
+

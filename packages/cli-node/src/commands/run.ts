@@ -4,7 +4,7 @@
  */
 
 import type { CommandContext, CommandResult } from '../types.js';
-import { findModule, getDefaultSearchPaths, runModule } from '../modules/index.js';
+import { findModule, getDefaultSearchPaths, runModule, runModuleStream } from '../modules/index.js';
 import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
 
 export interface RunOptions {
@@ -13,6 +13,7 @@ export interface RunOptions {
   noValidate?: boolean;
   pretty?: boolean;
   verbose?: boolean;
+  stream?: boolean;
 }
 
 export async function run(
@@ -57,26 +58,50 @@ export async function run(
       }
     }
 
-    // Run module with v2.2 envelope format
-    const result = await runModule(module, ctx.provider, {
-      args: options.args,
-      input: inputData,
-      verbose: options.verbose || ctx.verbose,
-      validateInput: !options.noValidate,
-      validateOutput: !options.noValidate,
-      useV22: true,  // Always use v2.2 envelope
-    });
+    if (options.stream) {
+      // Stream NDJSON events to stdout. Final exit code is determined by the end event.
+      let finalOk: boolean | null = null;
 
-    const output = attachContext(result as unknown as Record<string, unknown>, {
-      module: moduleName,
-      provider: ctx.provider.name,
-    });
+      for await (const ev of runModuleStream(module, ctx.provider, {
+        args: options.args,
+        input: inputData,
+        validateInput: !options.noValidate,
+        validateOutput: !options.noValidate,
+        useV22: true,
+      })) {
+        // Write each event as one JSON line (NDJSON).
+        process.stdout.write(JSON.stringify(ev) + '\n');
+        if (ev.type === 'end' && ev.result) {
+          finalOk = Boolean((ev.result as { ok?: boolean }).ok);
+        }
+      }
 
-    // Always return full v2.2 envelope
-    return {
-      success: result.ok,
-      data: output,
-    };
+      return {
+        success: finalOk === true,
+        data: { ok: finalOk === true },
+      };
+    } else {
+      // Run module with v2.2 envelope format
+      const result = await runModule(module, ctx.provider, {
+        args: options.args,
+        input: inputData,
+        verbose: options.verbose || ctx.verbose,
+        validateInput: !options.noValidate,
+        validateOutput: !options.noValidate,
+        useV22: true, // Always use v2.2 envelope
+      });
+
+      const output = attachContext(result as unknown as Record<string, unknown>, {
+        module: moduleName,
+        provider: ctx.provider.name,
+      });
+
+      // Always return full v2.2 envelope
+      return {
+        success: result.ok,
+        data: output,
+      };
+    }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     const errorEnvelope = attachContext(makeErrorEnvelope({

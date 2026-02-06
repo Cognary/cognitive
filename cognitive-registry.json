@@ -1,49 +1,49 @@
 {
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/registry-v1.json",
-  "version": "1.0.0",
-  "updated": "2026-02-01",
+  "$schema": "https://cognitive-modules.dev/schema/registry-v1.json",
+  "version": "1.0.1",
+  "updated": "2026-02-06",
   "modules": {
     "ui-spec-generator": {
       "description": "将产品需求转换为前端可实现的 UI 规范",
-      "version": "1.0.0",
-      "source": "github:ziel-io/cognitive-modules/cognitive/modules/ui-spec-generator",
+      "version": "2.2.5",
+      "source": "github:Cognary/cognitive/cognitive/modules/ui-spec-generator",
       "tags": ["ui", "frontend", "design", "specification"],
-      "author": "ziel-io"
+      "author": "Cognary"
     },
     "code-reviewer": {
       "description": "审查代码并提供结构化的改进建议",
-      "version": "1.0.0",
-      "source": "github:ziel-io/cognitive-modules/cognitive/modules/code-reviewer",
+      "version": "2.2.5",
+      "source": "github:Cognary/cognitive/cognitive/modules/code-reviewer",
       "tags": ["code", "review", "security", "quality"],
-      "author": "ziel-io"
+      "author": "Cognary"
     },
     "task-prioritizer": {
       "description": "根据紧急度、重要性和依赖关系对任务进行优先级排序",
-      "version": "1.0.0",
-      "source": "github:ziel-io/cognitive-modules/cognitive/modules/task-prioritizer",
+      "version": "2.2.5",
+      "source": "github:Cognary/cognitive/cognitive/modules/task-prioritizer",
       "tags": ["task", "priority", "project", "management"],
-      "author": "ziel-io"
+      "author": "Cognary"
     },
     "api-designer": {
       "description": "根据业务需求设计 RESTful API 端点规范",
-      "version": "1.0.0",
-      "source": "github:ziel-io/cognitive-modules/cognitive/modules/api-designer",
+      "version": "2.2.5",
+      "source": "github:Cognary/cognitive/cognitive/modules/api-designer",
       "tags": ["api", "rest", "design", "backend"],
-      "author": "ziel-io"
+      "author": "Cognary"
     },
     "code-simplifier": {
       "description": "简化代码同时保持行为不变",
-      "version": "1.0.0",
-      "source": "github:ziel-io/cognitive-modules/cognitive/modules/code-simplifier",
+      "version": "2.2.5",
+      "source": "github:Cognary/cognitive/cognitive/modules/code-simplifier",
       "tags": ["code", "simplify", "refactor", "quality"],
-      "author": "ziel-io"
+      "author": "Cognary"
     },
     "product-analyzer": {
       "description": "分析产品需求并调用 UI 规范生成器（子代理示例）",
-      "version": "1.0.0",
-      "source": "github:ziel-io/cognitive-modules/cognitive/modules/product-analyzer",
+      "version": "2.2.5",
+      "source": "github:Cognary/cognitive/cognitive/modules/product-analyzer",
       "tags": ["product", "analysis", "subagent"],
-      "author": "ziel-io"
+      "author": "Cognary"
     }
   },
   "categories": {

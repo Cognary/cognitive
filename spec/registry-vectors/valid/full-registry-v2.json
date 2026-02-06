@@ -1,0 +1,74 @@
+{
+  "$test": {
+    "name": "full-registry-v2",
+    "description": "Full v2 registry index: categories/featured/stats + signed distribution fields.",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "registry": {
+    "$schema": "https://cognitive-modules.dev/schema/registry-v2.json",
+    "version": "2.0.0",
+    "updated": "2026-02-06T00:00:00Z",
+    "modules": {
+      "api-designer": {
+        "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+        "identity": {
+          "name": "api-designer",
+          "namespace": "official",
+          "version": "1.5.0",
+          "spec_version": "2.2"
+        },
+        "metadata": {
+          "description": "Design RESTful APIs with structured outputs.",
+          "description_zh": "设计 RESTful API 并输出结构化结果。",
+          "author": "Cognary",
+          "tier": "exec",
+          "license": "Apache-2.0",
+          "repository": "https://github.com/Cognary/cognitive",
+          "documentation": "https://cognary.github.io/cognitive/docs/spec/cep/registry",
+          "homepage": "https://cognary.github.io/cognitive/",
+          "keywords": ["api", "design", "rest"]
+        },
+        "quality": {
+          "conformance_level": 2,
+          "test_vector_pass": true,
+          "verified": false,
+          "downloads_30d": 0,
+          "stars": 0
+        },
+        "dependencies": {
+          "runtime_min": "2.2.0",
+          "modules": [
+            { "name": "code-reviewer", "version": ">=2.2.0", "optional": true }
+          ]
+        },
+        "distribution": {
+          "tarball": "https://example.com/api-designer-1.5.0.tar.gz",
+          "checksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "signature": "https://example.com/api-designer-1.5.0.sig",
+          "signing_key": "https://example.com/keys/cognary.pub"
+        },
+        "timestamps": {
+          "created_at": "2026-02-01T00:00:00Z",
+          "updated_at": "2026-02-06T00:00:00Z",
+          "deprecated_at": null
+        }
+      }
+    },
+    "categories": {
+      "dev": {
+        "name": "Development",
+        "name_zh": "开发",
+        "description": "Development tools",
+        "modules": ["api-designer"]
+      }
+    },
+    "featured": ["api-designer"],
+    "stats": {
+      "total_modules": 1,
+      "total_downloads": 0,
+      "last_updated": "2026-02-06T00:00:00Z"
+    }
+  }
+}
+

@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cognitive-modules.dev/schema/registry-v2.json",
+  "title": "Cognitive Modules Registry Index v2",
+  "description": "Schema for the registry index that aggregates multiple registry entries.",
+  "type": "object",
+  "required": ["version", "updated", "modules"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "updated": {
+      "type": "string"
+    },
+    "modules": {
+      "type": "object",
+      "description": "Map of module name -> registry entry",
+      "additionalProperties": { "$ref": "https://cognitive-modules.dev/schema/registry-entry-v1.json" }
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "description", "modules"],
+        "properties": {
+          "name": { "type": "string" },
+          "name_zh": { "type": "string" },
+          "description": { "type": "string" },
+          "modules": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "featured": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "total_modules": { "type": "integer", "minimum": 0 },
+        "total_downloads": { "type": "integer", "minimum": 0 },
+        "last_updated": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

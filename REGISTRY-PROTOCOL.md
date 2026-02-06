@@ -190,6 +190,8 @@ A registry index aggregates multiple module entries:
 }
 ```
 
+In an OSS setup, the registry index is commonly hosted as a static JSON file (for example on `raw.githubusercontent.com`), while module tarballs are hosted as GitHub Release assets.
+
 ---
 
 ## 4. Distribution Formats
@@ -210,6 +212,22 @@ code-reviewer-2.2.0.tar.gz
         └── case1.expected.json
 ```
 
+### GitHub Release Assets (Recommended for OSS)
+
+When using GitHub Releases as the distribution channel, registries SHOULD publish `distribution.tarball` URLs in this form:
+
+```
+https://github.com/<owner>/<repo>/releases/download/<tag>/<module>-<version>.tar.gz
+```
+
+Example:
+
+```
+https://github.com/Cognary/cognitive/releases/download/v2.2.5/code-reviewer-2.2.5.tar.gz
+```
+
+This keeps module installs content-addressable via `distribution.checksum` and avoids requiring a dedicated registry server.
+
 ### GitHub Source
 
 For GitHub-hosted modules, the source format is:
@@ -222,6 +240,10 @@ Examples:
 - `github:ziel-io/cognitive-modules/cognitive/modules/code-reviewer`
 - `github:ziel-io/cognitive-modules/cognitive/modules/code-reviewer@v2.2.0`
 - `github:myorg/my-modules/modules/custom-module@main`
+
+Notes:
+- The v1 `cognitive-registry.json` format uses `source: "github:..."` directly.
+- The v2 registry entry schema requires `distribution.tarball` plus `distribution.checksum` for reproducible installs. GitHub is represented via `metadata.repository` (and optionally `metadata.homepage` / `metadata.documentation`), not as the install transport.
 
 ### Checksum Verification
 
@@ -401,6 +423,16 @@ Deprecated modules MUST include:
 ---
 
 ## 9. Security
+
+### Safe Installation (Required)
+
+Clients MUST:
+
+1. Validate archive paths (reject absolute paths and `..`)
+2. Reject symlinks/hardlinks inside archives (prevent link-based traversal)
+3. Verify checksums before extraction
+
+Avoid naive archive extractors that can be exploited via symlink traversal (for example: a tarball that creates a symlink `pkg -> /etc` and then writes `pkg/passwd`).
 
 ### Package Signing (Future)
 

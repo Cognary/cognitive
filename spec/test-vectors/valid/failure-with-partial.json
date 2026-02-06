@@ -30,6 +30,7 @@
         }
       ],
       "rationale": "Simplification applied but behavior depends on input types."
-    }
+    },
+    "version": "2.2"
   }
 }

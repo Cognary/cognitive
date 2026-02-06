@@ -13,12 +13,25 @@
     "SuccessEnvelope": {
       "type": "object",
       "description": "Success response envelope. MUST be returned when module execution succeeds.",
-      "required": ["ok", "meta", "data"],
+      "required": ["ok", "version", "meta", "data"],
       "additionalProperties": false,
       "properties": {
         "ok": {
           "const": true,
           "description": "MUST be true for success responses."
+        },
+        "version": {
+          "type": "string",
+          "enum": ["2.2"],
+          "description": "CEP envelope version. MUST be '2.2' for v2.2 envelopes."
+        },
+        "module": {
+          "type": "string",
+          "description": "Module identifier (transport context). OPTIONAL."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider identifier (transport context). OPTIONAL."
         },
         "meta": { "$ref": "#/definitions/Meta" },
         "data": { "$ref": "#/definitions/Data" }
@@ -28,12 +41,25 @@
     "FailureEnvelope": {
       "type": "object",
       "description": "Failure response envelope. MUST be returned when module execution fails.",
-      "required": ["ok", "meta", "error"],
+      "required": ["ok", "version", "meta", "error"],
       "additionalProperties": false,
       "properties": {
         "ok": {
           "const": false,
           "description": "MUST be false for failure responses."
+        },
+        "version": {
+          "type": "string",
+          "enum": ["2.2"],
+          "description": "CEP envelope version. MUST be '2.2' for v2.2 envelopes."
+        },
+        "module": {
+          "type": "string",
+          "description": "Module identifier (transport context). OPTIONAL."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider identifier (transport context). OPTIONAL."
         },
         "meta": { "$ref": "#/definitions/Meta" },
         "error": { "$ref": "#/definitions/Error" },

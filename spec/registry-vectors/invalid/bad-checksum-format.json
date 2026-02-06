@@ -1,0 +1,36 @@
+{
+  "$test": {
+    "name": "bad-checksum-format",
+    "description": "checksum must be sha256:<64hex>.",
+    "expects": "reject",
+    "conformance_level": 1
+  },
+  "registry": {
+    "version": "2.0.0",
+    "updated": "2026-02-06T00:00:00Z",
+    "modules": {
+      "task-prioritizer": {
+        "identity": {
+          "name": "task-prioritizer",
+          "namespace": "official",
+          "version": "1.0.0",
+          "spec_version": "2.2"
+        },
+        "metadata": {
+          "description": "Prioritize tasks.",
+          "author": "Cognary",
+          "tier": "decision"
+        },
+        "dependencies": {
+          "runtime_min": "2.2.0",
+          "modules": []
+        },
+        "distribution": {
+          "tarball": "https://example.com/task-prioritizer-1.0.0.tar.gz",
+          "checksum": "sha256:abc123"
+        }
+      }
+    }
+  }
+}
+

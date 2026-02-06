@@ -23,6 +23,7 @@ cog run <module> [options]
 | `--provider <name>` | `-p` | Provider override (openai/anthropic/gemini/deepseek/minimax/moonshot/qwen/ollama) |
 | `--model <name>` | `-M` | Model override |
 | `--verbose` | `-V` | Verbose output |
+| `--stream` | | Stream `cep.events.v2.2` as NDJSON (one JSON event per line) |
 
 ## Examples
 
@@ -47,3 +48,8 @@ cog run code-reviewer --args "code" --provider openai --model gpt-4o
 ## Output
 
 `cog run` prints a v2.2 envelope to stdout. The envelope includes `module`/`provider` when available. Errors use the same envelope structure (`ok:false`, `meta`, `error`). In `--pretty` mode it is formatted with indentation.
+
+In `--stream` mode, `cog run` prints streaming events as NDJSON:
+
+- One CEP event object per line
+- Terminal event is `{"type":"end", ... "result": { ...envelope... }}`

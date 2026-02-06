@@ -19,6 +19,7 @@
     "data": {
       "result": "test",
       "rationale": "Test rationale"
-    }
+    },
+    "version": "2.2"
   }
 }

@@ -32,4 +32,5 @@ site/
 # Node
 node_modules/
 .npm-cache/
+.npm-logs/
 *.tsbuildinfo

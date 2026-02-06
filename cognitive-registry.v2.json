@@ -1,0 +1,392 @@
+{
+  "$schema": "https://cognitive-modules.dev/schema/registry-v2.json",
+  "version": "2.0.0",
+  "updated": "2026-02-06T00:00:00Z",
+  "modules": {
+    "api-designer": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "api-designer",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u6839\u636e\u4e1a\u52a1\u9700\u6c42\u8bbe\u8ba1 RESTful API \u7aef\u70b9\u89c4\u8303",
+        "description_zh": "\u6839\u636e\u4e1a\u52a1\u9700\u6c42\u8bbe\u8ba1 RESTful API \u7aef\u70b9\u89c4\u8303",
+        "author": "Cognary",
+        "tier": "decision",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": [
+          "api",
+          "rest",
+          "design",
+          "backend"
+        ]
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/api-designer-2.2.5.tar.gz",
+        "checksum": "sha256:a264529a4a8b5e038c3f8abe070c81d8fd07946a116e8efc26e3fc6992fe128b",
+        "size_bytes": 5225,
+        "files": [
+          "MODULE.md",
+          "examples/input.json",
+          "examples/output.json",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/orders_api.expected.json",
+          "tests/orders_api.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    },
+    "code-reviewer": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "code-reviewer",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u5ba1\u67e5\u4ee3\u7801\u5e76\u63d0\u4f9b\u7ed3\u6784\u5316\u7684\u6539\u8fdb\u5efa\u8bae",
+        "description_zh": "\u5ba1\u67e5\u4ee3\u7801\u5e76\u63d0\u4f9b\u7ed3\u6784\u5316\u7684\u6539\u8fdb\u5efa\u8bae",
+        "author": "Cognary",
+        "tier": "decision",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": [
+          "code",
+          "review",
+          "security",
+          "quality"
+        ]
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/code-reviewer-2.2.5.tar.gz",
+        "checksum": "sha256:886aff4318ab52815fc330bd6f0e866c13eeccf5f69572dc9343150e786e4421",
+        "size_bytes": 5912,
+        "files": [
+          "MODULE.md",
+          "examples/input.json",
+          "examples/output.json",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/clean_code.expected.json",
+          "tests/clean_code.input.json",
+          "tests/sql_injection.expected.json",
+          "tests/sql_injection.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    },
+    "code-simplifier": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "code-simplifier",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u7b80\u5316\u4ee3\u7801\u540c\u65f6\u4fdd\u6301\u884c\u4e3a\u4e0d\u53d8",
+        "description_zh": "\u7b80\u5316\u4ee3\u7801\u540c\u65f6\u4fdd\u6301\u884c\u4e3a\u4e0d\u53d8",
+        "author": "Cognary",
+        "tier": "decision",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": [
+          "code",
+          "simplify",
+          "refactor",
+          "quality"
+        ]
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/code-simplifier-2.2.5.tar.gz",
+        "checksum": "sha256:17df4390f5ef744e5a5b0ae0f0d8e53a95e6e33c9309187742b9849c4b37d33d",
+        "size_bytes": 6482,
+        "files": [
+          "MODULE.md",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/case1.expected.json",
+          "tests/case1.input.json",
+          "tests/case2.expected.json",
+          "tests/case2.input.json",
+          "tests/case_behavior_uncertain.expected.json",
+          "tests/case_behavior_uncertain.input.json",
+          "tests/case_parse_error.expected.json",
+          "tests/case_parse_error.input.json",
+          "tests/case_unsupported_lang.expected.json",
+          "tests/case_unsupported_lang.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    },
+    "product-analyzer": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "product-analyzer",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u5206\u6790\u4ea7\u54c1\u9700\u6c42\u5e76\u8c03\u7528 UI \u89c4\u8303\u751f\u6210\u5668\uff08\u5b50\u4ee3\u7406\u793a\u4f8b\uff09",
+        "description_zh": "\u5206\u6790\u4ea7\u54c1\u9700\u6c42\u5e76\u8c03\u7528 UI \u89c4\u8303\u751f\u6210\u5668\uff08\u5b50\u4ee3\u7406\u793a\u4f8b\uff09",
+        "author": "Cognary",
+        "tier": "exploration",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": [
+          "product",
+          "analysis",
+          "subagent"
+        ]
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/product-analyzer-2.2.5.tar.gz",
+        "checksum": "sha256:2bf0c135b7fa0866ce0110db1336ca0ea610cb47f7814a1902359058594f3c90",
+        "size_bytes": 4136,
+        "files": [
+          "MODULE.md",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/health_product.expected.json",
+          "tests/health_product.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    },
+    "task-prioritizer": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "task-prioritizer",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u6839\u636e\u7d27\u6025\u5ea6\u3001\u91cd\u8981\u6027\u548c\u4f9d\u8d56\u5173\u7cfb\u5bf9\u4efb\u52a1\u8fdb\u884c\u4f18\u5148\u7ea7\u6392\u5e8f",
+        "description_zh": "\u6839\u636e\u7d27\u6025\u5ea6\u3001\u91cd\u8981\u6027\u548c\u4f9d\u8d56\u5173\u7cfb\u5bf9\u4efb\u52a1\u8fdb\u884c\u4f18\u5148\u7ea7\u6392\u5e8f",
+        "author": "Cognary",
+        "tier": "decision",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": [
+          "task",
+          "priority",
+          "project",
+          "management"
+        ]
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/task-prioritizer-2.2.5.tar.gz",
+        "checksum": "sha256:0a9ca8b87b1f55b7682a9e02bab798e5a9e6cddf8841f9a9f968e9aa33b00ff3",
+        "size_bytes": 5169,
+        "files": [
+          "MODULE.md",
+          "examples/input.json",
+          "examples/output.json",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/dev_tasks.expected.json",
+          "tests/dev_tasks.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    },
+    "ui-component-generator": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "ui-component-generator",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u6839\u636e\u9700\u6c42\u63cf\u8ff0\u751f\u6210\u53ef\u7528\u7684 React/Vue \u7ec4\u4ef6\u4ee3\u7801",
+        "description_zh": "\u6839\u636e\u9700\u6c42\u63cf\u8ff0\u751f\u6210\u53ef\u7528\u7684 React/Vue \u7ec4\u4ef6\u4ee3\u7801",
+        "author": "unknown",
+        "tier": "exec",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": []
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/ui-component-generator-2.2.5.tar.gz",
+        "checksum": "sha256:4e945408434a2b0b958751c0fb2cb9a0944a1eee8d64240d2533acd479cedeca",
+        "size_bytes": 9588,
+        "files": [
+          "MODULE.md",
+          "examples/input.json",
+          "examples/natural-language-input.json",
+          "examples/output.json",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/button_component.expected.json",
+          "tests/button_component.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    },
+    "ui-spec-generator": {
+      "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+      "identity": {
+        "name": "ui-spec-generator",
+        "namespace": "official",
+        "version": "2.2.5",
+        "spec_version": "2.2"
+      },
+      "metadata": {
+        "description": "\u5c06\u4ea7\u54c1\u9700\u6c42\u8f6c\u6362\u4e3a\u524d\u7aef\u53ef\u5b9e\u73b0\u7684 UI \u89c4\u8303",
+        "description_zh": "\u5c06\u4ea7\u54c1\u9700\u6c42\u8f6c\u6362\u4e3a\u524d\u7aef\u53ef\u5b9e\u73b0\u7684 UI \u89c4\u8303",
+        "author": "Cognary",
+        "tier": "exploration",
+        "license": "MIT",
+        "repository": "https://github.com/Cognary/cognitive",
+        "homepage": "https://cognary.github.io/cognitive/",
+        "keywords": [
+          "ui",
+          "frontend",
+          "design",
+          "specification"
+        ]
+      },
+      "dependencies": {
+        "runtime_min": "2.2.0",
+        "modules": []
+      },
+      "distribution": {
+        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.5/ui-spec-generator-2.2.5.tar.gz",
+        "checksum": "sha256:2908e76a6667ca4023ade4e6eab60d2b744b4866dc742a62ff010b408843a1f0",
+        "size_bytes": 23928,
+        "files": [
+          "MODULE.md",
+          "examples/health-product-input.json",
+          "examples/health-product-output.json",
+          "examples/input.json",
+          "examples/output.json",
+          "module.yaml",
+          "prompt.md",
+          "schema.json",
+          "tests/saas_landing.expected.json",
+          "tests/saas_landing.input.json"
+        ]
+      },
+      "timestamps": {
+        "created_at": "2026-02-06T00:00:00Z",
+        "updated_at": "2026-02-06T00:00:00Z",
+        "deprecated_at": null
+      }
+    }
+  },
+  "categories": {
+    "design": {
+      "name": "\u8bbe\u8ba1\u89c4\u8303",
+      "description": "UI/UX \u8bbe\u8ba1\u76f8\u5173\u6a21\u5757",
+      "modules": [
+        "ui-spec-generator",
+        "api-designer"
+      ]
+    },
+    "code-quality": {
+      "name": "\u4ee3\u7801\u8d28\u91cf",
+      "description": "\u4ee3\u7801\u5ba1\u67e5\u548c\u8d28\u91cf\u4fdd\u8bc1\u6a21\u5757",
+      "modules": [
+        "code-reviewer",
+        "code-simplifier"
+      ]
+    },
+    "project-management": {
+      "name": "\u9879\u76ee\u7ba1\u7406",
+      "description": "\u4efb\u52a1\u548c\u9879\u76ee\u7ba1\u7406\u76f8\u5173\u6a21\u5757",
+      "modules": [
+        "task-prioritizer"
+      ]
+    },
+    "orchestration": {
+      "name": "\u7f16\u6392\u793a\u4f8b",
+      "description": "\u5c55\u793a\u5b50\u4ee3\u7406\u529f\u80fd\u7684\u6a21\u5757",
+      "modules": [
+        "product-analyzer"
+      ]
+    }
+  },
+  "featured": [
+    "api-designer",
+    "code-reviewer",
+    "code-simplifier",
+    "product-analyzer",
+    "task-prioritizer",
+    "ui-component-generator",
+    "ui-spec-generator"
+  ],
+  "stats": {
+    "total_modules": 7,
+    "total_downloads": 0,
+    "last_updated": "2026-02-06T00:00:00Z"
+  }
+}

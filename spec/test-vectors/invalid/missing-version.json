@@ -1,0 +1,21 @@
+{
+  "$test": {
+    "name": "missing-version-field",
+    "description": "Envelope missing required 'version' field",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.9,
+      "risk": "low",
+      "explain": "Missing version."
+    },
+    "data": {
+      "rationale": "Some rationale here."
+    }
+  }
+}
+

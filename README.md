@@ -268,6 +268,8 @@ npm test
 | Resource | Description |
 |----------|-------------|
 | [REGISTRY-PROTOCOL.md](REGISTRY-PROTOCOL.md) | Registry protocol specification |
+| [cognitive-registry.v2.json](cognitive-registry.v2.json) | Default registry index (v2) used by the Node CLI |
+| [spec/registry.schema.json](spec/registry.schema.json) | Registry index schema (v2) |
 | [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | Registry entry schema |
 
 ## License

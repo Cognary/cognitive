@@ -4,12 +4,14 @@
     "description": "Failure envelope (ok=false) should not have data field (use partial_data instead)",
     "expects": "reject",
     "conformance_level": 1,
-    "error_codes": ["E3001"]
+    "error_codes": [
+      "E3001"
+    ]
   },
   "envelope": {
     "ok": false,
     "meta": {
-      "confidence": 0.0,
+      "confidence": 0,
       "risk": "high",
       "explain": "Failure should use partial_data, not data."
     },
@@ -19,6 +21,7 @@
     },
     "data": {
       "rationale": "This should be partial_data not data"
-    }
+    },
+    "version": "2.2"
   }
 }

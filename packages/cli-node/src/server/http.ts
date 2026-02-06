@@ -14,11 +14,12 @@
 import http from 'node:http';
 import { URL } from 'node:url';
 import { findModule, listModules, getDefaultSearchPaths } from '../modules/loader.js';
-import { runModule } from '../modules/runner.js';
+import { runModule, runModuleStream } from '../modules/runner.js';
 import { getProvider } from '../providers/index.js';
-import type { CognitiveModule, Provider, EnvelopeError } from '../types.js';
+import type { EnvelopeError } from '../types.js';
 import { VERSION } from '../version.js';
-import { ErrorCodes, makeErrorEnvelope, makeHttpError } from '../errors/index.js';
+import { ErrorCodes, attachContext, makeErrorEnvelope, makeHttpError, httpStatusForErrorCode } from '../errors/index.js';
+import { encodeSseFrame } from './sse.js';
 
 // =============================================================================
 // Types
@@ -33,7 +34,7 @@ interface RunRequest {
 }
 
 // Supported protocol versions
-const SUPPORTED_VERSIONS = ['2.2', '2.1'] as const;
+const SUPPORTED_VERSIONS = ['2.2'] as const;
 const DEFAULT_VERSION = '2.2';
 
 /**
@@ -87,7 +88,7 @@ interface RunResponse {
   data?: unknown;
   error?: EnvelopeError;
   partial_data?: unknown;
-  module: string;
+  module?: string;
   provider?: string;
 }
 
@@ -285,11 +286,13 @@ async function handleRun(
 
   // Verify API key
   if (!verifyApiKey(req)) {
-    jsonResponse(res, 401, buildHttpError(
+    const [status, body] = buildHttpError(
       ErrorCodes.PERMISSION_DENIED,
       'Missing or invalid API Key',
       { suggestion: 'Use header: Authorization: Bearer <your-api-key>' }
-    ), protocolVersion);
+    );
+    // Auth failures are better represented as 401 even if the CEP code is permission-related.
+    jsonResponse(res, 401, body, protocolVersion);
     return;
   }
   
@@ -332,6 +335,18 @@ async function handleRun(
 
   // Determine protocol version (body > header > query > default)
   protocolVersion = getRequestedVersion(req, url, reqBody.version);
+
+  // If the client explicitly requested an unsupported version, return a structured error.
+  const requested = reqBody.version ?? (req.headers['x-cognitive-version'] as string | undefined) ?? url.searchParams.get('version') ?? undefined;
+  if (requested && !SUPPORTED_VERSIONS.includes(requested as typeof SUPPORTED_VERSIONS[number])) {
+    const [status, body] = buildHttpError(
+      ErrorCodes.UNSUPPORTED_VALUE,
+      `Unsupported protocol version: ${requested}`,
+      { suggestion: `Use version=${DEFAULT_VERSION}` }
+    );
+    jsonResponse(res, status, body, protocolVersion);
+    return;
+  }
   
   // Validate request
   if (!reqBody.module || !reqBody.args) {
@@ -373,54 +388,20 @@ async function handleRun(
       useV22: true,
     });
     
-    // Build response envelope with requested protocol version
-    if (result.ok && 'data' in result) {
-      const v22Result = result as { 
-        ok: true; 
-        meta?: RunResponse['meta']; 
-        data: unknown;
-      };
-      const response: RunResponse = {
-        ok: true,
-        version: protocolVersion,
-        meta: v22Result.meta ?? {
-          confidence: 0.5,
-          risk: 'medium',
-          explain: 'No meta provided',
-        },
-        data: v22Result.data,
-        module: reqBody.module,
-        provider: providerName,
-      };
-      jsonResponse(res, 200, response, protocolVersion);
-    } else {
-      // Error response - must include meta and full error object
-      const errorResult = result as { 
-        ok: false; 
-        meta?: RunResponse['meta']; 
-        error?: { code: string; message: string; recoverable?: boolean; suggestion?: string };
-        partial_data?: unknown;
-      };
-      
-      const response: RunResponse = {
-        ok: false,
-        version: protocolVersion,
-        meta: errorResult.meta ?? {
-          confidence: 0.0,
-          risk: 'high',
-          explain: errorResult.error?.message ?? 'An error occurred',
-        },
-        error: errorResult.error ?? {
-          code: ErrorCodes.INTERNAL_ERROR,
-          message: 'Unknown error',
-          recoverable: false,
-        },
-        partial_data: errorResult.partial_data,
-        module: reqBody.module,
-        provider: providerName,
-      };
-      jsonResponse(res, 200, response, protocolVersion);
+    // Attach transport context but do not rebuild the envelope.
+    const contextual = attachContext(result as unknown as Record<string, unknown>, {
+      module: reqBody.module,
+      provider: providerName,
+    }) as unknown as RunResponse;
+
+    if (contextual.ok) {
+      jsonResponse(res, 200, contextual, protocolVersion);
+      return;
     }
+
+    const errorCode = (contextual.error?.code ?? ErrorCodes.INTERNAL_ERROR) as string;
+    const status = httpStatusForErrorCode(errorCode);
+    jsonResponse(res, status, contextual, protocolVersion);
   } catch (error) {
     // Infrastructure error - still return envelope
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -434,6 +415,161 @@ async function handleRun(
       }
     );
     jsonResponse(res, status, response, protocolVersion);
+  }
+}
+
+async function handleRunStream(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  searchPaths: string[],
+  url: URL
+): Promise<void> {
+  let protocolVersion = DEFAULT_VERSION;
+  let sseStarted = false;
+
+  const beginSse = (version: string) => {
+    if (sseStarted) return;
+    sseStarted = true;
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Cognitive-Version',
+      'Access-Control-Expose-Headers': 'X-Cognitive-Version',
+      'X-Cognitive-Version': version,
+    });
+  };
+
+  const writeEvent = (ev: Record<string, unknown>, id: number) => {
+    const type = typeof ev.type === 'string' ? ev.type : 'message';
+    res.write(encodeSseFrame(ev, { event: type, id }));
+  };
+
+  // Helper: send an error as CEP events (start + error + end).
+  const sendErrorStream = (envelope: Record<string, unknown>) => {
+    beginSse(protocolVersion);
+    let id = 1;
+    writeEvent({ type: 'start', version: protocolVersion, timestamp_ms: 0, module: (envelope as any).module ?? 'unknown' }, id++);
+    const err = (envelope as any).error ?? { code: ErrorCodes.INTERNAL_ERROR, message: 'Unknown error' };
+    writeEvent({ type: 'error', version: protocolVersion, timestamp_ms: 0, module: (envelope as any).module ?? 'unknown', provider: (envelope as any).provider, error: err }, id++);
+    writeEvent({ type: 'end', version: protocolVersion, timestamp_ms: 0, module: (envelope as any).module ?? 'unknown', provider: (envelope as any).provider, result: envelope }, id++);
+    res.end();
+  };
+
+  // Verify API key
+  if (!verifyApiKey(req)) {
+    // Auth failures should still be structured; SSE payload carries the error.
+    const envelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.PERMISSION_DENIED,
+      message: 'Missing or invalid API Key',
+      suggestion: 'Use header: Authorization: Bearer <your-api-key>',
+      version: protocolVersion,
+    }), { module: 'unknown', provider: 'unknown' }) as unknown as Record<string, unknown>;
+    sendErrorStream(envelope);
+    return;
+  }
+
+  // Parse request body
+  let request: RunRequest | undefined;
+  try {
+    const body = await parseBody(req);
+    request = JSON.parse(body);
+  } catch (e) {
+    const err = e as { code?: string };
+    const code = err?.code === 'PAYLOAD_TOO_LARGE' ? ErrorCodes.INPUT_TOO_LARGE : ErrorCodes.PARSE_ERROR;
+    const message = err?.code === 'PAYLOAD_TOO_LARGE' ? 'Payload too large' : 'Invalid JSON body';
+    const envelope = attachContext(makeErrorEnvelope({
+      code,
+      message,
+      suggestion: code === ErrorCodes.INPUT_TOO_LARGE ? 'Reduce input size to under 1MB' : 'Ensure request body is valid JSON',
+      version: protocolVersion,
+    }), { module: 'unknown', provider: 'unknown' }) as unknown as Record<string, unknown>;
+    sendErrorStream(envelope);
+    return;
+  }
+
+  if (!request || typeof request !== 'object') {
+    const envelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.INVALID_INPUT,
+      message: 'Invalid request body',
+      suggestion: 'Ensure request body is a JSON object',
+      version: protocolVersion,
+    }), { module: 'unknown', provider: 'unknown' }) as unknown as Record<string, unknown>;
+    sendErrorStream(envelope);
+    return;
+  }
+
+  const reqBody = request as RunRequest;
+  protocolVersion = getRequestedVersion(req, url, reqBody.version);
+
+  // If the client explicitly requested an unsupported version, return a structured error.
+  const requested = reqBody.version ?? (req.headers['x-cognitive-version'] as string | undefined) ?? url.searchParams.get('version') ?? undefined;
+  if (requested && !SUPPORTED_VERSIONS.includes(requested as typeof SUPPORTED_VERSIONS[number])) {
+    const envelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.UNSUPPORTED_VALUE,
+      message: `Unsupported protocol version: ${requested}`,
+      suggestion: `Use version=${DEFAULT_VERSION}`,
+      version: protocolVersion,
+    }), { module: reqBody?.module ?? 'unknown', provider: reqBody?.provider ?? 'unknown' }) as unknown as Record<string, unknown>;
+    sendErrorStream(envelope);
+    return;
+  }
+
+  // Validate request
+  if (!reqBody.module || !reqBody.args) {
+    const envelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.MISSING_REQUIRED_FIELD,
+      message: 'Missing required fields: module, args',
+      suggestion: 'Provide both "module" and "args" fields in request body',
+      version: protocolVersion,
+    }), { module: reqBody?.module ?? 'unknown', provider: reqBody?.provider ?? 'unknown' }) as unknown as Record<string, unknown>;
+    sendErrorStream(envelope);
+    return;
+  }
+
+  // Find module
+  const moduleData = await findModule(reqBody.module, searchPaths);
+  if (!moduleData) {
+    const envelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.MODULE_NOT_FOUND,
+      message: `Module '${reqBody.module}' not found`,
+      suggestion: 'Use GET /modules to list available modules',
+      version: protocolVersion,
+    }), { module: reqBody.module, provider: reqBody.provider ?? 'unknown' }) as unknown as Record<string, unknown>;
+    sendErrorStream(envelope);
+    return;
+  }
+
+  // Create provider
+  const provider = getProvider(reqBody.provider, reqBody.model);
+  const providerName = provider.name;
+
+  // Stream events
+  beginSse(protocolVersion);
+  let id = 1;
+  let closed = false;
+  const onClose = () => { closed = true; };
+  req.on('close', onClose);
+  res.on('close', onClose);
+
+  for await (const ev of runModuleStream(moduleData, provider, {
+    args: reqBody.args,
+    useV22: true,
+  })) {
+    if (closed) break;
+    const contextualEv = {
+      ...ev,
+      module: reqBody.module,
+      provider: providerName,
+    } as unknown as Record<string, unknown>;
+    writeEvent(contextualEv, id++);
+  }
+
+  if (!closed) {
+    res.end();
   }
 }
 
@@ -481,6 +617,8 @@ export function createServer(options: ServeOptions = {}): http.Server {
         await handleModuleInfo(res, moduleName, searchPaths);
       } else if (path === '/run' && method === 'POST') {
         await handleRun(req, res, searchPaths, url);
+      } else if (path === '/run/stream' && method === 'POST') {
+        await handleRunStream(req, res, searchPaths, url);
       } else {
         const envelope = makeErrorEnvelope({
           code: ErrorCodes.ENDPOINT_NOT_FOUND,
@@ -520,6 +658,7 @@ export async function serve(options: ServeOptions = {}): Promise<void> {
       console.log('  GET  /modules   - List modules');
       console.log('  GET  /modules/:name - Module info');
       console.log('  POST /run       - Run module');
+      console.log('  POST /run/stream - Run module (SSE stream)');
       resolve();
     });
   });

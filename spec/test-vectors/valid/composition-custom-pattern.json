@@ -13,12 +13,15 @@
       "explain": "Composition completed",
       "composition": {
         "pattern": "custom_pattern",
-        "modules_executed": ["module-a"]
+        "modules_executed": [
+          "module-a"
+        ]
       }
     },
     "data": {
       "result": "test",
       "rationale": "Test rationale"
-    }
+    },
+    "version": "2.2"
   }
 }

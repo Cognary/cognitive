@@ -1,0 +1,24 @@
+{
+  "$test": {
+    "name": "missing-end-result",
+    "description": "End event must include a result envelope.",
+    "expects": "reject",
+    "conformance_level": 1,
+    "error_codes": ["E3001"]
+  },
+  "events": [
+    {
+      "type": "start",
+      "version": "2.2",
+      "timestamp_ms": 0,
+      "module": "demo-module"
+    },
+    {
+      "type": "end",
+      "version": "2.2",
+      "timestamp_ms": 1,
+      "module": "demo-module"
+    }
+  ]
+}
+

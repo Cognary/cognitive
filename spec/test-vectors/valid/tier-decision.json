@@ -20,18 +20,32 @@
         {
           "id": "approach_a",
           "score": 0.88,
-          "pros": ["Better performance", "Easier maintenance"],
-          "cons": ["Higher initial complexity"]
+          "pros": [
+            "Better performance",
+            "Easier maintenance"
+          ],
+          "cons": [
+            "Higher initial complexity"
+          ]
         },
         {
           "id": "approach_b",
           "score": 0.72,
-          "pros": ["Simpler implementation"],
-          "cons": ["Performance concerns at scale"]
+          "pros": [
+            "Simpler implementation"
+          ],
+          "cons": [
+            "Performance concerns at scale"
+          ]
         }
       ],
       "rationale": "Given the stated requirement for high throughput, approach A is recommended despite its initial complexity.",
-      "decision_factors": ["performance", "scalability", "maintainability"]
-    }
+      "decision_factors": [
+        "performance",
+        "scalability",
+        "maintainability"
+      ]
+    },
+    "version": "2.2"
   }
 }

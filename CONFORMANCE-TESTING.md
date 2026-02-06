@@ -25,6 +25,28 @@ npm install ajv tsx
 npx tsx scripts/validate-test-vectors.ts --level 3 --verbose
 ```
 
+**CEP streaming vectors (events + terminal envelope):**
+```bash
+npm install ajv ajv-formats tsx
+npx tsx scripts/validate-stream-vectors.ts --level 3 --verbose
+```
+
+**CEP registry vectors (index + entries):**
+```bash
+npm install ajv ajv-formats tsx
+npx tsx scripts/validate-registry-vectors.ts --level 3 --verbose
+```
+
+**Registry safety (tarball extraction):**
+```bash
+cd packages/cli-node
+npm test
+```
+
+The Node CLI test suite includes tarball extraction safety checks:
+
+- `packages/cli-node/src/registry/tar.test.ts`
+
 ### 3. Integrate Into Your Test Suite
 
 See examples below for your language.

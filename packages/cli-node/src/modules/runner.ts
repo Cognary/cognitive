@@ -1683,14 +1683,16 @@ export async function runModule(
 // =============================================================================
 
 /** Event types emitted during streaming execution */
-export type StreamEventType = 'start' | 'chunk' | 'meta' | 'complete' | 'error';
+export type StreamEventType = 'start' | 'delta' | 'meta' | 'end' | 'error';
 
 /** Event emitted during streaming execution */
 export interface StreamEvent {
   type: StreamEventType;
+  version: string;
   timestamp_ms: number;
-  module_name: string;
-  chunk?: string;
+  module: string;
+  provider?: string;
+  delta?: string;
   meta?: EnvelopeMeta;
   result?: EnvelopeResponseV22<unknown>;
   error?: { code: string; message: string };
@@ -1712,9 +1714,9 @@ export interface StreamOptions {
  * 
  * Yields StreamEvent objects as the module executes:
  * - type="start": Module execution started
- * - type="chunk": Incremental data chunk (if LLM supports streaming)
+ * - type="delta": Incremental output delta (provider streaming chunk)
  * - type="meta": Meta information available early
- * - type="complete": Final complete result
+ * - type="end": Final result envelope (always emitted)
  * - type="error": Error occurred
  * 
  * @example
@@ -1734,12 +1736,15 @@ export async function* runModuleStream(
   const { input, args, validateInput = true, validateOutput = true, useV22 = true, enableRepair = true, traceId, model } = options;
   const startTime = Date.now();
   const moduleName = module.name;
+  const providerName = provider?.name;
 
   function makeEvent(type: StreamEventType, extra: Partial<StreamEvent> = {}): StreamEvent {
     return {
       type,
+      version: ENVELOPE_VERSION,
       timestamp_ms: Date.now() - startTime,
-      module_name: moduleName,
+      module: moduleName,
+      ...(providerName ? { provider: providerName } : {}),
       ...extra,
     };
   }
@@ -1774,7 +1779,7 @@ export async function* runModuleStream(
         _invokeErrorHooks(module.name, new Error(inputErrors.join('; ')), null);
         const errorObj = (errorResult as { error: { code: string; message: string } }).error;
         yield makeEvent('error', { error: errorObj });
-        yield makeEvent('complete', { result: errorResult });
+        yield makeEvent('end', { result: errorResult });
         return;
       }
     }
@@ -1819,7 +1824,7 @@ export async function* runModuleStream(
       let streamResult: IteratorResult<string, InvokeResult>;
       while (!(streamResult = await stream.next()).done) {
         const chunk = streamResult.value;
-        yield makeEvent('chunk', { chunk });
+        yield makeEvent('delta', { delta: chunk });
       }
       
       // Get the final result (returned from the generator)
@@ -1834,7 +1839,7 @@ export async function* runModuleStream(
       fullContent = result.content;
       
       // Emit chunk event with full response
-      yield makeEvent('chunk', { chunk: result.content });
+      yield makeEvent('delta', { delta: result.content });
     }
 
     // Parse response
@@ -1853,7 +1858,7 @@ export async function* runModuleStream(
       // errorResult is always an error response from makeErrorResponse
       const errorObj = (errorResult as { error: { code: string; message: string } }).error;
       yield makeEvent('error', { error: errorObj });
-      yield makeEvent('complete', { result: errorResult });
+      yield makeEvent('end', { result: errorResult });
       return;
     }
 
@@ -1911,7 +1916,7 @@ export async function* runModuleStream(
           _invokeErrorHooks(module.name, new Error(dataErrors.join('; ')), (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data);
           const errorObj = (errorResult as { error: { code: string; message: string } }).error;
           yield makeEvent('error', { error: errorObj });
-          yield makeEvent('complete', { result: errorResult });
+          yield makeEvent('end', { result: errorResult });
           return;
         }
 
@@ -1927,7 +1932,7 @@ export async function* runModuleStream(
           _invokeErrorHooks(module.name, new Error(overflowErrors.join('; ')), dataToValidate);
           const errorObj = (errorResult as { error: { code: string; message: string } }).error;
           yield makeEvent('error', { error: errorObj });
-          yield makeEvent('complete', { result: errorResult });
+          yield makeEvent('end', { result: errorResult });
           return;
         }
 
@@ -1943,7 +1948,7 @@ export async function* runModuleStream(
           _invokeErrorHooks(module.name, new Error(enumErrors.join('; ')), dataToValidate);
           const errorObj = (errorResult as { error: { code: string; message: string } }).error;
           yield makeEvent('error', { error: errorObj });
-          yield makeEvent('complete', { result: errorResult });
+          yield makeEvent('end', { result: errorResult });
           return;
         }
       }
@@ -1968,7 +1973,7 @@ export async function* runModuleStream(
             _invokeErrorHooks(module.name, new Error(metaErrors.join('; ')), (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data);
             const errorObj = (errorResult as { error: { code: string; message: string } }).error;
             yield makeEvent('error', { error: errorObj });
-            yield makeEvent('complete', { result: errorResult });
+            yield makeEvent('end', { result: errorResult });
             return;
           }
         }
@@ -1981,8 +1986,8 @@ export async function* runModuleStream(
     const finalLatencyMs = Date.now() - startTime;
     _invokeAfterHooks(module.name, response, finalLatencyMs);
 
-    // Emit complete event
-    yield makeEvent('complete', { result: response });
+    // Emit end event
+    yield makeEvent('end', { result: response });
 
   } catch (e) {
     _invokeErrorHooks(module.name, e as Error, null);
@@ -1994,7 +1999,7 @@ export async function* runModuleStream(
     // errorResult is always an error response from makeErrorResponse
     const errorObj = (errorResult as { error: { code: string; message: string } }).error;
     yield makeEvent('error', { error: errorObj });
-    yield makeEvent('complete', { result: errorResult });
+    yield makeEvent('end', { result: errorResult });
   }
 }
 

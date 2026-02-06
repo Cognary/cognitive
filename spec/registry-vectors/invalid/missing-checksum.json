@@ -1,0 +1,35 @@
+{
+  "$test": {
+    "name": "missing-checksum",
+    "description": "distribution.checksum is required for safe installs.",
+    "expects": "reject",
+    "conformance_level": 1
+  },
+  "registry": {
+    "version": "2.0.0",
+    "updated": "2026-02-06T00:00:00Z",
+    "modules": {
+      "api-designer": {
+        "identity": {
+          "name": "api-designer",
+          "namespace": "official",
+          "version": "1.0.0",
+          "spec_version": "2.2"
+        },
+        "metadata": {
+          "description": "Design APIs.",
+          "author": "Cognary",
+          "tier": "exec"
+        },
+        "dependencies": {
+          "runtime_min": "2.2.0",
+          "modules": []
+        },
+        "distribution": {
+          "tarball": "https://example.com/api-designer-1.0.0.tar.gz"
+        }
+      }
+    }
+  }
+}
+

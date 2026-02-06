@@ -4,7 +4,9 @@
     "description": "Confidence is string instead of number",
     "expects": "reject",
     "conformance_level": 1,
-    "error_codes": ["E3001"]
+    "error_codes": [
+      "E3001"
+    ]
   },
   "envelope": {
     "ok": true,
@@ -15,6 +17,7 @@
     },
     "data": {
       "rationale": "Some rationale here."
-    }
+    },
+    "version": "2.2"
   }
 }

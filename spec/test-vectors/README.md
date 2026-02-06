@@ -26,6 +26,26 @@ test-vectors/
 └── README.md                      # This file
 ```
 
+## Streaming Vectors
+
+Streaming conformance is validated separately under:
+
+```
+spec/stream-vectors/
+```
+
+Those vectors validate `cep.events.v2.2` event shapes and require that terminal `end.result` conforms to the response envelope schema.
+
+## Registry Vectors
+
+Registry conformance is validated separately under:
+
+```
+spec/registry-vectors/
+```
+
+Those vectors validate the registry index schema and registry entry schema (tarball + checksum required).
+
 ## Test Vector Format
 
 Each test vector is a JSON file with the following structure:

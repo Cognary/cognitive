@@ -268,6 +268,8 @@ npm test
 | 资源 | 说明 |
 |------|------|
 | [REGISTRY-PROTOCOL.md](REGISTRY-PROTOCOL.md) | Registry 协议规范 |
+| [cognitive-registry.v2.json](cognitive-registry.v2.json) | Node CLI 默认使用的 Registry Index（v2） |
+| [spec/registry.schema.json](spec/registry.schema.json) | Registry Index Schema（v2） |
 | [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | Registry entry schema |
 
 ## License

@@ -14,7 +14,11 @@
       "trace_id": "tr-para-001",
       "composition": {
         "pattern": "parallel",
-        "modules_executed": ["security-analyzer", "perf-analyzer", "maintainability-analyzer"],
+        "modules_executed": [
+          "security-analyzer",
+          "perf-analyzer",
+          "maintainability-analyzer"
+        ],
         "aggregation": "merge",
         "total_latency_ms": 2800
       }
@@ -29,11 +33,12 @@
         "bottlenecks": 2
       },
       "maintainability": {
-        "score": 0.90,
+        "score": 0.9,
         "technical_debt_hours": 4
       },
       "aggregate_health": 0.82,
       "rationale": "Ran three specialized analyzers in parallel and merged results for comprehensive assessment."
-    }
+    },
+    "version": "2.2"
   }
 }

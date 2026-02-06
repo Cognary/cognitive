@@ -10,15 +10,16 @@
  *   cog add https://github.com/org/repo --module name --tag v1.0.0
  */
 
-import { createWriteStream, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync, lstatSync } from 'node:fs';
 import { writeFile, readFile, mkdir, rm } from 'node:fs/promises';
-import { pipeline } from 'node:stream/promises';
+import { pipeline, finished } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { join, basename, dirname, resolve, sep, isAbsolute } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
-import { createGunzip } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import type { CommandContext, CommandResult } from '../types.js';
 import { RegistryClient } from '../registry/client.js';
+import { extractTarGzFile } from '../registry/tar.js';
 
 // Module storage paths
 const USER_MODULES_DIR = join(homedir(), '.cognitive', 'modules');
@@ -221,11 +222,87 @@ function copyDir(src: string, dest: string): void {
     const srcPath = join(src, entry);
     const destPath = join(dest, entry);
     
-    if (statSync(srcPath).isDirectory()) {
+    const st = lstatSync(srcPath);
+    if (st.isSymbolicLink()) {
+      throw new Error(`Refusing to install module containing symlink: ${srcPath}`);
+    }
+    if (st.isDirectory()) {
       copyDir(srcPath, destPath);
     } else {
       copyFileSync(srcPath, destPath);
     }
+  }
+}
+
+async function downloadTarballWithSha256(url: string, outPath: string, maxBytes: number): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
+  const hash = createHash('sha256');
+  let received = 0;
+  const fileStream = createWriteStream(outPath);
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'cognitive-runtime/2.2' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to download tarball: ${response.status} ${response.statusText}`);
+    }
+
+    const contentLengthHeader = response.headers?.get?.('content-length');
+    if (contentLengthHeader) {
+      const contentLength = Number(contentLengthHeader);
+      if (!Number.isNaN(contentLength) && contentLength > maxBytes) {
+        throw new Error(`Tarball too large: ${contentLength} bytes (max ${maxBytes})`);
+      }
+    }
+
+    if (!response.body) {
+      throw new Error('Tarball response has no body');
+    }
+
+    const reader = (response.body as any).getReader?.();
+    if (!reader) {
+      // Fallback: stream pipeline without incremental hash.
+      await pipeline(Readable.fromWeb(response.body as any), fileStream);
+      const content = await readFile(outPath);
+      return createHash('sha256').update(content).digest('hex');
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        received += value.byteLength;
+        if (received > maxBytes) {
+          controller.abort();
+          throw new Error(`Tarball too large: ${received} bytes (max ${maxBytes})`);
+        }
+        const chunk = Buffer.from(value);
+        hash.update(chunk);
+        if (!fileStream.write(chunk)) {
+          await new Promise<void>((resolve) => fileStream.once('drain', () => resolve()));
+        }
+      }
+    }
+
+    fileStream.end();
+    await finished(fileStream);
+    return hash.digest('hex');
+  } catch (error) {
+    try {
+      fileStream.destroy();
+    } catch {
+      // ignore
+    }
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Tarball download timed out after 10000ms');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -359,6 +436,7 @@ export async function addFromRegistry(
   const { name: moduleName, version: requestedVersion } = parseModuleSpec(moduleSpec);
   const { name: customName, registry: registryUrl } = options;
   
+  let tempDir: string | undefined;
   try {
     const client = new RegistryClient(registryUrl);
     const moduleInfo = await client.getModule(moduleName);
@@ -427,16 +505,110 @@ export async function addFromRegistry(
       return result;
     }
     
-    // For tarball sources, download directly (future implementation)
+    // Tarball sources: require checksum, verify, and extract safely.
+    if (!downloadInfo.url.startsWith('http')) {
+      return { success: false, error: `Unsupported registry download URL: ${downloadInfo.url}` };
+    }
+    if (!downloadInfo.checksum) {
+      return {
+        success: false,
+        error: `Registry tarball missing checksum (required for safe install): ${moduleName}`,
+      };
+    }
+
+    tempDir = join(tmpdir(), `cog-reg-${Date.now()}`);
+    mkdirSync(tempDir, { recursive: true });
+    const tarPath = join(tempDir, 'module.tar.gz');
+
+    const MAX_TARBALL_BYTES = 20 * 1024 * 1024; // 20MB
+    const actualSha256 = await downloadTarballWithSha256(downloadInfo.url, tarPath, MAX_TARBALL_BYTES);
+
+    const expected = downloadInfo.checksum;
+    const checksumMatch = expected.match(/^sha256:([a-f0-9]{64})$/);
+    if (!checksumMatch) {
+      throw new Error(`Unsupported checksum format (expected sha256:<64hex>): ${expected}`);
+    }
+    const expectedHash = checksumMatch[1];
+    if (actualSha256 !== expectedHash) {
+      throw new Error(`Checksum mismatch for ${moduleName}: expected ${expectedHash}, got ${actualSha256}`);
+    }
+
+    const extractedRoot = join(tempDir, 'pkg');
+    mkdirSync(extractedRoot, { recursive: true });
+    await extractTarGzFile(tarPath, extractedRoot, {
+      maxFiles: 5_000,
+      maxTotalBytes: 50 * 1024 * 1024,
+      maxSingleFileBytes: 20 * 1024 * 1024,
+      maxTarBytes: 100 * 1024 * 1024,
+    });
+
+    // Find module directory inside extractedRoot.
+    const rootNames = readdirSync(extractedRoot).filter((e) => e !== '__MACOSX' && e !== '.DS_Store');
+    const rootPaths = rootNames.map((e) => join(extractedRoot, e)).filter((p) => existsSync(p));
+    const rootDirs = rootPaths.filter((p) => statSync(p).isDirectory());
+    const rootFiles = rootPaths.filter((p) => !statSync(p).isDirectory());
+
+    if (rootDirs.length === 0) {
+      throw new Error('Tarball extraction produced no root directory');
+    }
+    if (rootDirs.length !== 1 || rootFiles.length > 0) {
+      throw new Error(
+        `Tarball must contain exactly one module root directory and no other top-level entries. ` +
+        `dirs=${rootDirs.map(basename).join(',') || '(none)'} files=${rootFiles.map(basename).join(',') || '(none)'}`
+      );
+    }
+
+    // Strict mode: require root dir itself to be a valid module.
+    const sourcePath = rootDirs[0];
+    if (!isValidModule(sourcePath)) {
+      throw new Error('Root directory in tarball is not a valid module');
+    }
+
+    const installName = (customName || moduleName);
+    const safeInstallName = assertSafeModuleName(installName);
+    const targetPath = resolveModuleTarget(safeInstallName);
+
+    if (existsSync(targetPath)) {
+      rmSync(targetPath, { recursive: true, force: true });
+    }
+    await mkdir(USER_MODULES_DIR, { recursive: true });
+    copyDir(sourcePath, targetPath);
+
+    const version = await getModuleVersion(sourcePath);
+    await recordInstall(safeInstallName, {
+      source: downloadInfo.url,
+      githubUrl: downloadInfo.url,
+      version,
+      installedAt: targetPath,
+      installedTime: new Date().toISOString(),
+      registryModule: moduleName,
+      registryUrl,
+    });
+
     return {
-      success: false,
-      error: `Tarball downloads not yet supported. Source: ${moduleInfo.source}`,
+      success: true,
+      data: {
+        message: `Added: ${safeInstallName}${version ? ` v${version}` : ''} (registry tarball)`,
+        name: safeInstallName,
+        version,
+        location: targetPath,
+        source: 'registry',
+        registryModule: moduleName,
+      },
     };
   } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
     };
+  } finally {
+    if (tempDir) {
+      try {
+        rmSync(tempDir, { recursive: true, force: true });
+      } catch {
+        // ignore
+      }
+    }
   }
 }
 

@@ -8,13 +8,14 @@
   "envelope": {
     "ok": true,
     "meta": {
-      "confidence": 1.0,
+      "confidence": 1,
       "risk": "none",
       "explain": "Perfect confidence - deterministic transformation."
     },
     "data": {
       "result": "transformed",
       "rationale": "Transformation is purely mechanical with no ambiguity."
-    }
+    },
+    "version": "2.2"
   }
 }

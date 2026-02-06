@@ -26,6 +26,7 @@
         "estimated_effort": "2 days"
       },
       "rationale": "Forked context to safely explore functional programming approach without affecting main context."
-    }
+    },
+    "version": "2.2"
   }
 }

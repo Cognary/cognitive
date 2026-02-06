@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: product-analyzer
-version: 2.2.0
+version: 2.2.5
 responsibility: 分析产品需求并调用 UI 规范生成器
 
 # 模块分级 - exploration 因为涉及需求分析和创意

@@ -14,7 +14,11 @@
       "trace_id": "tr-comp-001",
       "composition": {
         "pattern": "sequential",
-        "modules_executed": ["code-analyzer", "code-reviewer", "summarizer"],
+        "modules_executed": [
+          "code-analyzer",
+          "code-reviewer",
+          "summarizer"
+        ],
         "total_latency_ms": 4500
       }
     },
@@ -29,6 +33,7 @@
       },
       "summary": "Code has moderate complexity with 3 medium-severity issues requiring attention.",
       "rationale": "Composed three modules sequentially to provide comprehensive code analysis."
-    }
+    },
+    "version": "2.2"
   }
 }

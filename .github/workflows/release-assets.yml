@@ -1,0 +1,33 @@
+name: Build Registry Release Assets
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  registry-assets:
+    runs-on: ubuntu-latest
+    # Skip Python-only releases (py-v*) and other non-runtime tags.
+    if: startsWith(github.event.release.tag_name, 'v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build tarball assets
+        run: |
+          python3 scripts/build-registry-assets.py \
+            --tag "${{ github.event.release.tag_name }}" \
+            --timestamp "${{ github.event.release.published_at }}"
+
+      - name: Upload release assets (tarballs + registry index)
+        uses: softprops/action-gh-release@v2
+        with:
+          # Registry index is published from the repo (main branch) via raw.githubusercontent.com.
+          files: |
+            dist/registry-assets/*.tar.gz

@@ -61,13 +61,13 @@ const mockV2Registry: RegistryV2 = {
         verified: true,
       },
       dependencies: {
-        runtime_min: '2.2',
+        runtime_min: '2.2.0',
         modules: [],
       },
       distribution: {
-        source: 'github:test-org/modules/api-designer',
         tarball: 'https://example.com/api-designer-1.5.0.tar.gz',
-        checksum: 'sha256:abc123',
+        // 64 hex chars to match the registry-entry schema pattern
+        checksum: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       },
       timestamps: {
         created_at: '2024-01-01T00:00:00Z',
@@ -140,6 +140,23 @@ describe('RegistryClient', () => {
     it('should return null for non-github source', () => {
       const result = client.parseGitHubSource('https://example.com/module.tar.gz');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('getDownloadUrl (checksum propagation)', () => {
+    beforeEach(() => {
+      client = new RegistryClient('https://example.com/registry.json');
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockV2Registry),
+      });
+    });
+
+    it('should return checksum when module has tarball source', async () => {
+      const info = await client.getDownloadUrl('api-designer');
+      expect(info.isGitHub).toBe(false);
+      expect(info.url).toBe('https://example.com/api-designer-1.5.0.tar.gz');
+      expect(info.checksum).toBe('sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     });
   });
 
@@ -327,6 +344,36 @@ describe('RegistryClient', () => {
   describe('error handling', () => {
     beforeEach(() => {
       client = new RegistryClient('https://example.com/registry.json');
+    });
+
+    it('should time out registry fetch', async () => {
+      vi.useFakeTimers();
+      global.fetch = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            const err = new Error('aborted');
+            (err as any).name = 'AbortError';
+            reject(err);
+          });
+        });
+      });
+
+      const p = client.fetchRegistry(true);
+      await vi.advanceTimersByTimeAsync(10_000);
+      await expect(p).rejects.toThrow('Registry fetch timed out after 10000ms');
+      vi.useRealTimers();
+    });
+
+    it('should reject oversized registry payload via content-length', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        headers: {
+          get: (name: string) => (name.toLowerCase() === 'content-length' ? String(1024 * 1024 + 1) : null),
+        },
+        json: () => Promise.resolve(mockV1Registry),
+      });
+
+      await expect(client.fetchRegistry(true)).rejects.toThrow('Registry payload too large');
     });
 
     it('should throw on network error', async () => {

@@ -15,6 +15,17 @@ Cognitive Modules is a specification for defining verifiable, structured AI task
 - **Control/Data separation** - Meta plane for routing, data plane for business logic
 - **Tiered strictness** - exec/decision/exploration levels
 
+## CEP (`cep.*`)
+
+`cep.*` (Cognitive Execution Protocol) is the protocol-oriented spec set for interoperability across implementations and transports (CLI/HTTP/MCP/SDKs).
+
+- [CEP Overview](./spec/cep/overview)
+- [cep.module.v2.2](./spec/cep/module)
+- [cep.envelope.v2.2](./spec/cep/envelope)
+- [cep.events.v2.2](./spec/cep/events)
+- [cep.conformance.v2.2](./spec/cep/conformance)
+- [cep.registry (Draft)](./spec/cep/registry)
+
 ## Module Structure
 
 ### v2.2 Format
@@ -34,6 +45,7 @@ module-name/
 ```json
 {
   "ok": true,
+  "version": "2.2",
   "meta": {
     "confidence": 0.0-1.0,
     "risk": "none" | "low" | "medium" | "high",
@@ -54,6 +66,7 @@ module-name/
 ```json
 {
   "ok": false,
+  "version": "2.2",
   "meta": {
     "confidence": 0.0-1.0,
     "risk": "none" | "low" | "medium" | "high",

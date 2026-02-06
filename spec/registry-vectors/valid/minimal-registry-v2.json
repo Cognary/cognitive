@@ -1,0 +1,46 @@
+{
+  "$test": {
+    "name": "minimal-registry-v2",
+    "description": "Minimal v2 registry index with one module entry (tarball + sha256 checksum).",
+    "expects": "accept",
+    "conformance_level": 1
+  },
+  "registry": {
+    "$schema": "https://cognitive-modules.dev/schema/registry-v2.json",
+    "version": "2.0.0",
+    "updated": "2026-02-06T00:00:00Z",
+    "modules": {
+      "code-reviewer": {
+        "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
+        "identity": {
+          "name": "code-reviewer",
+          "namespace": "official",
+          "version": "2.2.5",
+          "spec_version": "2.2"
+        },
+        "metadata": {
+          "description": "Review code and provide structured improvement suggestions.",
+          "author": "Cognary",
+          "tier": "decision",
+          "license": "Apache-2.0",
+          "repository": "https://github.com/Cognary/cognitive"
+        },
+        "dependencies": {
+          "runtime_min": "2.2.0",
+          "modules": []
+        },
+        "distribution": {
+          "tarball": "https://example.com/code-reviewer-2.2.5.tar.gz",
+          "checksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "size_bytes": 15360,
+          "files": [
+            "module.yaml",
+            "prompt.md",
+            "schema.json"
+          ]
+        }
+      }
+    }
+  }
+}
+

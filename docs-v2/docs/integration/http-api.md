@@ -90,8 +90,31 @@ curl -X POST http://localhost:8000/run \
   }'
 ```
 
+### `POST /run/stream` (SSE)
+
+Run a module and stream `cep.events.v2.2` events over SSE.
+
+- Response `Content-Type`: `text/event-stream`
+- Each SSE message uses:
+  - `event:` = `type`
+  - `data:` = JSON-serialized CEP event object
+
+Terminal `event: end` MUST contain `result` which conforms to the v2.2 response envelope.
+
+**cURL example**
+
+```bash
+curl -N -X POST http://localhost:8000/run/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "module": "code-reviewer",
+    "args": "def foo(): pass"
+  }'
+```
+
 ## Notes
 
 - Payload limit: 1MB
 - Provider selection follows the same rules as CLI (`--provider`/API keys)
 - `/run` responses always include `module` and `provider` (may be `"unknown"` if not resolved)
+- CLI streaming uses NDJSON (`cog run --stream`) with the same event objects, one JSON per line
