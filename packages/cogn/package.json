@@ -21,11 +21,11 @@
   "author": "ziel-io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ziel-io/cognitive-modules.git"
+    "url": "https://github.com/Cognary/cognitive.git"
   },
-  "homepage": "https://ziel-io.github.io/cognitive-modules/",
+  "homepage": "https://cognary.github.io/cognitive/",
   "bugs": {
-    "url": "https://github.com/ziel-io/cognitive-modules/issues"
+    "url": "https://github.com/Cognary/cognitive/issues"
   },
   "files": [
     "bin.js",

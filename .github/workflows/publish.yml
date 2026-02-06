@@ -12,6 +12,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Avoid publishing on unrelated releases (e.g. npm-only releases).
+    # Publish only when the release tag is explicitly prefixed for Python.
+    if: startsWith(github.event.release.tag_name, 'py-v') || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 
