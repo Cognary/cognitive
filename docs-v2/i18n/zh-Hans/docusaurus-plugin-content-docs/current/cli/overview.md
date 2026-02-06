@@ -40,6 +40,6 @@ npm install -g cogn@2.2.5
 cog run code-reviewer --args "your code" --pretty
 cog init my-module
 cog validate my-module --v22
-cog add ziel-io/cognitive-modules -m code-simplifier
+cog add Cognary/cognitive -m code-simplifier
 cog compose code-review-pipeline --args "code" --trace
 ```

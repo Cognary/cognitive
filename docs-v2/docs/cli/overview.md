@@ -62,8 +62,8 @@ cog validate my-module --v22
 ### 3. Install Modules from GitHub
 
 ```bash
-cog add ziel-io/cognitive-modules -m code-simplifier
-cog versions ziel-io/cognitive-modules
+cog add Cognary/cognitive -m code-simplifier
+cog versions Cognary/cognitive
 cog update code-simplifier
 ```
 

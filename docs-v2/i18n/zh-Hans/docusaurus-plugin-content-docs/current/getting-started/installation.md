@@ -30,10 +30,10 @@ cog doctor
 
 ```bash
 # 从 GitHub 安装模块（推荐）
-cog add ziel-io/cognitive-modules -m code-simplifier
+cog add Cognary/cognitive -m code-simplifier
 
 # 安装指定版本
-cog add ziel-io/cognitive-modules -m code-reviewer --tag v1.0.0
+cog add Cognary/cognitive -m code-reviewer --tag v1.0.0
 
 # 列出模块
 cog list
@@ -44,7 +44,7 @@ cog list
 ```bash
 cog update code-simplifier
 cog update code-simplifier --tag v2.0.0
-cog versions ziel-io/cognitive-modules
+cog versions Cognary/cognitive
 cog remove code-simplifier
 ```
 

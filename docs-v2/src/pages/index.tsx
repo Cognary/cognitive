@@ -192,7 +192,7 @@ function HomepageHeader() {
           </Link>
           <Link
             className={styles.heroSecondaryButton}
-            to="https://github.com/ziel-io/cognitive-modules">
+            to="https://github.com/Cognary/cognitive">
             <Github {...ICON_PROPS} width={18} height={18} />
             <Translate
               id="homepage.hero.secondaryCta"

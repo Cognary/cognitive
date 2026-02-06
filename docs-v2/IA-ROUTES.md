@@ -5,7 +5,7 @@
 - 文档框架：Docusaurus (`docs-v2`)
 - Docs 基础路由：`/docs/*`
 - 站点主页路由：`/`
-- 生产环境基路径（当前配置）：`/cognitive-modules/`
+- 生产环境基路径（当前配置）：`/cognitive/`
 - 国际化：`en`、`zh-Hans`（中文路由前缀为 `/zh-Hans/*`）
 
 ## 2) UI 规范 IA -> 路由域映射

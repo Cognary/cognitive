@@ -32,10 +32,10 @@ cog doctor
 
 ```bash
 # Install module from GitHub (recommended)
-cog add ziel-io/cognitive-modules -m code-simplifier
+cog add Cognary/cognitive -m code-simplifier
 
 # Install specific version
-cog add ziel-io/cognitive-modules -m code-reviewer --tag v1.0.0
+cog add Cognary/cognitive -m code-reviewer --tag v1.0.0
 
 # List installed modules
 cog list
@@ -51,7 +51,7 @@ cog update code-simplifier
 cog update code-simplifier --tag v2.0.0
 
 # List available versions
-cog versions ziel-io/cognitive-modules
+cog versions Cognary/cognitive
 
 # Remove module
 cog remove code-simplifier

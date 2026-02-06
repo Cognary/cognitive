@@ -134,7 +134,7 @@ compat:
 
 ```json
 {
-  "$schema": "https://ziel-io.github.io/cognitive-modules/schema/v2.2.json",
+  "$schema": "https://cognitive-modules.dev/schema/v2.2.json",
   
   "meta": {
     "type": "object",

@@ -7,11 +7,11 @@ const config: Config = {
   tagline: 'Verifiable Structured AI Task Specifications',
   favicon: 'img/favicon.ico',
 
-  url: 'https://ziel-io.github.io',
-  baseUrl: '/cognitive-modules/',
+  url: 'https://cognary.github.io',
+  baseUrl: '/cognitive/',
 
-  organizationName: 'ziel-io',
-  projectName: 'cognitive-modules',
+  organizationName: 'Cognary',
+  projectName: 'cognitive',
 
   onBrokenLinks: 'throw',
   markdown: {
@@ -41,7 +41,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/ziel-io/cognitive-modules/tree/main/docs-v2/',
+          editUrl: 'https://github.com/Cognary/cognitive/tree/main/docs-v2/',
           routeBasePath: 'docs',
         },
         blog: false,
@@ -102,7 +102,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/ziel-io/cognitive-modules',
+          href: 'https://github.com/Cognary/cognitive',
           label: 'GitHub',
           position: 'right',
           className: 'navbar-github-link',
@@ -171,7 +171,7 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/ziel-io/cognitive-modules',
+              href: 'https://github.com/Cognary/cognitive',
             },
             {
               label: 'npm',
@@ -180,7 +180,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} ziel-io. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Cognary. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.dracula,

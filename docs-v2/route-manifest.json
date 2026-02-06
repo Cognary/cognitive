@@ -1,6 +1,6 @@
 {
   "version": "2.2.5",
-  "baseUrl": "/cognitive-modules/",
+  "baseUrl": "/cognitive/",
   "docsRouteBasePath": "/docs",
   "locales": ["en", "zh-Hans"],
   "ia_mapping": {
