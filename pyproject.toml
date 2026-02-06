@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cognitive-modules"
-version = "2.2.2"
+version = "2.2.3"
 description = "Structured LLM task runner with schema validation, confidence scoring, and subagent orchestration"
 readme = "README.md"
 license = {text = "MIT"}
@@ -79,10 +79,10 @@ docs = [
 cog = "cognitive.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/ziel-io/cognitive-modules"
-Documentation = "https://github.com/ziel-io/cognitive-modules#readme"
-Repository = "https://github.com/ziel-io/cognitive-modules"
-Issues = "https://github.com/ziel-io/cognitive-modules/issues"
+Homepage = "https://github.com/Cognary/cognitive"
+Documentation = "https://cognary.github.io/cognitive/"
+Repository = "https://github.com/Cognary/cognitive"
+Issues = "https://github.com/Cognary/cognitive/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
