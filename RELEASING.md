@@ -10,7 +10,7 @@ This repo publishes:
 
 - npm: `2.2.7`
 - registry module versions: aligned to the repo release tag (recommended)
-- PyPI: `2.2.7` (keep consistent with npm + registry assets)
+- PyPI: `2.2.3` (legacy; not kept in sync with npm/registry)
 
 ## Registry v2 (tarballs + checksums)
 

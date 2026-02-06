@@ -20,6 +20,6 @@ sidebar_position: 1
 本发布线下，npm、PyPI 与 registry tarball 的版本号保持一致：
 
 - npm（主运行时）：`cognitive-modules-cli@2.2.7` 与 `cogn@2.2.7`
-- PyPI：`cognitive-modules@2.2.7`
+- PyPI（遗留）：`cognitive-modules@2.2.3`
 
-原因：统一版本号能显著降低用户理解成本，避免“Release tag vs 资产文件名”不一致造成的困惑。
+原因：Node.js 运行时与 registry assets 是主要维护对象；Python 包属于遗留，不再强制同步。

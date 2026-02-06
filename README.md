@@ -20,7 +20,7 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 ## Version
 
 - **Runtime (npm)**: `2.2.7`
-- **Python package (PyPI, legacy)**: `2.2.7` (unified versioning across channels)
+- **Python package (PyPI, legacy)**: `2.2.3` (not kept in sync; legacy)
 - **Spec**: v2.2
 
 ## Installation (Node.js)
