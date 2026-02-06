@@ -1,18 +1,32 @@
 {
   "name": "cognitive-modules-cli",
-  "version": "2.2.1",
+  "version": "2.2.5",
   "description": "Cognitive Modules - Structured AI Task Execution with version management",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "bin": {
     "cognitive-modules-cli": "dist/cli.js",
     "cog": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\"",
+    "build": "npm run clean && tsc",
     "start": "node dist/cli.js",
     "dev": "tsx src/cli.ts",
-    "prepublishOnly": "npm run build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache",
+    "release:check": "npm run build && npm test && npm run pack:check",
+    "prepublishOnly": "npm run release:check"
   },
   "keywords": [
     "cognitive",
@@ -25,6 +39,12 @@
   ],
   "license": "MIT",
   "author": "ziel-io",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ziel-io/cognitive-modules.git"
@@ -33,20 +53,22 @@
   "bugs": {
     "url": "https://github.com/ziel-io/cognitive-modules/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
     "ajv": "^8.12.0",
-    "js-yaml": "^4.1.1"
-  },
-  "optionalDependencies": {
+    "js-yaml": "^4.1.1",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.0"
   }
 }

@@ -11,6 +11,26 @@ export abstract class BaseProvider implements Provider {
   
   abstract isConfigured(): boolean;
 
+  /**
+   * Check if this provider supports streaming.
+   * Override in subclasses that implement streaming.
+   */
+  supportsStreaming(): boolean {
+    return false;
+  }
+
+  /**
+   * Stream-based invoke (optional).
+   * Default implementation falls back to non-streaming invoke.
+   * Override in subclasses that support streaming.
+   */
+  async *invokeStream(params: InvokeParams): AsyncGenerator<string, InvokeResult, unknown> {
+    // Default fallback: use non-streaming invoke and yield the entire result at once
+    const result = await this.invoke(params);
+    yield result.content;
+    return result;
+  }
+
   protected buildJsonPrompt(schema: object): string {
     return `\n\nYou MUST respond with valid JSON matching this schema:\n${JSON.stringify(schema, null, 2)}\n\nRespond with ONLY the JSON, no markdown code blocks.`;
   }

@@ -11,6 +11,19 @@ export interface Provider {
   name: string;
   invoke(params: InvokeParams): Promise<InvokeResult>;
   isConfigured(): boolean;
+  
+  /**
+   * Stream-based invoke (optional).
+   * Returns an async generator that yields content chunks.
+   * 
+   * If not implemented, falls back to non-streaming invoke.
+   */
+  invokeStream?(params: InvokeParams): AsyncGenerator<string, InvokeResult, unknown>;
+  
+  /**
+   * Check if this provider supports streaming.
+   */
+  supportsStreaming?(): boolean;
 }
 
 export interface InvokeParams {
@@ -312,9 +325,12 @@ export interface EnvelopeMeta {
 
 /**
  * Enhanced error structure with retry and recovery info (v2.2.1).
+ * 
+ * Consistent across HTTP, MCP, and CLI layers.
+ * See ERROR-CODES.md for error code taxonomy.
  */
 export interface EnvelopeError {
-  /** Error code (e.g., "INVALID_INPUT", "PARSE_ERROR") */
+  /** Error code (E-format like "E4006" or legacy like "MODULE_NOT_FOUND") */
   code: string;
   
   /** Human-readable error message */
@@ -322,6 +338,9 @@ export interface EnvelopeError {
   
   /** Whether the error can be retried */
   recoverable?: boolean;
+  
+  /** Suggested action to fix the error */
+  suggestion?: string;
   
   /** Suggested wait time before retry (in milliseconds) */
   retry_after_ms?: number;
@@ -469,10 +488,26 @@ export interface CommandContext {
   verbose?: boolean;
 }
 
+/**
+ * CLI command result (legacy format).
+ * 
+ * For new code, prefer using CognitiveErrorEnvelope from errors/index.js
+ * for error responses to ensure cross-layer consistency.
+ */
 export interface CommandResult {
   success: boolean;
   data?: unknown;
   error?: string;
+}
+
+/**
+ * Extended command result with unified error structure.
+ * Use this for commands that need full error details.
+ */
+export interface CommandResultV2 {
+  ok: boolean;
+  data?: unknown;
+  error?: EnvelopeError;
 }
 
 // =============================================================================
@@ -540,7 +575,10 @@ function aggregateRiskFromList(items: Array<{ risk?: RiskLevel }>): RiskLevel {
   
   let maxLevel = 0;
   for (const item of items) {
-    const level = riskLevels[item.risk ?? 'medium'];
+    const riskKey = item.risk;
+    const level = typeof riskKey === 'string' && Object.prototype.hasOwnProperty.call(riskLevels, riskKey)
+      ? riskLevels[riskKey as RiskLevel]
+      : riskLevels.medium;
     maxLevel = Math.max(maxLevel, level);
   }
   

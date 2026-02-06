@@ -1,0 +1,46 @@
+{
+  "$test": {
+    "name": "extensions-too-many-insights",
+    "description": "Extensions insights array exceeds maxItems (20)",
+    "expects": "reject",
+    "conformance_level": 2,
+    "error_codes": ["E1003"]
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.8,
+      "risk": "low",
+      "explain": "Analysis complete"
+    },
+    "data": {
+      "result": "test",
+      "rationale": "Test rationale",
+      "extensions": {
+        "insights": [
+          {"text": "Insight 1", "suggested_mapping": "a"},
+          {"text": "Insight 2", "suggested_mapping": "b"},
+          {"text": "Insight 3", "suggested_mapping": "c"},
+          {"text": "Insight 4", "suggested_mapping": "d"},
+          {"text": "Insight 5", "suggested_mapping": "e"},
+          {"text": "Insight 6", "suggested_mapping": "f"},
+          {"text": "Insight 7", "suggested_mapping": "g"},
+          {"text": "Insight 8", "suggested_mapping": "h"},
+          {"text": "Insight 9", "suggested_mapping": "i"},
+          {"text": "Insight 10", "suggested_mapping": "j"},
+          {"text": "Insight 11", "suggested_mapping": "k"},
+          {"text": "Insight 12", "suggested_mapping": "l"},
+          {"text": "Insight 13", "suggested_mapping": "m"},
+          {"text": "Insight 14", "suggested_mapping": "n"},
+          {"text": "Insight 15", "suggested_mapping": "o"},
+          {"text": "Insight 16", "suggested_mapping": "p"},
+          {"text": "Insight 17", "suggested_mapping": "q"},
+          {"text": "Insight 18", "suggested_mapping": "r"},
+          {"text": "Insight 19", "suggested_mapping": "s"},
+          {"text": "Insight 20", "suggested_mapping": "t"},
+          {"text": "Insight 21", "suggested_mapping": "u"}
+        ]
+      }
+    }
+  }
+}

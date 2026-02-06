@@ -1,0 +1,58 @@
+{
+  "ok": true,
+  "version": "2.2",
+  "meta": {
+    "confidence": 0.82,
+    "risk": "low",
+    "explain": "Analyzed health product requirements and generated UI specification for landing page."
+  },
+  "data": {
+    "analysis": {
+      "product_type": "health-supplement",
+      "target_audience": {
+        "age_range": "25-45",
+        "profile": "busy professionals",
+        "pain_points": ["stress", "emotional burnout", "work-life balance"]
+      },
+      "key_value_propositions": [
+        "Natural stress relief",
+        "Emotional resilience support",
+        "Science-backed ingredients"
+      ],
+      "competitive_positioning": "premium wellness for high-achievers"
+    },
+    "recommended_sections": [
+      {
+        "name": "Hero",
+        "purpose": "Immediately communicate stress relief benefit",
+        "elements": ["calming imagery", "benefit-focused headline", "CTA to shop"]
+      },
+      {
+        "name": "Benefits",
+        "purpose": "Explain how product addresses pain points",
+        "elements": ["icon cards for each benefit", "brief scientific backing"]
+      },
+      {
+        "name": "Ingredients",
+        "purpose": "Build trust through transparency",
+        "elements": ["ingredient list", "sourcing information"]
+      },
+      {
+        "name": "Testimonials",
+        "purpose": "Social proof from similar professionals",
+        "elements": ["quotes", "professional titles", "before/after"]
+      },
+      {
+        "name": "Purchase CTA",
+        "purpose": "Convert interested visitors",
+        "elements": ["pricing", "subscription options", "guarantee"]
+      }
+    ],
+    "design_recommendations": {
+      "color_palette": "calming blues and greens with warm accents",
+      "typography": "clean, professional, easy to read",
+      "imagery_style": "lifestyle photography showing calm, successful professionals"
+    },
+    "rationale": "Analyzed target audience needs for stress relief and emotional wellness. Recommended sections focus on building trust (ingredients, testimonials) while clearly communicating benefits. Design recommendations align with calming, professional aesthetic expected by target demographic."
+  }
+}

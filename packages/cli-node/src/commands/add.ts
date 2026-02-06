@@ -1,18 +1,24 @@
 /**
- * Add command - Install modules from GitHub
+ * Add command - Install modules from GitHub or Registry
  * 
- * cog add ziel-io/cognitive-modules -m code-simplifier
- * cog add https://github.com/org/repo --module name --tag v1.0.0
+ * From Registry:
+ *   cog add code-reviewer
+ *   cog add code-reviewer@2.0.0
+ * 
+ * From GitHub:
+ *   cog add ziel-io/cognitive-modules -m code-simplifier
+ *   cog add https://github.com/org/repo --module name --tag v1.0.0
  */
 
 import { createWriteStream, existsSync, mkdirSync, rmSync, readdirSync, statSync, copyFileSync } from 'node:fs';
 import { writeFile, readFile, mkdir, rm } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
-import { join, basename } from 'node:path';
+import { join, basename, dirname, resolve, sep, isAbsolute } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { createGunzip } from 'node:zlib';
 import type { CommandContext, CommandResult } from '../types.js';
+import { RegistryClient } from '../registry/client.js';
 
 // Module storage paths
 const USER_MODULES_DIR = join(homedir(), '.cognitive', 'modules');
@@ -23,19 +29,26 @@ export interface AddOptions {
   name?: string;
   branch?: string;
   tag?: string;
+  registry?: string;
+}
+
+export interface InstallInfo {
+  source: string;
+  githubUrl: string;
+  modulePath?: string;
+  tag?: string;
+  branch?: string;
+  version?: string;
+  installedAt: string;
+  installedTime: string;
+  /** Registry module name if installed from registry */
+  registryModule?: string;
+  /** Registry URL if installed from a custom registry */
+  registryUrl?: string;
 }
 
 interface InstallManifest {
-  [moduleName: string]: {
-    source: string;
-    githubUrl: string;
-    modulePath?: string;
-    tag?: string;
-    branch?: string;
-    version?: string;
-    installedAt: string;
-    installedTime: string;
-  };
+  [moduleName: string]: InstallInfo;
 }
 
 /**
@@ -60,6 +73,36 @@ function parseGitHubUrl(url: string): { org: string; repo: string; fullUrl: stri
     repo,
     fullUrl: `https://github.com/${org}/${repo}`,
   };
+}
+
+function assertSafeModuleName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Invalid module name: empty');
+  }
+  if (trimmed.includes('..') || trimmed.includes('/') || trimmed.includes('\\')) {
+    throw new Error(`Invalid module name: ${name}`);
+  }
+  if (isAbsolute(trimmed)) {
+    throw new Error(`Invalid module name (absolute path not allowed): ${name}`);
+  }
+  return trimmed;
+}
+
+function resolveModuleTarget(moduleName: string): string {
+  const safeName = assertSafeModuleName(moduleName);
+  const targetPath = resolve(USER_MODULES_DIR, safeName);
+  const root = resolve(USER_MODULES_DIR) + sep;
+  if (!targetPath.startsWith(root)) {
+    throw new Error(`Invalid module name (path traversal): ${moduleName}`);
+  }
+  return targetPath;
+}
+
+function isPathWithinRoot(rootDir: string, targetPath: string): boolean {
+  const root = resolve(rootDir);
+  const target = resolve(targetPath);
+  return target === root || target.startsWith(root + sep);
 }
 
 /**
@@ -96,6 +139,9 @@ async function downloadAndExtract(
   
   // Extract using built-in unzip (available on most systems)
   const { execSync } = await import('node:child_process');
+  // Validate ZIP entries to avoid path traversal (Zip Slip)
+  const listing = execSync(`unzip -Z1 "${zipPath}"`, { stdio: 'pipe' }).toString('utf-8');
+  assertSafeZipEntries(listing);
   execSync(`unzip -q "${zipPath}" -d "${tempDir}"`, { stdio: 'pipe' });
   
   // Find extracted directory
@@ -108,6 +154,23 @@ async function downloadAndExtract(
   }
   
   return join(tempDir, entries[0]);
+}
+
+/**
+ * Validate ZIP listing to prevent path traversal.
+ */
+function assertSafeZipEntries(listing: string): void {
+  const entries = listing.split(/\r?\n/).map(e => e.trim()).filter(Boolean);
+  for (const entry of entries) {
+    const normalized = entry.replace(/\\/g, '/');
+    if (normalized.startsWith('/') || /^[a-zA-Z]:\//.test(normalized)) {
+      throw new Error(`Unsafe ZIP entry (absolute path): ${entry}`);
+    }
+    const parts = normalized.split('/');
+    if (parts.includes('..')) {
+      throw new Error(`Unsafe ZIP entry (path traversal): ${entry}`);
+    }
+  }
 }
 
 /**
@@ -125,12 +188,17 @@ function isValidModule(path: string): boolean {
  * Find module within repository
  */
 function findModuleInRepo(repoRoot: string, modulePath: string): string {
-  const possiblePaths = [
-    join(repoRoot, modulePath),
-    join(repoRoot, 'cognitive', 'modules', modulePath),
-    join(repoRoot, 'modules', modulePath),
+  const candidatePaths = [
+    resolve(repoRoot, modulePath),
+    resolve(repoRoot, 'cognitive', 'modules', modulePath),
+    resolve(repoRoot, 'modules', modulePath),
   ];
-  
+
+  const possiblePaths = candidatePaths.filter((p) => isPathWithinRoot(repoRoot, p));
+  if (possiblePaths.length === 0) {
+    throw new Error(`Invalid module path (outside repository root): ${modulePath}`);
+  }
+
   for (const p of possiblePaths) {
     if (existsSync(p) && isValidModule(p)) {
       return p;
@@ -228,9 +296,154 @@ export async function getInstallInfo(moduleName: string): Promise<InstallManifes
 }
 
 /**
+ * Check if input looks like a GitHub URL or org/repo format
+ * 
+ * GitHub formats:
+ * - https://github.com/org/repo
+ * - http://github.com/org/repo
+ * - github:org/repo
+ * - org/repo (shorthand, must be exactly two parts)
+ * 
+ * NOT GitHub (registry module names):
+ * - code-reviewer
+ * - code-reviewer@1.0.0
+ * - my-module (no slash)
+ */
+function isGitHubSource(input: string): boolean {
+  // URL formats
+  if (input.startsWith('http://') || input.startsWith('https://')) {
+    return true;
+  }
+  
+  // github: prefix format
+  if (input.startsWith('github:')) {
+    return true;
+  }
+  
+  // Contains github.com
+  if (input.includes('github.com')) {
+    return true;
+  }
+  
+  // Shorthand format: org/repo (exactly two parts, no @ version suffix)
+  // Must match pattern like: owner/repo or owner/repo but NOT module@version
+  const shorthandMatch = input.match(/^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/);
+  if (shorthandMatch) {
+    // Additional check: if it contains @, it's likely a scoped npm package or versioned module
+    // But GitHub shorthand shouldn't have @ in the middle
+    return !input.includes('@');
+  }
+  
+  return false;
+}
+
+/**
+ * Parse module name with optional version: "module-name@1.0.0"
+ */
+function parseModuleSpec(spec: string): { name: string; version?: string } {
+  const match = spec.match(/^([^@]+)(?:@(.+))?$/);
+  if (!match) {
+    return { name: spec };
+  }
+  return { name: match[1], version: match[2] };
+}
+
+/**
+ * Add a module from the registry
+ */
+export async function addFromRegistry(
+  moduleSpec: string,
+  ctx: CommandContext,
+  options: AddOptions = {}
+): Promise<CommandResult> {
+  const { name: moduleName, version: requestedVersion } = parseModuleSpec(moduleSpec);
+  const { name: customName, registry: registryUrl } = options;
+  
+  try {
+    const client = new RegistryClient(registryUrl);
+    const moduleInfo = await client.getModule(moduleName);
+    
+    if (!moduleInfo) {
+      return {
+        success: false,
+        error: `Module not found in registry: ${moduleName}\nUse 'cog search' to find available modules.`,
+      };
+    }
+    
+    // Check if deprecated
+    if (moduleInfo.deprecated) {
+      console.error(`Warning: Module '${moduleName}' is deprecated.`);
+    }
+    
+    // Get download info
+    const downloadInfo = await client.getDownloadUrl(moduleName);
+    
+    if (downloadInfo.isGitHub && downloadInfo.githubInfo) {
+      const { org, repo, path, ref } = downloadInfo.githubInfo;
+      
+      // Use addFromGitHub() directly (not add() to avoid recursion)
+      const result = await addFromGitHub(`${org}/${repo}`, ctx, {
+        module: path,
+        name: customName || moduleName,
+        tag: requestedVersion || ref,
+        branch: ref || 'main',
+      });
+      
+      // If successful, update the install manifest to track registry info
+      if (result.success && result.data) {
+        const data = result.data as { name: string; version?: string; location?: string };
+        const installName = data.name;
+        
+        // Update manifest with registry info
+        const existingInfo = await getInstallInfo(installName);
+        if (existingInfo) {
+          await recordInstall(installName, {
+            ...existingInfo,
+            registryModule: moduleName,
+            registryUrl: registryUrl,
+          });
+        } else {
+          // Fallback: create minimal install info if not found (shouldn't happen but safety first)
+          await recordInstall(installName, {
+            source: 'registry',
+            githubUrl: `${org}/${repo}`,
+            modulePath: path,
+            version: data.version,
+            installedAt: data.location || '',
+            installedTime: new Date().toISOString(),
+            registryModule: moduleName,
+            registryUrl: registryUrl,
+          });
+        }
+        
+        // Update result to indicate registry source
+        result.data = {
+          ...result.data,
+          source: 'registry',
+          registryModule: moduleName,
+        };
+      }
+      
+      return result;
+    }
+    
+    // For tarball sources, download directly (future implementation)
+    return {
+      success: false,
+      error: `Tarball downloads not yet supported. Source: ${moduleInfo.source}`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
  * Add a module from GitHub
  */
-export async function add(
+export async function addFromGitHub(
   url: string,
   ctx: CommandContext,
   options: AddOptions = {}
@@ -242,7 +455,7 @@ export async function add(
   const ref = tag || branch;
   const isTag = !!tag;
   
-  let repoRoot: string;
+  let repoRoot: string | undefined;
   let sourcePath: string;
   let moduleName: string;
   
@@ -264,13 +477,13 @@ export async function add(
     }
     
     // Determine module name
-    moduleName = name || basename(sourcePath);
+    moduleName = name ? assertSafeModuleName(name) : basename(sourcePath);
     
     // Get version
     const version = await getModuleVersion(sourcePath);
     
     // Install to user modules dir
-    const targetPath = join(USER_MODULES_DIR, moduleName);
+    const targetPath = resolveModuleTarget(moduleName);
     
     // Remove existing
     if (existsSync(targetPath)) {
@@ -294,8 +507,10 @@ export async function add(
     });
     
     // Cleanup temp directory
-    const tempDir = repoRoot.split('/').slice(0, -1).join('/');
-    rmSync(tempDir, { recursive: true, force: true });
+    const tempDir = dirname(repoRoot);
+    if (tempDir && tempDir !== '/' && tempDir !== '.' && tempDir !== USER_MODULES_DIR) {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
     
     return {
       success: true,
@@ -304,12 +519,42 @@ export async function add(
         name: moduleName,
         version,
         location: targetPath,
+        source: 'github',
       },
     };
   } catch (error) {
+    // Cleanup temp directory on error
+    if (repoRoot) {
+      try {
+        const tempDir = dirname(repoRoot);
+        if (tempDir && tempDir !== '/' && tempDir !== '.' && tempDir !== USER_MODULES_DIR) {
+          rmSync(tempDir, { recursive: true, force: true });
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
     };
+  }
+}
+
+/**
+ * Add a module from GitHub or Registry (auto-detect source)
+ */
+export async function add(
+  source: string,
+  ctx: CommandContext,
+  options: AddOptions = {}
+): Promise<CommandResult> {
+  // Determine source type
+  if (isGitHubSource(source)) {
+    return addFromGitHub(source, ctx, options);
+  } else {
+    // Treat as registry module name
+    return addFromRegistry(source, ctx, options);
   }
 }

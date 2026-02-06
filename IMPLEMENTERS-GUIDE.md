@@ -49,8 +49,8 @@ The specification is language-agnostic. Reference implementations exist in:
 
 | Language | Package | Repository |
 |----------|---------|------------|
-| Python | `cognitive-modules` | ziel-io/cognitive-modules |
-| TypeScript | `cogn` | ziel-io/cognitive-modules/packages/cli-node |
+| Node.js (TypeScript) | `cognitive-modules-cli` / `cogn` | ziel-io/cognitive-modules/packages/cli-node |
+| Python | `cognitive-modules` | Legacy (not actively maintained) |
 
 ---
 
@@ -747,19 +747,11 @@ class SubagentExecutor:
 
 ## 8. Reference Implementations
 
-### Python Reference
+### Python Reference (Legacy)
 
-```python
-# Install
-pip install cognitive-modules
-
-# Source code
-# https://github.com/ziel-io/cognitive-modules/tree/main/src/cognitive
-
-# Key files:
-# - loader.py: Module loading
-# - runner.py: Execution with v2.2 envelope
-# - validator.py: Schema validation
+```text
+Python runtime is legacy and not actively maintained.
+Source code: https://github.com/ziel-io/cognitive-modules/tree/main/src/cognitive
 ```
 
 ### TypeScript Reference

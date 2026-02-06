@@ -1,0 +1,37 @@
+{
+  "$test": {
+    "name": "overflow-extensions",
+    "description": "Valid response with overflow data in extensions",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.86,
+      "risk": "low",
+      "explain": "Analysis complete with additional insights captured in extensions"
+    },
+    "data": {
+      "primary_result": {
+        "status": "success",
+        "main_finding": "Code follows best practices"
+      },
+      "rationale": "Performed comprehensive analysis following established methodology.",
+      "extensions": {
+        "insights": [
+          {
+            "text": "Detected potential for async/await optimization in data fetching layer",
+            "suggested_mapping": "performance.optimization",
+            "evidence": "Multiple sequential await calls in UserService.fetchAll()"
+          },
+          {
+            "text": "Consider using TypeScript strict mode for better type safety",
+            "suggested_mapping": "quality.type_safety",
+            "evidence": "Found 12 instances of 'any' type usage"
+          }
+        ]
+      }
+    }
+  }
+}

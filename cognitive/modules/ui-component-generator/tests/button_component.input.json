@@ -1,0 +1,35 @@
+{
+  "component_name": "Button",
+  "description": "A reusable button component with multiple variants",
+  "framework": "react",
+  "props": [
+    {
+      "name": "variant",
+      "type": "string",
+      "options": ["primary", "secondary", "outline"],
+      "default": "primary"
+    },
+    {
+      "name": "size",
+      "type": "string",
+      "options": ["sm", "md", "lg"],
+      "default": "md"
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "onClick",
+      "type": "function",
+      "required": false
+    },
+    {
+      "name": "children",
+      "type": "ReactNode",
+      "required": true
+    }
+  ],
+  "styling": "tailwind"
+}

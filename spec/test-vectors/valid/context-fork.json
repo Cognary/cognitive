@@ -1,0 +1,31 @@
+{
+  "$test": {
+    "name": "context-fork",
+    "description": "Valid response with context protocol fork indication",
+    "expects": "accept",
+    "conformance_level": 3
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.91,
+      "risk": "none",
+      "explain": "Context forked for parallel exploration of alternatives",
+      "trace_id": "tr-fork-001",
+      "context": {
+        "mode": "fork",
+        "fork_id": "fork-abc123",
+        "parent_context": "ctx-main-001",
+        "purpose": "Explore alternative implementation approach"
+      }
+    },
+    "data": {
+      "exploration_result": {
+        "approach": "functional_style",
+        "viability": "high",
+        "estimated_effort": "2 days"
+      },
+      "rationale": "Forked context to safely explore functional programming approach without affecting main context."
+    }
+  }
+}

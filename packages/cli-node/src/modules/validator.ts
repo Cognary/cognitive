@@ -63,14 +63,14 @@ export async function validateModule(
   } else if (hasModuleMd) {
     // v1 format
     if (v22) {
-      errors.push("Module is v1 format. Use 'cogn migrate' to upgrade to v2.2");
+      errors.push("Module is v1 format. Use 'cog migrate' to upgrade to v2.2");
       return { valid: false, errors, warnings };
     }
     return validateV1Format(modulePath);
   } else if (hasOldModuleMd) {
     // v0 format
     if (v22) {
-      errors.push("Module is v0 format. Use 'cogn migrate' to upgrade to v2.2");
+      errors.push("Module is v0 format. Use 'cog migrate' to upgrade to v2.2");
       return { valid: false, errors, warnings };
     }
     return validateV0Format(modulePath);
@@ -93,7 +93,8 @@ async function validateV22Format(modulePath: string): Promise<ValidationResult> 
   
   try {
     const content = await fs.readFile(moduleYamlPath, 'utf-8');
-    manifest = yaml.load(content) as Record<string, unknown>;
+    const loaded = yaml.load(content);
+    manifest = loaded && typeof loaded === 'object' ? (loaded as Record<string, unknown>) : {};
   } catch (e) {
     errors.push(`Invalid YAML in module.yaml: ${(e as Error).message}`);
     return { valid: false, errors, warnings };
@@ -281,7 +282,8 @@ async function validateV2Format(modulePath: string): Promise<ValidationResult> {
   
   try {
     const content = await fs.readFile(moduleYamlPath, 'utf-8');
-    manifest = yaml.load(content) as Record<string, unknown>;
+    const loaded = yaml.load(content);
+    manifest = loaded && typeof loaded === 'object' ? (loaded as Record<string, unknown>) : {};
   } catch (e) {
     errors.push(`Invalid YAML in module.yaml: ${(e as Error).message}`);
     return { valid: false, errors, warnings };
@@ -339,7 +341,7 @@ async function validateV2Format(modulePath: string): Promise<ValidationResult> {
   
   // Check for v2.2 features and suggest upgrade
   if (!manifest.tier) {
-    warnings.push("Consider adding 'tier' for v2.2 (use 'cogn validate --v22' for full check)");
+    warnings.push("Consider adding 'tier' for v2.2 (use 'cog validate --v22' for full check)");
   }
   
   return { valid: errors.length === 0, errors, warnings };
@@ -645,6 +647,8 @@ export function validateV22Envelope(response: Record<string, unknown>): { valid:
   // Check meta
   if (!('meta' in response)) {
     errors.push("Missing 'meta' field (required for v2.2)");
+  } else if (typeof response.meta !== 'object' || response.meta === null || Array.isArray(response.meta)) {
+    errors.push("meta must be an object");
   } else {
     const meta = response.meta as Record<string, unknown>;
     
@@ -667,8 +671,10 @@ export function validateV22Envelope(response: Record<string, unknown>): { valid:
     
     if (!('explain' in meta)) {
       errors.push("meta missing 'explain'");
+    } else if (typeof meta.explain !== 'string') {
+      errors.push("meta.explain must be a string");
     } else {
-      const explain = (meta.explain as string) ?? '';
+      const explain = meta.explain;
       if (explain.length > 280) {
         errors.push(`meta.explain exceeds 280 chars (${explain.length} chars)`);
       }

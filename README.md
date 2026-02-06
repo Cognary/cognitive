@@ -2,110 +2,56 @@
 
 [![CI](https://github.com/ziel-io/cognitive-modules/actions/workflows/ci.yml/badge.svg)](https://github.com/ziel-io/cognitive-modules/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/cognitive-modules-cli.svg)](https://www.npmjs.com/package/cognitive-modules-cli)
-[![PyPI version](https://img.shields.io/pypi/v/cognitive-modules.svg)](https://pypi.org/project/cognitive-modules/)
 [![npm downloads](https://img.shields.io/npm/dm/cognitive-modules-cli.svg)](https://www.npmjs.com/package/cognitive-modules-cli)
 [![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > Verifiable Structured AI Task Specification
 
 English | [中文](README_zh.md)
 
-Cognitive Modules is an AI task definition specification designed for generation tasks that require **strong constraints, verifiability, and auditability**.
+Cognitive Modules is a specification and runtime for **verifiable, structured AI tasks** with strong contracts, auditability, and deterministic validation.
 
-## What's New in v2.2
+## Status
 
-| Feature | Description |
-|---------|-------------|
-| **Control/Data Separation** | `meta` control plane + `data` data plane, middleware can route without parsing business logic |
-| **Module Tiers** | `exec` / `decision` / `exploration` with different strictness levels |
-| **Recoverable Overflow** | `extensions.insights` preserves LLM's additional insights |
-| **Extensible Enums** | Allow custom types without sacrificing type safety |
-| **Repair Pass** | Auto-fix formatting issues, reduce validation failures |
+- **Primary runtime**: Node.js CLI (`cognitive-modules-cli`, command `cog`)
+- **Python runtime**: legacy / not actively maintained
 
-## Features
+## Version
 
-- **Strong Type Contracts** - JSON Schema bidirectional validation for input/output
-- **Explainable Output** - Mandatory `confidence` + `rationale` output
-- **Control/Data Separation** - `meta.explain` for quick routing + `data.rationale` for detailed audit
-- **Module Tiers** - exec / decision / exploration with different constraint levels
-- **Subagent Orchestration** - `@call:module` supports inter-module calls
-- **Parameter Passing** - `$ARGUMENTS` runtime substitution
-- **Multi-LLM Support** - OpenAI / Anthropic / MiniMax / Ollama
-- **Public Registry** - `cog install registry:module-name`
+- **Runtime (npm)**: `2.2.5`
+- **Spec**: v2.2
 
-## Version Selection
-
-| Version | Spec | npm | PyPI | Status |
-|---------|------|-----|------|--------|
-| **v2.2** | v2.2 | `2.2.1` | `2.2.1` | ✅ Stable (recommended) |
-| **v2.5** | v2.5 | `2.5.0-beta.x` | `2.5.0bx` | 🧪 Beta (streaming + multimodal) |
+## Installation (Node.js)
 
 ```bash
-# Install stable v2.2
-npm install cognitive-modules-cli@2.2.1
-# or install the alias package (same `cog` command)
-npm install cogn@2.2.1
-pip install cognitive-modules==2.2.1
-
-# Install beta v2.5 (streaming + multimodal)
-npm install cognitive-modules-cli@beta
-pip install cognitive-modules==2.5.0b1
-```
-
-## Installation
-
-### Node.js (npm) - Recommended
-
-```bash
-# Zero-install quick start (recommended)
-npx cogn@2.2.1 run code-reviewer --args "your code"
+# Zero-install quick start
+npx cogn@2.2.5 --help
 
 # Or use the full package name
-npx cognitive-modules-cli@2.2.1 run code-reviewer --args "your code"
+npx cognitive-modules-cli@2.2.5 --help
 
 # Global installation
-npm install -g cogn@2.2.1
-# or: npm install -g cognitive-modules-cli@2.2.1
+npm install -g cogn@2.2.5
+# or: npm install -g cognitive-modules-cli@2.2.5
 ```
 
-> **Note**: `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.
-
-### Python (pip)
-
-```bash
-pip install cognitive-modules==2.2.1
-
-# With LLM support
-pip install "cognitive-modules[openai]==2.2.1"      # OpenAI
-pip install "cognitive-modules[anthropic]==2.2.1"   # Claude
-pip install "cognitive-modules[all]==2.2.1"         # All providers
-```
-
-| Platform | Package | Command | Features |
-|----------|---------|---------|----------|
-| **npm** | `cognitive-modules-cli` | `cog` | ✅ Recommended, zero-install, full features |
-| pip | `cognitive-modules` | `cog` | ✅ Full features |
+> `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.
 
 ## Quick Start
 
 ```bash
-# Configure LLM
-export LLM_PROVIDER=openai
+# Configure provider (example: OpenAI)
 export OPENAI_API_KEY=sk-xxx
 
-# Run code review (npm)
-npx cogn run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
-
-# Or use globally installed cog command
-cog run code-reviewer --args "..." --pretty
+# Run code review
+cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # Run task prioritization
 cog run task-prioritizer --args "fix bug(urgent), write docs, optimize performance" --pretty
 
 # Run API design
-cog run api-designer --args "user system CRUD API" --pretty
+cog run api-designer --args "order system CRUD API" --pretty
 
 # Start HTTP service (API integration)
 cog serve --port 8000
@@ -116,7 +62,7 @@ cog mcp
 
 ## v2.2 Response Format
 
-All modules now return the unified v2.2 envelope format:
+All modules return the unified v2.2 envelope format:
 
 ```json
 {
@@ -141,82 +87,49 @@ All modules now return the unified v2.2 envelope format:
 }
 ```
 
-### Control vs Data Plane
-
-| Layer | Field | Purpose |
-|-------|-------|---------|
-| **Control Plane** | `meta.confidence` | Routing/fallback decisions |
-| **Control Plane** | `meta.risk` | Human review trigger |
-| **Control Plane** | `meta.explain` | Logs/card UI |
-| **Data Plane** | `data.rationale` | Detailed audit |
-| **Data Plane** | `data.extensions` | Recoverable insights |
-
 ## Core Features
 
-| Feature | Description |
-|---------|-------------|
-| **JSON Schema Validation** | Bidirectional input/output validation |
-| **Confidence** | Every output must include 0-1 confidence |
-| **Reasoning** | `meta.explain` (brief) + `data.rationale` (detailed) |
-| **Module Tiers** | `tier: exec \| decision \| exploration` |
-| **Risk Aggregation** | `meta.risk = max(changes[*].risk)` |
-| **Parameter Passing** | `$ARGUMENTS` runtime substitution |
-| **Subagents** | `@call:module` for inter-module calls |
-| **Validation Tools** | `cog validate` / `cog validate --v22` |
-
-## Integration Methods
-
-| Method | Command | Use Case |
-|--------|---------|----------|
-| CLI | `cog run` | Command line |
-| HTTP API | `cog serve` | n8n, Coze, Dify |
-| MCP Server | `cog mcp` | Claude, Cursor |
+- **Strong type contracts** - JSON Schema validation for input/output
+- **Control/Data separation** - `meta` for routing, `data` for business payloads
+- **Module tiers** - `exec | decision | exploration` with strictness/overflow rules
+- **Subagent orchestration** - `@call:module` for inter-module calls
+- **Composition** - sequential/parallel/conditional/iterative workflows
+- **HTTP API & MCP** - first-class integrations for workflows and AI tools
+- **Repair pass** - auto-fix common envelope format issues
 
 ## CLI Commands
 
 ```bash
 # Module management
-cog list                    # List installed modules
-cog info <module>           # View module details
-cog validate <module>       # Validate module structure
-cog validate <module> --v22 # Validate v2.2 format
+cog list
+cog add <url> --module <path>
+cog update <module>
+cog remove <module>
+cog versions <url>
 
 # Run modules
-cog run <module> input.json -o output.json --pretty
-cog run <module> --args "requirements" --pretty
-cog run <module> --args "requirements" --subagent  # Enable subagent
+cog run <module> --args "..."
+cog run <module> --input '{"query":"..."}'
 
-# Create modules
-cog init <name> -d "description"
-cog init <name> --format v22  # Create v2.2 format module
+# Composition
+cog compose <module> --args "..."
+cog compose-info <module>
 
-# Migrate modules
-cog migrate <module>        # Migrate v1/v2.1 module to v2.2
+# Validation & migration
+cog validate <module> --v22
+cog validate --all
+cog migrate <module> --dry-run
+cog migrate --all --no-backup
 
-# Install from GitHub (recommended)
-cog add ziel-io/cognitive-modules -m code-simplifier
-cog add org/repo -m module-name --tag v1.0.0   # Install specific version
-cog remove <module>                             # Remove module
-
-# Version management
-cog update <module>                 # Update to latest version
-cog update <module> --tag v2.0.0    # Update to specific version
-cog versions <url>                  # View available versions
-
-# Other installation methods
-cog install github:user/repo/path
-cog install registry:module-name
-cog uninstall <module>
-
-# Registry
-cog registry                # View public modules
-cog search <query>          # Search modules
-
-# Environment check
+# Other
+cog pipe --module <name>
+cog init [name]
 cog doctor
+cog serve --port 8000
+cog mcp
 ```
 
-## Built-in Modules
+## Built-in Modules (Repository)
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
@@ -225,31 +138,28 @@ cog doctor
 | `task-prioritizer` | decision | Task priority sorting | `cog run task-prioritizer --args "task1,task2"` |
 | `api-designer` | decision | REST API design | `cog run api-designer --args "order system"` |
 | `ui-spec-generator` | exploration | UI spec generation | `cog run ui-spec-generator --args "e-commerce homepage"` |
-| `product-analyzer` | exploration | Product analysis (subagent) | `cog run product-analyzer --args "health product" -s` |
+| `ui-component-generator` | exploration | UI component spec | `cog run ui-component-generator --args "button component"` |
+| `product-analyzer` | exploration | Product analysis | `cog run product-analyzer --args "health product"` |
 
-## Module Format
-
-### v2.2 Format (Recommended)
+## Module Format (v2.2)
 
 ```
 my-module/
-├── module.yaml     # Machine-readable manifest (with tier/overflow/enums)
+├── module.yaml     # Machine-readable manifest
 ├── prompt.md       # Human-readable prompt
 ├── schema.json     # meta + input + data + error schemas
 └── tests/          # Golden test cases
-    ├── case1.input.json
-    └── case1.expected.json
 ```
 
-### module.yaml (v2.2)
+Minimal `module.yaml`:
 
 ```yaml
 name: my-module
 version: 2.2.0
 responsibility: One-line description
 
-tier: decision           # exec | decision | exploration
-schema_strictness: medium # high | medium | low
+tier: decision                # exec | decision | exploration
+schema_strictness: medium     # high | medium | low
 
 excludes:
   - things not to do
@@ -266,7 +176,7 @@ overflow:
   require_suggested_mapping: true
 
 enums:
-  strategy: extensible   # strict | extensible
+  strategy: extensible        # strict | extensible
 
 failure:
   contract: error_union
@@ -277,200 +187,87 @@ compat:
   runtime_auto_wrap: true
 ```
 
-### v1 Format (Still Supported)
-
-```
-my-module/
-├── MODULE.md       # Metadata + instructions
-├── schema.json     # Input/output schema
-└── examples/
-    ├── input.json
-    └── output.json
-```
-
-## Tier Explanation
-
-| Tier | Purpose | Schema Strictness | Overflow |
-|------|---------|-------------------|----------|
-| `exec` | Auto-execution (patch, instruction generation) | high | Disabled |
-| `decision` | Judgment/evaluation/classification | medium | Enabled |
-| `exploration` | Exploration/research/inspiration | low | Enabled |
-
-## Using with AI Tools
-
-### Cursor / Codex CLI
-
-Create `AGENTS.md` in your project root:
-
-```markdown
-## Code Review
-
-When code review is needed:
-1. Read `~/.cognitive/modules/code-reviewer/MODULE.md`
-2. Output in schema.json format
-3. Include meta.explain + data.rationale
-```
-
-### Direct Conversation
-
-```
-Read ~/.cognitive/modules/code-reviewer/MODULE.md,
-review this code: def login(u,p): ...
-```
-
 ## LLM Configuration
 
+Cognitive Modules auto-selects a provider based on which API key is present. You can override with `--provider` and `--model`.
+
+Environment variables:
+
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `GEMINI_API_KEY`
+- `DEEPSEEK_API_KEY`
+- `MINIMAX_API_KEY`
+- `MOONSHOT_API_KEY`
+- `DASHSCOPE_API_KEY` or `QWEN_API_KEY`
+- `OLLAMA_HOST` (for Ollama local)
+- `COG_MODEL` (override default model)
+
+Check config:
+
 ```bash
-# OpenAI
-export LLM_PROVIDER=openai
-export OPENAI_API_KEY=sk-xxx
-
-# Anthropic Claude
-export LLM_PROVIDER=anthropic
-export ANTHROPIC_API_KEY=sk-ant-xxx
-
-# MiniMax
-export LLM_PROVIDER=minimax
-export MINIMAX_API_KEY=sk-xxx
-
-# Ollama (local)
-export LLM_PROVIDER=ollama
-
-# Check configuration
 cog doctor
 ```
 
-## Migrating to v2.2
-
-Migrate from v1 or v2.1 modules to v2.2:
-
-```bash
-# Auto-migrate single module
-cog migrate code-reviewer
-
-# Migrate all modules
-cog migrate --all
-
-# Verify migration result
-cog validate code-reviewer --v22
-```
-
-Manual migration steps:
-1. Create `module.yaml` (add tier/overflow/enums)
-2. Update `schema.json` (add meta schema)
-3. Create/update `prompt.md` (describe v2.2 envelope format)
-4. Keep `MODULE.md` (backward compatibility)
-
-## Development
+## Development (Node.js)
 
 ```bash
 # Clone
 git clone https://github.com/ziel-io/cognitive-modules.git
 cd cognitive-modules
 
-# Install dev dependencies
-pip install -e ".[dev]"
+# Install
+cd packages/cli-node
+npm install
 
-# Run tests
-pytest tests/ -v
+# Build
+npm run build
 
-# Create new module (v2.2 format)
-cog init my-module -d "module description" --format v22
-cog validate my-module --v22
+# Test
+npm test
 ```
-
-## Project Structure
-
-```
-cognitive-modules/
-├── src/cognitive/          # Python CLI source
-│   ├── cli.py              # Command entry
-│   ├── loader.py           # Module loader (supports v0/v1/v2.2)
-│   ├── runner.py           # Module executor (v2.2 envelope)
-│   ├── validator.py        # Module validator (includes v2.2 validation)
-│   ├── migrate.py          # v2.2 migration tool
-│   ├── subagent.py         # Subagent orchestration
-│   ├── registry.py         # Module installation
-│   ├── templates.py        # Module templates
-│   └── providers/          # LLM backends
-├── packages/
-│   └── cli-node/           # Node.js CLI (npm: cognitive-modules-cli)
-│       ├── src/            # TypeScript source
-│       └── package.json
-├── cognitive/modules/      # Built-in modules (all v2.2)
-├── coze-plugin/            # Coze integration plugin
-├── tests/                  # Unit tests
-├── SPEC.md                 # v0.1 specification (historical)
-├── SPEC-v2.2.md            # v2.2 specification (latest)
-├── INTEGRATION.md          # Integration guide
-└── cognitive-registry.json # Public registry
-```
-
-## Multi-Platform Support
-
-| Platform | Package | Command | Installation |
-|----------|---------|---------|--------------|
-| Python | `cognitive-modules` | `cog` | `pip install cognitive-modules` |
-| Node.js | `cognitive-modules-cli` | `cog` | `npm install -g cognitive-modules-cli` |
-
-Both versions share the same module format and v2.2 specification.
 
 ## Documentation
 
-### Specification
+### Specifications
 
 | Document | Description |
 |----------|-------------|
-| [SPEC-v2.2.md](SPEC-v2.2.md) | v2.2 full specification (Control/Data separation, Tier, Overflow) |
+| [SPEC-v2.2.md](SPEC-v2.2.md) | v2.2 full specification |
 | [SPEC-v2.2_zh.md](SPEC-v2.2_zh.md) | v2.2 规范中文版 |
-| [SPEC.md](SPEC.md) | v0.1 specification (context philosophy) |
 
-### For Implementers
-
-| Document | Description |
-|----------|-------------|
-| [IMPLEMENTERS-GUIDE.md](IMPLEMENTERS-GUIDE.md) | Step-by-step guide for building a runtime |
-| [CONFORMANCE.md](CONFORMANCE.md) | Conformance levels (Level 1/2/3) |
-| [ERROR-CODES.md](ERROR-CODES.md) | Standard error code taxonomy (E1xxx-E4xxx) |
-| [templates/runtime-starter/](templates/runtime-starter/) | Starter template for new implementations |
-
-### Advanced Features
+### Implementers
 
 | Document | Description |
 |----------|-------------|
-| [COMPOSITION.md](COMPOSITION.md) | Module composition and dataflow specification |
-| [CONTEXT-PROTOCOL.md](CONTEXT-PROTOCOL.md) | Context protocol for stateful workflows |
+| [IMPLEMENTERS-GUIDE.md](IMPLEMENTERS-GUIDE.md) | How to build a runtime |
+| [CONFORMANCE.md](CONFORMANCE.md) | Conformance levels |
+| [ERROR-CODES.md](ERROR-CODES.md) | Standard error codes |
+| [templates/runtime-starter/](templates/runtime-starter/) | Runtime starter template |
+
+### Advanced
+
+| Document | Description |
+|----------|-------------|
+| [COMPOSITION.md](COMPOSITION.md) | Composition and dataflow |
+| [CONTEXT-PROTOCOL.md](CONTEXT-PROTOCOL.md) | Context protocol |
+| [COGNITIVE-PROTOCOL.md](COGNITIVE-PROTOCOL.md) | Protocol details |
+| [INTEGRATION.md](INTEGRATION.md) | Integration guide |
 
 ### Schemas & Test Vectors
 
 | Resource | Description |
 |----------|-------------|
-| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | JSON Schema for v2.2 envelope validation |
-| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | JSON Schema for module.yaml |
-| [spec/test-vectors/](spec/test-vectors/) | Official test vectors for compliance |
+| [spec/response-envelope.schema.json](spec/response-envelope.schema.json) | v2.2 envelope schema |
+| [spec/module.yaml.schema.json](spec/module.yaml.schema.json) | module.yaml schema |
+| [spec/test-vectors/](spec/test-vectors/) | Compliance test vectors |
 
-### Registry & Distribution
+### Registry (Spec Only)
 
 | Resource | Description |
 |----------|-------------|
 | [REGISTRY-PROTOCOL.md](REGISTRY-PROTOCOL.md) | Registry protocol specification |
-| [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | Registry entry JSON Schema |
-| [cognitive-registry.json](cognitive-registry.json) | Current public registry |
-| [CERTIFICATION.md](CERTIFICATION.md) | Certification program (badges, verification) |
-
-### Governance
-
-| Document | Description |
-|----------|-------------|
-| [GOVERNANCE.md](GOVERNANCE.md) | Project governance structure |
-| [CMEP-PROCESS.md](CMEP-PROCESS.md) | Enhancement proposal process |
-
-### Integration
-
-| Document | Description |
-|----------|-------------|
-| [INTEGRATION.md](INTEGRATION.md) | Agent tool integration guide |
-| [COGNITIVE-PROTOCOL.md](COGNITIVE-PROTOCOL.md) | Protocol details |
+| [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | Registry entry schema |
 
 ## License
 

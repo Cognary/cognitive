@@ -11,3 +11,7 @@ export * from './update.js';
 export * from './remove.js';
 export * from './versions.js';
 export * from './compose.js';
+export * from './validate.js';
+export * from './migrate.js';
+export * from './test.js';
+export * from './search.js';

@@ -80,3 +80,7 @@ constraints:
   no_inventing_data: true
   require_confidence: true
   require_rationale: true
+
+# Golden tests
+tests:
+  - tests/saas_landing.input.json -> tests/saas_landing.expected.json

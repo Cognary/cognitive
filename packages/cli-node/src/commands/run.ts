@@ -1,9 +1,11 @@
 /**
  * cog run - Run a Cognitive Module
+ * Always returns v2.2 envelope format for consistency
  */
 
 import type { CommandContext, CommandResult } from '../types.js';
 import { findModule, getDefaultSearchPaths, runModule } from '../modules/index.js';
+import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
 
 export interface RunOptions {
   args?: string;
@@ -23,9 +25,15 @@ export async function run(
   // Find module
   const module = await findModule(moduleName, searchPaths);
   if (!module) {
+    const errorEnvelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.MODULE_NOT_FOUND,
+      message: `Module not found: ${moduleName}\nSearch paths: ${searchPaths.join(', ')}`,
+      suggestion: "Use 'cog list' to see installed modules or 'cog search' to find modules in registry",
+    }), { module: moduleName, provider: ctx.provider.name });
     return {
       success: false,
-      error: `Module not found: ${moduleName}\nSearch paths: ${searchPaths.join(', ')}`,
+      error: errorEnvelope.error.message,
+      data: errorEnvelope,
     };
   }
 
@@ -36,45 +44,50 @@ export async function run(
       try {
         inputData = JSON.parse(options.input);
       } catch {
+        const errorEnvelope = attachContext(makeErrorEnvelope({
+          code: ErrorCodes.INVALID_INPUT,
+          message: `Invalid JSON input: ${options.input}`,
+          suggestion: 'Ensure input is valid JSON format',
+        }), { module: moduleName, provider: ctx.provider.name });
         return {
           success: false,
-          error: `Invalid JSON input: ${options.input}`,
+          error: errorEnvelope.error.message,
+          data: errorEnvelope,
         };
       }
     }
 
-    // Run module
+    // Run module with v2.2 envelope format
     const result = await runModule(module, ctx.provider, {
       args: options.args,
       input: inputData,
       verbose: options.verbose || ctx.verbose,
+      validateInput: !options.noValidate,
+      validateOutput: !options.noValidate,
+      useV22: true,  // Always use v2.2 envelope
     });
 
-    // Return envelope format or extracted data
-    if (options.pretty) {
-      return {
-        success: result.ok,
-        data: result,
-      };
-    } else {
-      // For non-pretty mode, return data (success) or error (failure)
-      if (result.ok) {
-        return {
-          success: true,
-          data: result.data,
-        };
-      } else {
-        return {
-          success: false,
-          error: `${result.error?.code}: ${result.error?.message}`,
-          data: result.partial_data,
-        };
-      }
-    }
+    const output = attachContext(result as unknown as Record<string, unknown>, {
+      module: moduleName,
+      provider: ctx.provider.name,
+    });
+
+    // Always return full v2.2 envelope
+    return {
+      success: result.ok,
+      data: output,
+    };
   } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const errorEnvelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.INTERNAL_ERROR,
+      message,
+      recoverable: false,
+    }), { module: moduleName, provider: ctx.provider.name });
     return {
       success: false,
-      error: e instanceof Error ? e.message : String(e),
+      error: message,
+      data: errorEnvelope,
     };
   }
 }

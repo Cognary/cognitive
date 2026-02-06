@@ -1,11 +1,14 @@
 {
   "name": "cogn",
-  "version": "2.2.1",
+  "version": "2.2.5",
   "description": "Cognitive Modules CLI - Structured AI Task Execution (alias for cognitive-modules-cli)",
   "bin": {
+    "cogn": "./bin.js",
     "cog": "./bin.js"
   },
-  "scripts": {},
+  "scripts": {
+    "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache"
+  },
   "keywords": [
     "cognitive",
     "ai",
@@ -21,7 +24,22 @@
     "url": "https://github.com/ziel-io/cognitive-modules.git"
   },
   "homepage": "https://ziel-io.github.io/cognitive-modules/",
+  "bugs": {
+    "url": "https://github.com/ziel-io/cognitive-modules/issues"
+  },
+  "files": [
+    "bin.js",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
-    "cognitive-modules-cli": "^2.2.1"
+    "cognitive-modules-cli": "2.2.5"
   }
 }

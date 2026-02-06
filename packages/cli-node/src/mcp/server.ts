@@ -18,10 +18,11 @@ import {
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import { loadModule, findModule, listModules, getDefaultSearchPaths } from '../modules/loader.js';
+import { findModule, listModules, getDefaultSearchPaths } from '../modules/loader.js';
 import { runModule } from '../modules/runner.js';
 import { getProvider } from '../providers/index.js';
-import type { CognitiveModule, ModuleResult } from '../types.js';
+import { VERSION } from '../version.js';
+import { ErrorCodes, attachContext, makeErrorEnvelope, makeMcpError, makeMcpSuccess } from '../errors/index.js';
 
 // =============================================================================
 // Server Setup
@@ -30,7 +31,7 @@ import type { CognitiveModule, ModuleResult } from '../types.js';
 const server = new Server(
   {
     name: 'cognitive-modules',
-    version: '1.3.0',
+    version: VERSION,
   },
   {
     capabilities: {
@@ -53,7 +54,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'cognitive_run',
-        description: 'Run a Cognitive Module to get structured AI analysis results',
+        description: 'Run a Cognitive Module to get structured AI analysis results (Cognitive Protocol v2.2)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -79,7 +80,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'cognitive_list',
-        description: 'List all installed Cognitive Modules',
+        description: 'List all installed Cognitive Modules (Cognitive Protocol v2.2)',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -87,7 +88,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'cognitive_info',
-        description: 'Get detailed information about a Cognitive Module',
+        description: 'Get detailed information about a Cognitive Module (Cognitive Protocol v2.2)',
         inputSchema: {
           type: 'object',
           properties: {
@@ -103,8 +104,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+// Error handling now uses unified errors module (../errors/index.js)
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+  const runContext = name === 'cognitive_run'
+    ? { module: (args as { module?: string }).module, provider: (args as { provider?: string }).provider ?? 'unknown' }
+    : undefined;
 
   try {
     switch (name) {
@@ -115,34 +121,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           provider?: string;
           model?: string;
         };
+        
+        const providerLabel = providerName ?? 'unknown';
 
         // Find module
         const moduleData = await findModule(moduleName, searchPaths);
         if (!moduleData) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({ ok: false, error: `Module '${moduleName}' not found` }),
-              },
-            ],
-          };
+          return makeMcpError({
+            code: ErrorCodes.MODULE_NOT_FOUND,
+            message: `Module '${moduleName}' not found`,
+            suggestion: 'Use cognitive_list to see available modules',
+            module: moduleName,
+            provider: providerLabel,
+          });
         }
 
         // Create provider
         const provider = getProvider(providerName, model);
+        const resolvedProvider = provider?.name ?? providerLabel;
 
-        // Run module
+        // Run module - result is already v2.2 envelope
         const result = await runModule(moduleData, provider, {
-          input: { query: inputArgs, code: inputArgs },
+          args: inputArgs,
           useV22: true,
+        });
+
+        const contextual = attachContext(result as unknown as Record<string, unknown>, {
+          module: moduleName,
+          provider: resolvedProvider,
         });
 
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(result, null, 2),
+              text: JSON.stringify(contextual, null, 2),
             },
           ],
         };
@@ -150,26 +163,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'cognitive_list': {
         const modules = await listModules(searchPaths);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  modules: modules.map((m) => ({
-                    name: m.name,
-                    location: m.location,
-                    format: m.format,
-                    tier: m.tier,
-                  })),
-                  count: modules.length,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return makeMcpSuccess({
+          data: {
+            modules: modules.map((m) => ({
+              name: m.name,
+              location: m.location,
+              format: m.format,
+              tier: m.tier,
+              responsibility: m.responsibility,
+            })),
+            count: modules.length,
+          },
+          explain: `Found ${modules.length} installed modules`,
+        });
       }
 
       case 'cognitive_info': {
@@ -177,61 +183,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const moduleData = await findModule(moduleName, searchPaths);
         if (!moduleData) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({ ok: false, error: `Module '${moduleName}' not found` }),
-              },
-            ],
-          };
+          return makeMcpError({
+            code: ErrorCodes.MODULE_NOT_FOUND,
+            message: `Module '${moduleName}' not found`,
+            suggestion: 'Use cognitive_list to see available modules',
+            module: moduleName,
+          });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  ok: true,
-                  name: moduleData.name,
-                  version: moduleData.version,
-                  responsibility: moduleData.responsibility,
-                  tier: moduleData.tier,
-                  format: moduleData.format,
-                  inputSchema: moduleData.inputSchema,
-                  outputSchema: moduleData.outputSchema,
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
+        return makeMcpSuccess({
+          data: {
+            name: moduleData.name,
+            version: moduleData.version,
+            responsibility: moduleData.responsibility,
+            tier: moduleData.tier,
+            format: moduleData.format,
+            inputSchema: moduleData.inputSchema,
+            outputSchema: moduleData.outputSchema,
+          },
+          explain: `Module '${moduleName}' info retrieved`,
+        });
       }
 
       default:
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ ok: false, error: `Unknown tool: ${name}` }),
-            },
-          ],
-        };
+        return makeMcpError({
+          code: ErrorCodes.INVALID_REFERENCE,
+          message: `Unknown tool: ${name}`,
+          suggestion: 'Use cognitive_run, cognitive_list, or cognitive_info',
+        });
     }
   } catch (error) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            ok: false,
-            error: error instanceof Error ? error.message : String(error),
-          }),
-        },
-      ],
-    };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return makeMcpError({
+      code: ErrorCodes.INTERNAL_ERROR,
+      message: errorMessage,
+      recoverable: false,
+      ...(runContext ?? {}),
+    });
   }
 });
 
@@ -282,12 +270,17 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const moduleData = await findModule(moduleName, searchPaths);
 
     if (!moduleData) {
+      const envelope = attachContext(makeErrorEnvelope({
+        code: ErrorCodes.MODULE_NOT_FOUND,
+        message: `Module '${moduleName}' not found`,
+        recoverable: true,
+      }), { module: moduleName });
       return {
         contents: [
           {
             uri,
-            mimeType: 'text/plain',
-            text: `Module '${moduleName}' not found`,
+            mimeType: 'application/json',
+            text: JSON.stringify(envelope, null, 2),
           },
         ],
       };
@@ -304,12 +297,18 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     };
   }
 
+  // Return structured error for unknown resource
+  const envelope = makeErrorEnvelope({
+    code: ErrorCodes.RESOURCE_NOT_FOUND,
+    message: `Unknown resource: ${uri}`,
+    recoverable: true,
+  });
   return {
     contents: [
       {
         uri,
-        mimeType: 'text/plain',
-        text: `Unknown resource: ${uri}`,
+        mimeType: 'application/json',
+        text: JSON.stringify(envelope, null, 2),
       },
     ],
   };

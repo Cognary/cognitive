@@ -1,0 +1,67 @@
+{
+  "ok": true,
+  "version": "2.2",
+  "meta": {
+    "confidence": 0.88,
+    "risk": "low",
+    "explain": "Prioritized 5 tasks. Critical issue (login crash) identified as P0."
+  },
+  "data": {
+    "prioritized_tasks": [
+      {
+        "rank": 1,
+        "task_id": "t1",
+        "priority_score": 95,
+        "quadrant": "urgent-important",
+        "reasoning": "Login crash affects all users, production incident, must fix immediately"
+      },
+      {
+        "rank": 2,
+        "task_id": "t4",
+        "priority_score": 75,
+        "quadrant": "important",
+        "reasoning": "Database upgrade is infrastructure work, blocks other optimization tasks"
+      },
+      {
+        "rank": 3,
+        "task_id": "t2",
+        "priority_score": 65,
+        "quadrant": "important",
+        "reasoning": "Performance optimization is important but not urgent, depends on t4"
+      },
+      {
+        "rank": 4,
+        "task_id": "t3",
+        "priority_score": 50,
+        "quadrant": "important",
+        "reasoning": "New feature is business requirement, but no urgent deadline"
+      },
+      {
+        "rank": 5,
+        "task_id": "t5",
+        "priority_score": 25,
+        "quadrant": "neither",
+        "reasoning": "Documentation update is lower priority, can be done in between other tasks"
+      }
+    ],
+    "dependencies": [
+      {
+        "task_id": "t2",
+        "blocked_by": ["t4"],
+        "blocks": []
+      },
+      {
+        "task_id": "t4",
+        "blocked_by": [],
+        "blocks": ["t2"]
+      }
+    ],
+    "recommendations": [
+      "Handle login crash (t1) immediately - this is a P0 incident",
+      "Complete t4 before starting t2 to avoid wasted work",
+      "t3 can be developed in parallel, not blocked by other tasks",
+      "Suggest assigning t5 to new team member or completing during meeting gaps"
+    ],
+    "rationale": "Applied urgency-importance matrix with dependency analysis. Login crash ranked highest due to production impact and immediate deadline. Database upgrade prioritized before query optimization due to explicit dependency."
+  }
+}

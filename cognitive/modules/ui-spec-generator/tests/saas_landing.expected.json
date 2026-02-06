@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "version": "2.2",
+  "meta": {
+    "confidence": 0.85,
+    "risk": "low",
+    "explain": "Generated UI specification for SaaS landing page with 3 sections targeting conversion."
+  },
+  "data": {
+    "specification": {
+      "page_type": "product-landing",
+      "sections": [
+        {
+          "name": "Hero",
+          "priority": "must-have",
+          "layout": "centered",
+          "components": [
+            {
+              "type": "heading",
+              "level": 1,
+              "purpose": "Value proposition headline"
+            },
+            {
+              "type": "paragraph",
+              "purpose": "Supporting subheadline"
+            },
+            {
+              "type": "button",
+              "variant": "primary",
+              "purpose": "Start free trial CTA"
+            }
+          ]
+        },
+        {
+          "name": "Features",
+          "priority": "must-have",
+          "layout": "grid",
+          "components": [
+            {
+              "type": "card-group",
+              "count": 4,
+              "card_structure": {
+                "icon": true,
+                "title": true,
+                "description": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "Testimonials",
+          "priority": "should-have",
+          "layout": "carousel-or-grid",
+          "components": [
+            {
+              "type": "testimonial-card",
+              "structure": {
+                "quote": true,
+                "author_name": true,
+                "author_title": true,
+                "author_photo": "optional"
+              }
+            }
+          ]
+        }
+      ],
+      "accessibility": {
+        "level": "WCAG-AA",
+        "requirements": [
+          "All interactive elements must be keyboard accessible",
+          "Color contrast ratio minimum 4.5:1 for normal text",
+          "Alt text required for all images"
+        ]
+      }
+    },
+    "rationale": "Designed a conversion-focused landing page structure. Hero section prioritizes immediate value communication and CTA visibility. Feature grid provides scannable overview of key benefits. Social proof section builds trust for visitors considering signup."
+  }
+}

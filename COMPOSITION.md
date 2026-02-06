@@ -286,9 +286,8 @@ The parsed structure shows:
 ├─────────────────────────────────────────┤
 │ 1. Check local: .cognitive/modules/     │
 │ 2. Check user: ~/.cognitive/modules/    │
-│ 3. Check registry: cognitive-registry   │
-│ 4. Check fallback: composition.fallback │
-│ 5. Fail if required and not found       │
+│ 3. Check fallback: composition.fallback │
+│ 4. Fail if required and not found       │
 └─────────────────────────────────────────┘
 ```
 

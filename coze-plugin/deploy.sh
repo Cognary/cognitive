@@ -30,7 +30,7 @@ if [ ! -f ".env" ]; then
     echo "⚠️  请编辑 .env 文件配置以下内容："
     echo "   - COGNITIVE_API_KEY: API 认证密钥"
     echo "   - OPENAI_API_KEY: OpenAI API Key"
-    echo "   - LLM_PROVIDER: LLM 提供商"
+    echo "   - 任意一个 LLM API Key（例如 OPENAI_API_KEY）"
     echo ""
     echo "编辑完成后，重新运行此脚本。"
     exit 0
@@ -39,7 +39,7 @@ fi
 # 检查必要的环境变量
 source .env
 
-if [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$DEEPSEEK_API_KEY" ]; then
+if [ -z "$OPENAI_API_KEY" ] && [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$GEMINI_API_KEY" ] && [ -z "$DEEPSEEK_API_KEY" ] && [ -z "$MINIMAX_API_KEY" ] && [ -z "$MOONSHOT_API_KEY" ] && [ -z "$DASHSCOPE_API_KEY" ] && [ -z "$QWEN_API_KEY" ]; then
     echo "❌ 错误: 未配置任何 LLM API Key"
     echo "请在 .env 文件中至少配置一个 API Key"
     exit 1
@@ -58,7 +58,7 @@ if curl -s http://localhost:${PORT:-8000}/health > /dev/null; then
     echo "✅ 服务启动成功！"
     echo ""
     echo "📍 API 地址: http://localhost:${PORT:-8000}"
-    echo "📖 API 文档: http://localhost:${PORT:-8000}/docs"
+    echo "📖 API 信息: http://localhost:${PORT:-8000}/"
     echo ""
     echo "🔗 下一步："
     echo "   1. 配置公网访问（Nginx 反向代理或云服务）"

@@ -10,6 +10,17 @@
 
 import type { CommandContext, CommandResult } from '../types.js';
 import { findModule, getDefaultSearchPaths, executeComposition } from '../modules/index.js';
+import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
+
+function looksLikeCode(str: string): boolean {
+  const codeIndicators = [
+    /^(def|function|class|const|let|var|import|export|public|private)\s/,
+    /[{};()]/,
+    /=>/,
+    /\.(py|js|ts|go|rs|java|cpp|c|rb)$/,
+  ];
+  return codeIndicators.some(re => re.test(str));
+}
 
 export interface ComposeOptions {
   /** Direct text input */
@@ -38,9 +49,15 @@ export async function compose(
   // Find module
   const module = await findModule(moduleName, searchPaths);
   if (!module) {
+    const errorEnvelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.MODULE_NOT_FOUND,
+      message: `Module not found: ${moduleName}\nSearch paths: ${searchPaths.join(', ')}`,
+      suggestion: "Use 'cog list' to see installed modules or 'cog search' to find modules in registry",
+    }), { module: moduleName, provider: ctx.provider.name });
     return {
       success: false,
-      error: `Module not found: ${moduleName}\nSearch paths: ${searchPaths.join(', ')}`,
+      error: errorEnvelope.error.message,
+      data: errorEnvelope,
     };
   }
 
@@ -51,17 +68,26 @@ export async function compose(
       try {
         inputData = JSON.parse(options.input);
       } catch {
+        const errorEnvelope = attachContext(makeErrorEnvelope({
+          code: ErrorCodes.INVALID_INPUT,
+          message: `Invalid JSON input: ${options.input}`,
+          suggestion: 'Ensure input is valid JSON format',
+        }), { module: moduleName, provider: ctx.provider.name });
         return {
           success: false,
-          error: `Invalid JSON input: ${options.input}`,
+          error: errorEnvelope.error.message,
+          data: errorEnvelope,
         };
       }
     }
     
     // Handle --args as text input
     if (options.args) {
-      inputData.query = options.args;
-      inputData.code = options.args;
+      if (looksLikeCode(options.args)) {
+        inputData.code = options.args;
+      } else {
+        inputData.query = options.args;
+      }
     }
 
     // Execute composition
@@ -90,11 +116,28 @@ export async function compose(
       console.error(`--- Total: ${result.totalTimeMs}ms ---`);
     }
 
+    if (!result.ok) {
+      const partialData = options.trace
+        ? { moduleResults: result.moduleResults, trace: result.trace }
+        : { moduleResults: result.moduleResults };
+      const errorEnvelope = attachContext(makeErrorEnvelope({
+        code: result.error?.code ?? ErrorCodes.INTERNAL_ERROR,
+        message: result.error?.message ?? 'Composition failed',
+        details: result.error?.module ? { module: result.error.module } : undefined,
+        partial_data: partialData,
+      }), { module: moduleName, provider: ctx.provider.name });
+      return {
+        success: false,
+        error: errorEnvelope.error.message,
+        data: errorEnvelope,
+      };
+    }
+
     // Return result
     if (options.trace) {
       // Include full result with trace
       return {
-        success: result.ok,
+        success: true,
         data: {
           ok: result.ok,
           result: result.result,
@@ -106,30 +149,26 @@ export async function compose(
       };
     } else if (options.pretty) {
       return {
-        success: result.ok,
+        success: true,
         data: result.result,
       };
     } else {
-      // For non-pretty mode, return data (success) or error (failure)
-      if (result.ok && result.result) {
-        return {
-          success: true,
-          data: (result.result as { data?: unknown }).data,
-        };
-      } else {
-        return {
-          success: false,
-          error: result.error 
-            ? `${result.error.code}: ${result.error.message}` 
-            : 'Composition failed',
-          data: result.moduleResults,
-        };
-      }
+      // Keep compose output consistent with run/pipe: always return full v2.2 envelope
+      return {
+        success: true,
+        data: result.result,
+      };
     }
   } catch (e) {
+    const errorEnvelope = attachContext(makeErrorEnvelope({
+      code: ErrorCodes.INTERNAL_ERROR,
+      message: e instanceof Error ? e.message : String(e),
+      recoverable: false,
+    }), { module: moduleName, provider: ctx.provider.name });
     return {
       success: false,
-      error: e instanceof Error ? e.message : String(e),
+      error: errorEnvelope.error.message,
+      data: errorEnvelope,
     };
   }
 }

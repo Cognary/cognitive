@@ -84,3 +84,7 @@ constraints:
   require_confidence: true
   require_rationale: true
   behavior_equivalence_false_max_confidence: 0.7
+
+# Golden tests
+tests:
+  - tests/button_component.input.json -> tests/button_component.expected.json

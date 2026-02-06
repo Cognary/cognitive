@@ -1,0 +1,32 @@
+{
+  "$test": {
+    "name": "tier-exec-module",
+    "description": "Valid response from exec tier module with tool results",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.95,
+      "risk": "medium",
+      "explain": "Code changes applied successfully with one file modified",
+      "trace_id": "tr-exec-001",
+      "model": "gpt-4o",
+      "latency_ms": 2500,
+      "tier": "exec"
+    },
+    "data": {
+      "actions_taken": [
+        {
+          "type": "file_write",
+          "path": "src/utils.ts",
+          "description": "Added helper function"
+        }
+      ],
+      "summary": "Created utility function for data validation",
+      "rationale": "The user requested a helper function for validating input data. I analyzed the existing codebase patterns and created a consistent implementation.",
+      "side_effects": ["Modified src/utils.ts"]
+    }
+  }
+}

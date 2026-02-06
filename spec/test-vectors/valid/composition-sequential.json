@@ -1,0 +1,34 @@
+{
+  "$test": {
+    "name": "composition-sequential",
+    "description": "Valid response from sequential composition of multiple modules",
+    "expects": "accept",
+    "conformance_level": 3
+  },
+  "envelope": {
+    "ok": true,
+    "meta": {
+      "confidence": 0.82,
+      "risk": "low",
+      "explain": "Sequential composition completed: analyze → review → summarize",
+      "trace_id": "tr-comp-001",
+      "composition": {
+        "pattern": "sequential",
+        "modules_executed": ["code-analyzer", "code-reviewer", "summarizer"],
+        "total_latency_ms": 4500
+      }
+    },
+    "data": {
+      "analysis": {
+        "complexity_score": 7.2,
+        "lines_of_code": 450
+      },
+      "review": {
+        "issues_found": 3,
+        "severity": "medium"
+      },
+      "summary": "Code has moderate complexity with 3 medium-severity issues requiring attention.",
+      "rationale": "Composed three modules sequentially to provide comprehensive code analysis."
+    }
+  }
+}
