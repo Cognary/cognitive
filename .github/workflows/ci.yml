@@ -108,7 +108,21 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/cli-node
-        run: npm ci
+        run: |
+          node --version
+          npm --version
+          npm ci --no-audit --no-fund --loglevel verbose || (
+            echo "npm ci failed, dumping latest npm debug log..."
+            ls -la ~/.npm/_logs || true
+            LOG="$(ls -t ~/.npm/_logs/*debug-0.log 2>/dev/null | head -1 || true)"
+            echo "LOG=${LOG}"
+            if [ -n "${LOG}" ] && [ -f "${LOG}" ]; then
+              sed -n '1,200p' "${LOG}" || true
+              echo "..."
+              tail -n 200 "${LOG}" || true
+            fi
+            exit 1
+          )
 
       - name: Run TypeScript type check
         working-directory: packages/cli-node
