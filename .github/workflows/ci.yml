@@ -116,8 +116,8 @@ jobs:
         run: |
           node --version
           npm --version
-          npm ci --no-audit --no-fund --loglevel verbose || (
-            echo "npm ci failed, dumping latest npm debug log..."
+          npm install --no-audit --no-fund --loglevel verbose || (
+            echo "npm install failed, dumping latest npm debug log..."
             ls -la ~/.npm/_logs || true
             LOG="$(ls -t ~/.npm/_logs/*debug-0.log 2>/dev/null | head -1 || true)"
             echo "LOG=${LOG}"
