@@ -325,5 +325,125 @@
   "theme.tags.tagsPageTitle": {
     "message": "标签",
     "description": "The title of the tag list page"
+  },
+  "homepage.hero.subtitle": {
+    "message": "可验证的结构化 AI 任务规范",
+    "description": "Homepage hero subtitle"
+  },
+  "homepage.hero.primaryCta": {
+    "message": "快速开始",
+    "description": "Homepage primary CTA text"
+  },
+  "homepage.hero.secondaryCta": {
+    "message": "GitHub",
+    "description": "Homepage secondary CTA text"
+  },
+  "homepage.hero.specCta": {
+    "message": "规范",
+    "description": "Homepage specification CTA text"
+  },
+  "homepage.features.sectionTitle": {
+    "message": "核心特性",
+    "description": "Homepage features section title"
+  },
+  "homepage.features.strongContracts.title": {
+    "message": "强类型契约",
+    "description": "Feature title: strong type contracts"
+  },
+  "homepage.features.strongContracts.description": {
+    "message": "输入与输出均通过 JSON Schema 双向校验，确保结构化结果稳定可靠。",
+    "description": "Feature description: strong type contracts"
+  },
+  "homepage.features.controlData.title": {
+    "message": "控制/数据分离",
+    "description": "Feature title: control/data separation"
+  },
+  "homepage.features.controlData.description": {
+    "message": "meta 控制面用于路由决策，data 数据面承载业务结果与审计信息。",
+    "description": "Feature description: control/data separation"
+  },
+  "homepage.features.moduleTiers.title": {
+    "message": "模块分层",
+    "description": "Feature title: module tiers"
+  },
+  "homepage.features.moduleTiers.description": {
+    "message": "exec / decision / exploration 三层能力模型，匹配不同任务严格度。",
+    "description": "Feature description: module tiers"
+  },
+  "homepage.features.explainable.title": {
+    "message": "可解释输出",
+    "description": "Feature title: explainable output"
+  },
+  "homepage.features.explainable.description": {
+    "message": "每次调用都要求置信度与 rationale，便于追溯与复核。",
+    "description": "Feature description: explainable output"
+  },
+  "homepage.features.multiLlm.title": {
+    "message": "多模型支持",
+    "description": "Feature title: multi-LLM support"
+  },
+  "homepage.features.multiLlm.description": {
+    "message": "支持 OpenAI / Anthropic / MiniMax / Ollama，一套模块跨模型运行。",
+    "description": "Feature description: multi-LLM support"
+  },
+  "homepage.features.mcp.title": {
+    "message": "MCP 集成",
+    "description": "Feature title: MCP integration"
+  },
+  "homepage.features.mcp.description": {
+    "message": "原生支持 Claude Desktop、Cursor 等 AI 工具，接入路径直接。",
+    "description": "Feature description: MCP integration"
+  },
+  "homepage.entries.sectionTitle": {
+    "message": "按主题进入",
+    "description": "Homepage entry links section title"
+  },
+  "homepage.entries.conformance.title": {
+    "message": "一致性",
+    "description": "Entry link title: conformance"
+  },
+  "homepage.entries.conformance.description": {
+    "message": "查看一致性等级、要求与测试向量。",
+    "description": "Entry link description: conformance"
+  },
+  "homepage.entries.registry.title": {
+    "message": "Registry",
+    "description": "Entry link title: registry"
+  },
+  "homepage.entries.registry.description": {
+    "message": "查看发现与分发协议，以及 schema 校验规则。",
+    "description": "Entry link description: registry"
+  },
+  "homepage.entries.releaseNotes.title": {
+    "message": "发布说明",
+    "description": "Entry link title: release notes"
+  },
+  "homepage.entries.releaseNotes.description": {
+    "message": "查看 2.2.x 的版本更新与兼容性澄清。",
+    "description": "Entry link description: release notes"
+  },
+  "homepage.entries.community.title": {
+    "message": "社区",
+    "description": "Entry link title: community"
+  },
+  "homepage.entries.community.description": {
+    "message": "查看治理机制、流程与贡献入口。",
+    "description": "Entry link description: community"
+  },
+  "homepage.quickStart.title": {
+    "message": "快速开始",
+    "description": "Homepage quick start section title"
+  },
+  "homepage.quickStart.link": {
+    "message": "查看完整安装指南 →",
+    "description": "Homepage quick start link text"
+  },
+  "homepage.meta.title": {
+    "message": "可验证的结构化 AI 任务规范",
+    "description": "Homepage meta title"
+  },
+  "homepage.meta.description": {
+    "message": "Cognitive Modules - 可验证的结构化 AI 任务规范",
+    "description": "Homepage meta description"
   }
 }

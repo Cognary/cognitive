@@ -23,6 +23,14 @@
     "message": "CLI 参考",
     "description": "The label of footer link with label=CLI Reference linking to /docs/cli/overview"
   },
+  "link.item.label.Conformance": {
+    "message": "一致性",
+    "description": "The label of footer link with label=Conformance linking to /docs/conformance"
+  },
+  "link.item.label.Registry": {
+    "message": "Registry",
+    "description": "The label of footer link with label=Registry linking to /docs/registry"
+  },
   "copyright": {
     "message": "Copyright © 2026 ziel-io. Built with Docusaurus.",
     "description": "The footer copyright"
@@ -43,12 +51,16 @@
     "message": "GitHub",
     "description": "The label of footer link with label=GitHub linking to https://github.com/ziel-io/cognitive-modules"
   },
+  "link.item.label.Release Notes": {
+    "message": "发布说明",
+    "description": "The label of footer link with label=Release Notes linking to /docs/release-notes"
+  },
+  "link.item.label.Governance": {
+    "message": "治理机制",
+    "description": "The label of footer link with label=Governance linking to /docs/community/governance"
+  },
   "link.item.label.npm": {
     "message": "npm",
     "description": "The label of footer link with label=npm linking to https://www.npmjs.com/package/cogn"
-  },
-  "link.item.label.PyPI": {
-    "message": "PyPI",
-    "description": "The label of footer link with label=PyPI linking to https://pypi.org/project/cognitive-modules/"
   }
 }

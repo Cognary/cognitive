@@ -1,104 +1,39 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
-# Argument Passing
+# Arguments & Input Mapping
 
-Cognitive Modules supports the `$ARGUMENTS` placeholder, allowing runtime parameter passing.
+Cognitive Modules supports two ways to pass input:
 
-## Basic Usage
+1. **Structured JSON** via `--input` (recommended)
+2. **Free-form text** via `--args`
 
-### In MODULE.md
-
-```markdown
-## Input
-
-User requirement: $ARGUMENTS
-
-Generate output based on the above requirement.
-```
-
-### Runtime Passing
+## Structured Input (`--input`)
 
 ```bash
-cog run my-module --args "your requirement description"
+cog run code-reviewer --input '{"query":"review this code"}'
 ```
 
-## Placeholder Syntax
+Fields in `input` are available to prompts via `${variable}` placeholders, for example `${query}`.
 
-| Placeholder | Description | Example |
-|-------------|-------------|---------|
-| `$ARGUMENTS` | Complete input text | "health product homepage" |
-| `$ARGUMENTS[0]` | First word (space-separated) | "health" |
-| `$ARGUMENTS[1]` | Second word | "product" |
-| `$0`, `$1`, ... | Shorthand form | Same as above |
-
-## Example
-
-### MODULE.md
-
-```markdown
----
-name: page-designer
-version: 1.0.0
----
-
-# Page Designer
-
-Design a $1 page for $0 type product.
-
-Product type: $ARGUMENTS[0]
-Page type: $ARGUMENTS[1]
-```
-
-### Invocation
+## Text Input (`--args`)
 
 ```bash
-cog run page-designer --args "health-product homepage"
+cog run code-reviewer --args "def foo(): pass"
 ```
 
-### Replacement Result
+`--args` is mapped to:
 
-```
-Design a homepage page for health-product type product.
+- `input.code` if it looks like code
+- otherwise `input.query`
 
-Product type: health-product
-Page type: homepage
-```
+## Prompt Substitution
 
-## With JSON Input
+The runtime supports legacy placeholders in `prompt.md`:
 
-When using `--args`:
+- `$ARGUMENTS` (full args string)
+- `$ARGUMENTS[N]` (index access)
+- `$N` (shorthand index)
 
-1. Skip input Schema validation
-2. Create `{"$ARGUMENTS": "...", "query": "..."}` input
-
-When using JSON file:
-
-1. Normal input Schema validation
-2. `$ARGUMENTS` is obtained from JSON's `$ARGUMENTS` or `query` field
-
-```json
-{
-  "$ARGUMENTS": "custom argument",
-  "other_field": "other value"
-}
-```
-
-## Best Practices
-
-1. **Simple tasks**: Use `$ARGUMENTS` directly
-2. **Complex input**: Define complete input Schema
-3. **Mixed use**: Include `$ARGUMENTS` field in Schema
-
-```json
-{
-  "input": {
-    "type": "object",
-    "properties": {
-      "$ARGUMENTS": { "type": "string" },
-      "options": { "type": "object" }
-    }
-  }
-}
-```
+If the prompt does not include args explicitly, the runtime appends a short input section automatically.

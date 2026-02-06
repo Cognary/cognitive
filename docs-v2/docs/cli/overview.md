@@ -2,145 +2,74 @@
 sidebar_position: 1
 ---
 
-# CLI Overview
+# CLI Overview (Node.js)
 
-Cognitive Modules provides two command-line tools:
-
-| Platform | Package | Command |
-|----------|---------|---------|
-| pip | `cognitive-modules` | `cogn` |
-| npm | `cognitive-modules-cli` | `cog` |
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+Cognitive Modules CLI is distributed via npm and provides the `cog` command.
 
 ## Installation
 
-<Tabs>
-<TabItem value="pip" label="Python (pip)">
-
 ```bash
-pip install cognitive-modules
+# Zero-install
+npx cogn@2.2.5 --help
+
+# Global
+npm install -g cogn@2.2.5
+# or: npm install -g cognitive-modules-cli@2.2.5
 ```
-
-</TabItem>
-<TabItem value="npm" label="Node.js (npm)">
-
-```bash
-npm install -g cognitive-modules-cli
-```
-
-</TabItem>
-<TabItem value="npx" label="npx (zero-install)">
-
-```bash
-npx cognitive-modules-cli <command>
-```
-
-</TabItem>
-</Tabs>
 
 ## Command List
 
 | Command | Description |
 |---------|-------------|
 | `list` | List installed modules |
-| `info <module>` | View module details |
 | `run <module>` | Run a module |
-| `validate <module>` | Validate a module |
-| `init <name>` | Create a new module |
-| `add <url>` | Install module from GitHub (recommended) |
+| `pipe --module <name>` | Pipe mode (stdin/stdout) |
+| `init [name]` | Initialize project or create module |
+| `add <url>` | Install module from GitHub |
 | `update <module>` | Update module to latest version |
-| `versions <url>` | View available versions |
-| `remove <module>` | Remove a module |
-| `install <source>` | Install module (compatible method) |
-| `uninstall <module>` | Uninstall a module |
-| `search <query>` | Search registry |
-| `registry` | View registry |
+| `versions <url>` | View available tags/versions |
+| `remove <module>` | Remove module |
+| `compose <module>` | Execute composed workflow |
+| `compose-info <module>` | Show composition config |
+| `validate <module>` | Validate a module |
+| `migrate <module>` | Migrate module to v2.2 |
+| `serve` | Start HTTP API server |
+| `mcp` | Start MCP server |
 | `doctor` | Environment check |
 
 ## Global Options
 
 ```bash
-cogn --version  # Show version (pip)
-cog --version   # Show version (npm)
-cogn --help     # Show help
+cog --version
+cog --help
 ```
 
 ## Common Workflows
 
-:::note Command Names
-The examples below use `cogn` (pip version). If using the npm version, replace `cogn` with `cog`.
-:::
-
-### 1. Use Built-in Modules
+### 1. Run a Module
 
 ```bash
-# View available modules
-cogn list
-
-# View module details
-cogn info code-reviewer
-
-# Run a module
-cogn run code-reviewer --args "your code" --pretty
+cog run code-reviewer --args "your code" --pretty
 ```
 
-### 2. Create Custom Modules
+### 2. Create a Module
 
 ```bash
-# Create skeleton
-cogn init my-module -d "Module description"
-
-# Edit MODULE.md and schema.json
-# ...
-
-# Validate
-cogn validate my-module
-
-# Install globally
-cogn install ./cognitive/modules/my-module
+cog init my-module
+cog validate my-module --v22
 ```
 
-### 3. Install Community Modules
+### 3. Install Modules from GitHub
 
 ```bash
-# Install from GitHub (recommended)
-cogn add ziel-io/cognitive-modules -m code-simplifier
-
-# Install specific version
-cogn add ziel-io/cognitive-modules -m code-reviewer --tag v1.0.0
-
-# View available versions
-cogn versions ziel-io/cognitive-modules
-
-# Search registry
-cogn search "code review"
-
-# Install from registry
-cogn install registry:code-reviewer
+cog add ziel-io/cognitive-modules -m code-simplifier
+cog versions ziel-io/cognitive-modules
+cog update code-simplifier
 ```
 
-### 4. Version Management
+### 4. Compose Workflows
 
 ```bash
-# Update module to latest version
-cogn update code-simplifier
-
-# Update to specific version
-cogn update code-simplifier --tag v2.0.0
-
-# View module installation info
-cogn info code-simplifier
-
-# Remove module
-cogn remove code-simplifier
-```
-
-### 5. npx Zero-Install Usage
-
-```bash
-# No installation needed, use directly
-npx cognitive-modules-cli add ziel-io/cognitive-modules -m code-simplifier
-npx cognitive-modules-cli run code-simplifier --args "code"
+cog compose code-review-pipeline --args "code" --timeout 60000 --trace
+cog compose-info code-review-pipeline
 ```

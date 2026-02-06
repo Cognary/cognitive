@@ -2,158 +2,31 @@
 sidebar_position: 5
 ---
 
-# TypeScript Runtime
+# Node.js Runtime
 
-Besides the Python CLI, Cognitive Modules also provides a standalone TypeScript runtime `cognitive-runtime`.
+The Node.js runtime is provided by the `cognitive-modules-cli` package. It can be used programmatically (not just via CLI).
 
-## Installation
-
-```bash
-npm install -g cognitive-runtime
-```
-
-## CLI Usage
+## Install
 
 ```bash
-# Run module
-cog run code-reviewer --args "your code" --pretty
-
-# List modules
-cog list
-
-# Module info
-cog info code-reviewer
-
-# Validate module
-cog validate code-reviewer --v22
+npm install cognitive-modules-cli
 ```
 
-## Programmatic Usage
+## Example
 
-### Basic
+```ts
+import { loadModule, runModule, getProvider } from 'cognitive-modules-cli';
 
-```typescript
-import { runModule } from 'cognitive-runtime';
+const provider = getProvider('openai', 'gpt-4o');
+const module = await loadModule('./cognitive/modules/code-simplifier');
 
-const result = await runModule('code-reviewer', {
-  code: 'function add(a, b) { return a + b; }',
-  language: 'javascript'
-});
-
-console.log(result.meta.confidence);
-console.log(result.data.issues);
+const result = await runModule(module, provider, { args: 'code' });
+console.log(result);
 ```
 
-### With Configuration
+## Module Search Paths
 
-```typescript
-import { CognitiveRuntime } from 'cognitive-runtime';
+The runtime searches these locations (in order):
 
-const runtime = new CognitiveRuntime({
-  modulesPath: './cognitive/modules',
-  provider: 'openai',
-  apiKey: process.env.OPENAI_API_KEY,
-  model: 'gpt-4o'
-});
-
-const result = await runtime.run('code-reviewer', { code: '...' });
-```
-
-### Streaming
-
-```typescript
-import { runModuleStream } from 'cognitive-runtime';
-
-const stream = runModuleStream('code-reviewer', { code: '...' });
-
-for await (const chunk of stream) {
-  process.stdout.write(chunk);
-}
-```
-
-## v2.2 Format Support
-
-TypeScript runtime fully supports v2.2 format:
-
-```typescript
-interface ModuleResult<T = any> {
-  ok: boolean;
-  meta: {
-    confidence: number;
-    risk: 'none' | 'low' | 'medium' | 'high';
-    explain: string;
-  };
-  data?: T & {
-    rationale: string;
-    extensions?: {
-      insights?: Array<{
-        text: string;
-        suggested_mapping: string;
-      }>;
-    };
-  };
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-```
-
-## HTTP Server
-
-```bash
-# Start HTTP server
-cog serve --port 8000
-
-# With CORS
-cog serve --port 8000 --cors
-```
-
-### API Endpoints
-
-```bash
-# Run module
-POST /api/run/:module
-Content-Type: application/json
-{
-  "code": "...",
-  "language": "python"
-}
-
-# List modules
-GET /api/modules
-
-# Module info
-GET /api/modules/:module
-```
-
-## MCP Server
-
-```bash
-# Start MCP server (for Claude Desktop, Cursor)
-cog mcp
-
-# With custom port
-cog mcp --port 3000
-```
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `LLM_PROVIDER` | Provider (openai/anthropic/ollama) |
-| `OPENAI_API_KEY` | OpenAI API key |
-| `ANTHROPIC_API_KEY` | Anthropic API key |
-| `LLM_MODEL` | Default model |
-| `COGNITIVE_MODULES_PATH` | Custom modules path |
-
-## Comparison with Python
-
-| Feature | Python (cogn) | TypeScript (cog) |
-|---------|---------------|------------------|
-| CLI | ✅ | ✅ |
-| HTTP Server | ✅ | ✅ |
-| MCP Server | ✅ | ✅ |
-| Async | ✅ | ✅ |
-| Streaming | ❌ | ✅ |
-| v2.2 Support | ✅ | ✅ |
+1. `./cognitive/modules/`
+2. `~/.cognitive/modules/`

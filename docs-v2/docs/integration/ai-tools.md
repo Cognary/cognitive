@@ -2,104 +2,37 @@
 sidebar_position: 3
 ---
 
-# AI Tools Integration
+# Integrating with AI Tools
 
-Integrate Cognitive Modules with various AI development tools.
+Recommended path: **MCP Server**.
 
-## Supported Tools
+## Cursor / Claude Code
 
-| Tool | Integration Method | Status |
-|------|-------------------|--------|
-| Claude Desktop | MCP Server | ✅ |
-| Cursor | MCP Server | ✅ |
-| VS Code | Extension (planned) | 🚧 |
-| JetBrains | Plugin (planned) | 🚧 |
+1. Install and start MCP server:
 
-## Claude Desktop
-
-### Setup
-
-1. Start MCP server:
 ```bash
+npm install -g cogn@2.2.5
+npm install @modelcontextprotocol/sdk
 cog mcp
 ```
 
-2. Configure Claude Desktop (`claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "cognitive": {
-      "command": "cog",
-      "args": ["mcp"]
-    }
-  }
-}
-```
+2. Configure your tool to call MCP server `cognitive`.
 
-3. Restart Claude Desktop
+The tool can call:
+- `cognitive_run(module, args, provider?, model?)`
+- `cognitive_list()`
+- `cognitive_info(module)`
 
-### Usage
+## HTTP-based Tools (n8n / Dify / Coze)
 
-In Claude Desktop:
-```
-Use the code-reviewer module to review this code:
-[paste code]
-```
+Use `cog serve` and call `POST /run`.
 
-## Cursor
-
-### Setup
-
-1. Start MCP server:
 ```bash
-cog mcp --port 3000
+cog serve --port 8000
 ```
 
-2. Add to Cursor settings
-
-### Usage
-
-In Cursor chat:
-```
-@cognitive run code-reviewer on the selected code
-```
-
-## Generic Integration
-
-### HTTP API
-
-Start HTTP server:
 ```bash
-cog serve --port 8000 --cors
-```
-
-Call from any tool:
-```bash
-curl -X POST http://localhost:8000/api/run/code-reviewer \
+curl -X POST http://localhost:8000/run \
   -H "Content-Type: application/json" \
-  -d '{"code": "def foo(): pass"}'
+  -d '{"module":"task-prioritizer","args":"fix bug, write docs"}'
 ```
-
-### WebSocket
-
-```javascript
-const ws = new WebSocket('ws://localhost:8000/ws');
-
-ws.send(JSON.stringify({
-  type: 'run',
-  module: 'code-reviewer',
-  input: { code: '...' }
-}));
-
-ws.onmessage = (event) => {
-  const result = JSON.parse(event.data);
-  console.log(result);
-};
-```
-
-## Benefits
-
-- **Structured Output** - Get predictable JSON responses
-- **Validation** - Input/output automatically validated
-- **Confidence** - Know how reliable the result is
-- **Audit Trail** - Every call has rationale

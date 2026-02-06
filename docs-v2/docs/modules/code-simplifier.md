@@ -110,4 +110,4 @@ cog run code-simplifier --args "function calculate(x) {
 
 ## Schema
 
-See [Module Format - v2.2 Schema](/docs/guide/module-format#schemajson-v22) for complete schema.
+See [Module Format - schema.json](/docs/guide/module-format#schemajson) for complete schema.

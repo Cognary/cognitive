@@ -14,7 +14,11 @@ const config: Config = {
   projectName: 'cognitive-modules',
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   i18n: {
     defaultLocale: 'en',
@@ -83,6 +87,21 @@ const config: Config = {
           label: 'Docs',
         },
         {
+          to: '/docs/conformance',
+          label: 'Conformance',
+          position: 'left',
+        },
+        {
+          to: '/docs/registry',
+          label: 'Registry',
+          position: 'left',
+        },
+        {
+          to: '/docs/release-notes',
+          label: 'Release Notes',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/ziel-io/cognitive-modules',
           label: 'GitHub',
           position: 'right',
@@ -112,6 +131,14 @@ const config: Config = {
               label: 'CLI Reference',
               to: '/docs/cli/overview',
             },
+            {
+              label: 'Conformance',
+              to: '/docs/conformance',
+            },
+            {
+              label: 'Registry',
+              to: '/docs/registry',
+            },
           ],
         },
         {
@@ -135,16 +162,20 @@ const config: Config = {
           title: 'More',
           items: [
             {
+              label: 'Release Notes',
+              to: '/docs/release-notes',
+            },
+            {
+              label: 'Governance',
+              to: '/docs/community/governance',
+            },
+            {
               label: 'GitHub',
               href: 'https://github.com/ziel-io/cognitive-modules',
             },
             {
               label: 'npm',
               href: 'https://www.npmjs.com/package/cogn',
-            },
-            {
-              label: 'PyPI',
-              href: 'https://pypi.org/project/cognitive-modules/',
             },
           ],
         },

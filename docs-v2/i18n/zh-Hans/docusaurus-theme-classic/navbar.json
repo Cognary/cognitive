@@ -7,6 +7,18 @@
     "message": "文档",
     "description": "Navbar item with label Docs"
   },
+  "item.label.Conformance": {
+    "message": "一致性",
+    "description": "Navbar item with label Conformance"
+  },
+  "item.label.Registry": {
+    "message": "Registry",
+    "description": "Navbar item with label Registry"
+  },
+  "item.label.Release Notes": {
+    "message": "发布说明",
+    "description": "Navbar item with label Release Notes"
+  },
   "item.label.GitHub": {
     "message": "GitHub",
     "description": "Navbar item with label GitHub"
