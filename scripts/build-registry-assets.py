@@ -140,7 +140,7 @@ def now_iso() -> str:
 
 def main() -> None:
   ap = argparse.ArgumentParser()
-  ap.add_argument("--tag", required=True, help="GitHub release tag, e.g. v2.2.5")
+  ap.add_argument("--tag", required=True, help="GitHub release tag, e.g. v2.2.7")
   ap.add_argument("--modules-dir", default="cognitive/modules", help="Modules directory")
   ap.add_argument("--v1-registry", default="cognitive-registry.json", help="v1 registry index file (for tags/author/description)")
   ap.add_argument("--out-dir", default="dist/registry-assets", help="Output directory for tarballs")
