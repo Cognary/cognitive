@@ -358,10 +358,16 @@ describe('RegistryClient', () => {
         });
       });
 
-      const p = client.fetchRegistry(true);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await expect(p).rejects.toThrow('Registry fetch timed out after 10000ms');
-      vi.useRealTimers();
+      try {
+        // Attach the rejection handler before advancing timers to avoid
+        // transient unhandledRejection warnings in Node/vitest.
+        const p = client.fetchRegistry(true);
+        const assertion = expect(p).rejects.toThrow('Registry fetch timed out after 10000ms');
+        await vi.advanceTimersByTimeAsync(10_000);
+        await assertion;
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should reject oversized registry payload via content-length', async () => {
