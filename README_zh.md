@@ -52,7 +52,11 @@ npm install -g cogn@2.2.7
 覆盖方式：
 
 - 环境变量：`COGNITIVE_REGISTRY_URL`
+- 环境变量：`COGNITIVE_REGISTRY_TIMEOUT_MS`（毫秒）
+- 环境变量：`COGNITIVE_REGISTRY_MAX_BYTES`
 - CLI 参数：`--registry <url>`
+- CLI 参数：`--registry-timeout-ms <ms>`
+- CLI 参数：`--registry-max-bytes <n>`
 
 ## 快速开始
 

@@ -52,7 +52,11 @@ For reproducible builds, pin to a specific tag:
 Override via:
 
 - Env: `COGNITIVE_REGISTRY_URL`
+- Env: `COGNITIVE_REGISTRY_TIMEOUT_MS` (ms)
+- Env: `COGNITIVE_REGISTRY_MAX_BYTES`
 - CLI: `--registry <url>`
+- CLI: `--registry-timeout-ms <ms>`
+- CLI: `--registry-max-bytes <n>`
 
 ## Quick Start
 

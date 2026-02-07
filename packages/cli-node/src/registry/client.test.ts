@@ -96,15 +96,30 @@ const mockV2Registry: RegistryV2 = {
 describe('RegistryClient', () => {
   let client: RegistryClient;
   let originalFetch: typeof global.fetch;
+  let originalRegistryUrlEnv: string | undefined;
+  let originalTimeoutEnv: string | undefined;
+  let originalMaxBytesEnv: string | undefined;
 
   beforeEach(() => {
     originalFetch = global.fetch;
     vi.clearAllMocks();
+    originalRegistryUrlEnv = process.env.COGNITIVE_REGISTRY_URL;
+    originalTimeoutEnv = process.env.COGNITIVE_REGISTRY_TIMEOUT_MS;
+    originalMaxBytesEnv = process.env.COGNITIVE_REGISTRY_MAX_BYTES;
+    delete process.env.COGNITIVE_REGISTRY_URL;
+    delete process.env.COGNITIVE_REGISTRY_TIMEOUT_MS;
+    delete process.env.COGNITIVE_REGISTRY_MAX_BYTES;
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
     vi.restoreAllMocks();
+    if (originalRegistryUrlEnv === undefined) delete process.env.COGNITIVE_REGISTRY_URL;
+    else process.env.COGNITIVE_REGISTRY_URL = originalRegistryUrlEnv;
+    if (originalTimeoutEnv === undefined) delete process.env.COGNITIVE_REGISTRY_TIMEOUT_MS;
+    else process.env.COGNITIVE_REGISTRY_TIMEOUT_MS = originalTimeoutEnv;
+    if (originalMaxBytesEnv === undefined) delete process.env.COGNITIVE_REGISTRY_MAX_BYTES;
+    else process.env.COGNITIVE_REGISTRY_MAX_BYTES = originalMaxBytesEnv;
   });
 
   describe('parseGitHubSource', () => {
@@ -372,31 +387,71 @@ describe('RegistryClient', () => {
       }
     });
 
-	    it('should reject oversized registry payload via content-length', async () => {
-	      global.fetch = vi.fn().mockResolvedValue({
-	        ok: true,
-	        headers: {
-	          get: (name: string) => (name.toLowerCase() === 'content-length' ? String(2 * 1024 * 1024 + 1) : null),
-	        },
-	        json: () => Promise.resolve(mockV1Registry),
-	      });
+    it('should time out registry fetch (env override)', async () => {
+      process.env.COGNITIVE_REGISTRY_TIMEOUT_MS = '12345';
+      const c = new RegistryClient('https://example.com/registry.json');
 
-	      await expect(client.fetchRegistry(true)).rejects.toThrow('Registry payload too large');
-	    });
+      vi.useFakeTimers();
+      global.fetch = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            const err = new Error('aborted');
+            (err as any).name = 'AbortError';
+            reject(err);
+          });
+        });
+      });
+
+      try {
+        const p = c.fetchRegistry(true);
+        const assertion = expect(p).rejects.toThrow('Registry fetch timed out after 12345ms');
+        await vi.advanceTimersByTimeAsync(12_345);
+        await assertion;
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('should reject oversized registry payload via content-length', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        headers: {
+          get: (name: string) => (name.toLowerCase() === 'content-length' ? String(2 * 1024 * 1024 + 1) : null),
+        },
+        json: () => Promise.resolve(mockV1Registry),
+      });
+
+      await expect(client.fetchRegistry(true)).rejects.toThrow('Registry payload too large');
+    });
+
+    it('should reject oversized registry payload via content-length (env override)', async () => {
+      process.env.COGNITIVE_REGISTRY_MAX_BYTES = '1024';
+      const c = new RegistryClient('https://example.com/registry.json');
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        headers: {
+          get: (name: string) => (name.toLowerCase() === 'content-length' ? String(1025) : null),
+        },
+        json: () => Promise.resolve(mockV1Registry),
+      });
+
+      await expect(c.fetchRegistry(true)).rejects.toThrow('Registry payload too large');
+    });
 
     it('should throw on network error', async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
       await expect(client.fetchRegistry(true)).rejects.toThrow('Network error');
     });
 
-	    it('should throw on non-ok response', async () => {
-	      global.fetch = vi.fn().mockResolvedValue({
-	        ok: false,
-	        status: 404,
-	        statusText: 'Not Found',
-	      });
-	      await expect(client.fetchRegistry(true)).rejects.toThrow('Failed to fetch registry: 404 Not Found');
-	    });
+    it('should throw on non-ok response', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+      });
+      await expect(client.fetchRegistry(true)).rejects.toThrow('Failed to fetch registry: 404 Not Found');
+    });
 
       it('should fall back to raw main when latest release index is temporarily missing', async () => {
         const fallbackUrl = 'https://raw.githubusercontent.com/Cognary/cognitive/main/cognitive-registry.v2.json';

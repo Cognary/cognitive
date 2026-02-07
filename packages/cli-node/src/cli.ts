@@ -78,6 +78,8 @@ async function main() {
       // Search options
       category: { type: 'string', short: 'c' },
       registry: { type: 'string' }, // override registry index URL (or use env COGNITIVE_REGISTRY_URL)
+      'registry-timeout-ms': { type: 'string' },
+      'registry-max-bytes': { type: 'string' },
       // Registry build/verify options
       'modules-dir': { type: 'string' },
       'v1-registry': { type: 'string' },
@@ -97,6 +99,7 @@ async function main() {
       'fetch-timeout-ms': { type: 'string' },
       'max-index-bytes': { type: 'string' },
       'max-tarball-bytes': { type: 'string' },
+      concurrency: { type: 'string' },
     },
     allowPositionals: true,
   });
@@ -152,12 +155,23 @@ async function main() {
     process.exit(1);
   }
 
+  const parsePositive = (key: string, raw: unknown): number | undefined => {
+    if (raw === undefined || raw === null || raw === '') return undefined;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) {
+      throw new Error(`Invalid --${key}: ${String(raw)} (expected a positive number)`);
+    }
+    return Math.floor(n);
+  };
+
   const ctx: CommandContext = {
     cwd: process.cwd(),
     provider,
     verbose: values.verbose,
     policy,
     registryUrl: (values.registry as string | undefined) ?? undefined,
+    registryTimeoutMs: parsePositive('registry-timeout-ms', values['registry-timeout-ms']),
+    registryMaxBytes: parsePositive('registry-max-bytes', values['registry-max-bytes']),
   };
 
   try {
@@ -1039,18 +1053,10 @@ async function main() {
             (remote ? defaultIndex : 'cognitive-registry.v2.json');
           const assetsDir = (values['assets-dir'] as string | undefined) ?? (remote ? undefined : 'dist/registry-assets');
 
-          const parseNumOpt = (key: string, raw: unknown): number | undefined => {
-            if (raw === undefined || raw === null || raw === '') return undefined;
-            const n = Number(raw);
-            if (!Number.isFinite(n) || n <= 0) {
-              throw new Error(`Invalid --${key}: ${String(raw)} (expected a positive number)`);
-            }
-            return Math.floor(n);
-          };
-
-          const fetchTimeoutMs = parseNumOpt('fetch-timeout-ms', values['fetch-timeout-ms']);
-          const maxIndexBytes = parseNumOpt('max-index-bytes', values['max-index-bytes']);
-          const maxTarballBytes = parseNumOpt('max-tarball-bytes', values['max-tarball-bytes']);
+          const fetchTimeoutMs = parsePositive('fetch-timeout-ms', values['fetch-timeout-ms']);
+          const maxIndexBytes = parsePositive('max-index-bytes', values['max-index-bytes']);
+          const maxTarballBytes = parsePositive('max-tarball-bytes', values['max-tarball-bytes']);
+          const concurrency = parsePositive('concurrency', values.concurrency);
 
           const verified = await verifyRegistryAssets({
             registryIndexPath: indexPath,
@@ -1059,6 +1065,7 @@ async function main() {
             fetchTimeoutMs,
             maxIndexBytes,
             maxTarballBytes,
+            concurrency,
           });
           console.log(JSON.stringify(verified, null, values.pretty ? 2 : 0));
           if (!verified.ok) {
@@ -1152,6 +1159,8 @@ OPTIONS:
   -f, --format <fmt>    Output format: text or json (for validate)
   -c, --category <cat>  Filter by category (for search)
   --registry <url>      Override registry index URL (or set env COGNITIVE_REGISTRY_URL)
+  --registry-timeout-ms <ms>  Registry index fetch timeout (overrides env COGNITIVE_REGISTRY_TIMEOUT_MS)
+  --registry-max-bytes <n>    Registry index max bytes (overrides env COGNITIVE_REGISTRY_MAX_BYTES)
   -l, --limit <n>       Limit results (for search, versions)
   -v, --version         Show version
   -h, --help            Show this help
@@ -1223,6 +1232,8 @@ ENVIRONMENT:
   OLLAMA_HOST         Ollama local (default: localhost:11434)
   COG_MODEL           Override default model for any provider
   COGNITIVE_REGISTRY_URL  Override registry index URL
+  COGNITIVE_REGISTRY_TIMEOUT_MS  Registry index fetch timeout (ms)
+  COGNITIVE_REGISTRY_MAX_BYTES   Registry index max bytes
 `);
 }
 

@@ -440,7 +440,10 @@ export async function addFromRegistry(
   
   let tempDir: string | undefined;
   try {
-    const client = new RegistryClient(registryUrl);
+    const client = new RegistryClient(registryUrl, {
+      timeoutMs: ctx.registryTimeoutMs,
+      maxBytes: ctx.registryMaxBytes,
+    });
     const moduleInfo = await client.getModule(moduleName);
     
     if (!moduleInfo) {

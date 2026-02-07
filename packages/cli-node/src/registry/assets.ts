@@ -31,6 +31,7 @@ export interface VerifyRegistryOptions {
   remote?: boolean;
   fetchTimeoutMs?: number;
   maxIndexBytes?: number;
+  concurrency?: number;
 }
 
 export interface RegistryBuildResult {
@@ -652,8 +653,24 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
     throw new Error('Local verify requires --assets-dir (directory containing tarballs)');
   }
 
-  for (const [name, entry] of Object.entries(modules)) {
+  const entries = Object.entries(modules);
+  const desiredConcurrency = opts.concurrency ?? (wantRemote ? 4 : 1);
+  const concurrency = Math.max(1, Math.min(8, Math.floor(desiredConcurrency)));
+
+  const localTarPath = async (moduleName: string, tarballRef: string): Promise<string> => {
+    const fileName = tarballFileName(tarballRef);
+    // Avoid collisions when we download into a temp dir (remote verify).
+    if (wantRemote && tmpAssetsRoot && !opts.assetsDir) {
+      const p = path.join(assetsDir, moduleName, fileName);
+      await fs.mkdir(path.dirname(p), { recursive: true });
+      return p;
+    }
+    return path.join(assetsDir, fileName);
+  };
+
+  const verifyOne = async (moduleName: string, entry: any): Promise<void> => {
     checked += 1;
+    let tarPathForCleanup: string | null = null;
     try {
       const dist = (entry as any).distribution ?? {};
       const tarballUrl = String(dist.tarball ?? '');
@@ -662,8 +679,8 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
       const expectedFiles: string[] = Array.isArray(dist.files) ? dist.files.map(String) : [];
 
       if (!tarballUrl) throw new Error('Missing distribution.tarball');
-      const fileName = tarballFileName(tarballUrl);
-      const tarPath = path.join(assetsDir, fileName);
+      const tarPath = await localTarPath(moduleName, tarballUrl);
+      tarPathForCleanup = tarPath;
 
       if (wantRemote) {
         if (!isHttpUrl(tarballUrl)) {
@@ -743,31 +760,37 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
         } catch {
           // ignore if module.yaml is missing or malformed; module validity already checked
         }
-
       } finally {
         await fs.rm(tmp, { recursive: true, force: true });
       }
 
       passed += 1;
     } catch (e) {
-      failures.push({ module: name, reason: e instanceof Error ? e.message : String(e) });
+      failures.push({ module: moduleName, reason: e instanceof Error ? e.message : String(e) });
     } finally {
       // If we downloaded tarballs into a temp dir, keep disk usage bounded.
-      if (wantRemote && tmpAssetsRoot) {
+      if (wantRemote && tmpAssetsRoot && tarPathForCleanup) {
         try {
-          const dist = (entry as any).distribution ?? {};
-          const tarballUrl = String(dist.tarball ?? '');
-          const fileName = tarballUrl ? tarballFileName(tarballUrl) : '';
-          const tarPath = fileName ? path.join(assetsDir, fileName) : '';
-          if (tarPath) {
-            await fs.rm(tarPath, { force: true });
-          }
+          await fs.rm(tarPathForCleanup, { force: true });
         } catch {
-          // ignore cleanup errors (best effort)
+          // ignore
         }
       }
     }
-  }
+  };
+
+  let cursor = 0;
+  const workers = Array.from({ length: concurrency }, async () => {
+    while (true) {
+      const i = cursor;
+      cursor += 1;
+      if (i >= entries.length) break;
+      const [name, entry] = entries[i];
+      await verifyOne(name, entry);
+    }
+  });
+
+  await Promise.all(workers);
 
   if (tmpAssetsRoot) {
     await fs.rm(tmpAssetsRoot, { recursive: true, force: true });

@@ -165,8 +165,26 @@ export const DEFAULT_REGISTRY_URL =
 const FALLBACK_REGISTRY_URL = 'https://raw.githubusercontent.com/Cognary/cognitive/main/cognitive-registry.v2.json';
 const CACHE_DIR = join(homedir(), '.cognitive', 'cache');
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const REGISTRY_FETCH_TIMEOUT_MS = 10_000; // 10s
-const MAX_REGISTRY_BYTES = 2 * 1024 * 1024; // 2MB
+const DEFAULT_REGISTRY_FETCH_TIMEOUT_MS = 10_000; // 10s
+const DEFAULT_MAX_REGISTRY_BYTES = 2 * 1024 * 1024; // 2MB
+const HARD_MAX_REGISTRY_BYTES = 20 * 1024 * 1024; // 20MB (absolute safety cap)
+
+function parsePositiveIntEnv(name: string): number | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return Math.floor(n);
+}
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
+export interface RegistryClientOptions {
+  timeoutMs?: number;
+  maxBytes?: number;
+}
 
 // =============================================================================
 // Registry Client
@@ -174,23 +192,36 @@ const MAX_REGISTRY_BYTES = 2 * 1024 * 1024; // 2MB
 
 export class RegistryClient {
   private registryUrl: string;
+  private timeoutMs: number;
+  private maxBytes: number;
   private cache: { data: RegistryV1 | RegistryV2 | null; timestamp: number } = { data: null, timestamp: 0 };
 
-  constructor(registryUrl?: string) {
+  constructor(registryUrl?: string, options: RegistryClientOptions = {}) {
     const fromEnv = process.env.COGNITIVE_REGISTRY_URL;
     const selected =
       (typeof registryUrl === 'string' && registryUrl.trim() ? registryUrl.trim() : undefined) ??
       (typeof fromEnv === 'string' && fromEnv.trim() ? fromEnv.trim() : undefined) ??
       DEFAULT_REGISTRY_URL;
     this.registryUrl = selected;
+
+    const envTimeout = parsePositiveIntEnv('COGNITIVE_REGISTRY_TIMEOUT_MS');
+    const envMaxBytes = parsePositiveIntEnv('COGNITIVE_REGISTRY_MAX_BYTES');
+
+    const timeout = options.timeoutMs ?? envTimeout ?? DEFAULT_REGISTRY_FETCH_TIMEOUT_MS;
+    // keep timeouts bounded for predictable UX
+    this.timeoutMs = clamp(timeout, 1000, 120_000);
+
+    const maxBytes = options.maxBytes ?? envMaxBytes ?? DEFAULT_MAX_REGISTRY_BYTES;
+    // enforce an absolute upper bound to avoid accidental OOM on hostile endpoints
+    this.maxBytes = clamp(maxBytes, 1024, HARD_MAX_REGISTRY_BYTES);
   }
 
   private async parseRegistryResponse(response: Response): Promise<RegistryV1 | RegistryV2> {
     const contentLengthHeader = response.headers?.get('content-length');
     if (contentLengthHeader) {
       const contentLength = Number(contentLengthHeader);
-      if (!Number.isNaN(contentLength) && contentLength > MAX_REGISTRY_BYTES) {
-        throw new Error(`Registry payload too large: ${contentLength} bytes (max ${MAX_REGISTRY_BYTES})`);
+      if (!Number.isNaN(contentLength) && contentLength > this.maxBytes) {
+        throw new Error(`Registry payload too large: ${contentLength} bytes (max ${this.maxBytes})`);
       }
     }
 
@@ -206,8 +237,8 @@ export class RegistryClient {
           if (done) break;
           if (value) {
             totalBytes += value.byteLength;
-            if (totalBytes > MAX_REGISTRY_BYTES) {
-              throw new Error(`Registry payload too large: ${totalBytes} bytes (max ${MAX_REGISTRY_BYTES})`);
+            if (totalBytes > this.maxBytes) {
+              throw new Error(`Registry payload too large: ${totalBytes} bytes (max ${this.maxBytes})`);
             }
             buffer += decoder.decode(value, { stream: true });
           }
@@ -227,8 +258,8 @@ export class RegistryClient {
     if (typeof response.text === 'function') {
       const text = await response.text();
       const byteLen = Buffer.byteLength(text, 'utf-8');
-      if (byteLen > MAX_REGISTRY_BYTES) {
-        throw new Error(`Registry payload too large: ${byteLen} bytes (max ${MAX_REGISTRY_BYTES})`);
+      if (byteLen > this.maxBytes) {
+        throw new Error(`Registry payload too large: ${byteLen} bytes (max ${this.maxBytes})`);
       }
       try {
         return JSON.parse(text) as RegistryV1 | RegistryV2;
@@ -281,7 +312,7 @@ export class RegistryClient {
     
     const fetchOnce = async (url: string): Promise<RegistryV1 | RegistryV2> => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
+      const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
       try {
         const response = await fetch(url, {
           headers: { 'User-Agent': 'cognitive-runtime/2.2' },
@@ -298,7 +329,7 @@ export class RegistryClient {
         return await this.parseRegistryResponse(response);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          throw new Error(`Registry fetch timed out after ${REGISTRY_FETCH_TIMEOUT_MS}ms`);
+          throw new Error(`Registry fetch timed out after ${this.timeoutMs}ms`);
         }
         throw error;
       } finally {

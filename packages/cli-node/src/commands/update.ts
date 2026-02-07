@@ -121,7 +121,10 @@ export async function update(
     const registryUrl = info.registryUrl || undefined;
     
     // Check registry for latest version
-    const client = new RegistryClient(registryUrl);
+    const client = new RegistryClient(registryUrl, {
+      timeoutMs: ctx.registryTimeoutMs,
+      maxBytes: ctx.registryMaxBytes,
+    });
     const registryInfo = await client.getModule(registryModule);
     
     if (!registryInfo) {

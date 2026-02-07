@@ -26,7 +26,10 @@ export async function search(
   const registryUrl = registry ?? ctx.registryUrl;
   
   try {
-    const client = new RegistryClient(registryUrl);
+    const client = new RegistryClient(registryUrl, {
+      timeoutMs: ctx.registryTimeoutMs,
+      maxBytes: ctx.registryMaxBytes,
+    });
     
     let results: SearchResult[];
     
@@ -117,7 +120,10 @@ export async function listCategories(
   options: { registry?: string } = {}
 ): Promise<CommandResult> {
   try {
-    const client = new RegistryClient(options.registry ?? ctx.registryUrl);
+    const client = new RegistryClient(options.registry ?? ctx.registryUrl, {
+      timeoutMs: ctx.registryTimeoutMs,
+      maxBytes: ctx.registryMaxBytes,
+    });
     const categories = await client.getCategories();
     
     return {
@@ -148,7 +154,10 @@ export async function info(
   options: { registry?: string } = {}
 ): Promise<CommandResult> {
   try {
-    const client = new RegistryClient(options.registry ?? ctx.registryUrl);
+    const client = new RegistryClient(options.registry ?? ctx.registryUrl, {
+      timeoutMs: ctx.registryTimeoutMs,
+      maxBytes: ctx.registryMaxBytes,
+    });
     const module = await client.getModule(moduleName);
     
     if (!module) {

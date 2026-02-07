@@ -98,4 +98,27 @@ cog registry verify --remote \
   --fetch-timeout-ms 20000 \
   --max-index-bytes 2097152 \
   --max-tarball-bytes 26214400
+
+# 控制远端校验并发（默认：4；最大：8）
+cog registry verify --remote --concurrency 2
+```
+
+## Registry 拉取严谨化（Index Client）
+
+会读取 registry index 的命令（例如 `search`/`add`/`update`）使用带门禁的拉取策略：
+
+- 超时（默认：10s）
+- 最大 payload 字节数（默认：2MB，硬上限：20MB）
+
+CLI 覆盖：
+
+```bash
+cog search "code" --registry-timeout-ms 15000 --registry-max-bytes 2097152
+```
+
+或环境变量：
+
+```bash
+export COGNITIVE_REGISTRY_TIMEOUT_MS=15000
+export COGNITIVE_REGISTRY_MAX_BYTES=2097152
 ```

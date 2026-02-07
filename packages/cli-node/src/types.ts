@@ -492,6 +492,10 @@ export interface CommandContext {
    * If omitted, the RegistryClient default strategy is used.
    */
   registryUrl?: string;
+  /** Override registry fetch timeout (ms). */
+  registryTimeoutMs?: number;
+  /** Override registry max index bytes. */
+  registryMaxBytes?: number;
 }
 
 /**

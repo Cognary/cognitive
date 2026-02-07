@@ -94,8 +94,10 @@ cog doctor
 #   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 # 可通过环境变量或全局参数覆盖：
 COGNITIVE_REGISTRY_URL=... cog search
+COGNITIVE_REGISTRY_TIMEOUT_MS=15000 COGNITIVE_REGISTRY_MAX_BYTES=2097152 cog search
 cog search --registry https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+cog registry verify --remote --concurrency 2
 ```
 
 ## 开发

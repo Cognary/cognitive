@@ -126,6 +126,29 @@ cog registry verify --remote \
   --fetch-timeout-ms 20000 \
   --max-index-bytes 2097152 \
   --max-tarball-bytes 26214400
+
+# Control remote verification concurrency (default: 4; max: 8)
+cog registry verify --remote --concurrency 2
+```
+
+### 3.2 Registry Fetch Hardening (Index Client)
+
+Commands that read the registry index (for example: `search`, `add`, `update`) use a guarded fetch:
+
+- timeout (default: 10s)
+- max payload bytes (default: 2MB, hard cap: 20MB)
+
+Override via CLI:
+
+```bash
+cog search "code" --registry-timeout-ms 15000 --registry-max-bytes 2097152
+```
+
+Or env:
+
+```bash
+export COGNITIVE_REGISTRY_TIMEOUT_MS=15000
+export COGNITIVE_REGISTRY_MAX_BYTES=2097152
 ```
 
 ### 4. Compose Workflows
