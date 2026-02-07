@@ -24,6 +24,9 @@ npx cogn@2.2.11 --help
 # 配置 LLM
 export OPENAI_API_KEY=sk-xxx
 
+# 查看 providers 能力矩阵（结构化输出/流式）
+cog providers --pretty
+
 # 运行模块
 cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
@@ -60,7 +63,10 @@ cog run code-reviewer --args "..." --profile core       # 极简：跳过校验
 cog run code-reviewer --args "..." --profile default    # 默认：开启校验
 cog run code-reviewer --args "..." --profile strict     # 更严格：开启校验（更强门禁）
 cog run code-reviewer --args "..." --profile certified  # 最严格：v2.2 + 审计 + registry provenance/完整性门禁
-# 覆盖开关：--validate auto|on|off，--audit（写入 ~/.cognitive/audit/）
+# 覆盖开关：
+# - --validate auto|on|off
+# - --structured auto|off|prompt|native（provider 层结构化输出策略）
+# - --audit（写入 ~/.cognitive/audit/）
 
 # 模块操作
 cog list                      # 列出模块

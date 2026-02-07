@@ -3,14 +3,12 @@
 This repo publishes:
 
 - Node runtime (npm): `cognitive-modules-cli` and `cogn`
-- Python package (PyPI): `cognitive-modules`
 - Registry distribution (GitHub Release assets): module tarballs referenced by `cognitive-registry.v2.json`
 
 ## Versioning
 
 - npm: `2.2.7`
 - registry module versions: aligned to the repo release tag (recommended)
-- PyPI: `2.2.3` (legacy; not kept in sync with npm/registry)
 
 ## Registry v2 (tarballs + checksums)
 
@@ -37,7 +35,12 @@ Tarball layout is strict:
 2. Regenerate registry v2 + tarballs locally
 
 ```bash
-python3 scripts/build-registry-assets.py --tag v2.2.7 --timestamp 2026-02-06T00:00:00Z
+cog registry build \
+  --tag v2.2.7 \
+  --timestamp 2026-02-06T00:00:00Z \
+  --tarball-base-url https://github.com/Cognary/cognitive/releases/download/v2.2.7 \
+  --out-dir dist/registry-assets \
+  --registry-out cognitive-registry.v2.json
 ```
 
 Outputs:
@@ -48,7 +51,8 @@ Outputs:
 3. Validate conformance vectors (local)
 
 ```bash
-python3 scripts/validate-test-vectors.py --level 3 --verbose
+npm install ajv ajv-formats tsx
+npx tsx scripts/validate-test-vectors.ts --level 3 --verbose
 ```
 
 In CI, the TypeScript validators also run:

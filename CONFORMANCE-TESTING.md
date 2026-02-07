@@ -13,12 +13,6 @@ cd cognitive-modules/spec/test-vectors
 
 ### 2. Run Official Validators
 
-**Python:**
-```bash
-pip install jsonschema
-python scripts/validate-test-vectors.py --level 3 --verbose
-```
-
 **TypeScript/Node.js:**
 ```bash
 npm install ajv tsx

@@ -125,7 +125,6 @@ AI IDE 应该：
 | npm | `npx cogn@2.2.7` ✅ |
 | MCP | `cog mcp` ✅ |
 | HTTP API | `cog serve` ✅ |
-| PyPI | 旧版遗留（非主要维护） |
 
 ---
 
