@@ -12,6 +12,7 @@ const certifiedPolicy: ExecutionPolicy = {
   validate: 'on',
   audit: true,
   enableRepair: false,
+  structured: 'auto',
   requireV22: true,
 };
 
@@ -156,4 +157,3 @@ describe('certified policy gates', () => {
     }
   });
 });
-

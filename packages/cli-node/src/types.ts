@@ -19,6 +19,16 @@ export type StructuredOutputMode = 'none' | 'prompt' | 'native';
 /** If a schema is passed, how it should be applied. */
 export type JsonSchemaMode = Exclude<StructuredOutputMode, 'none'>;
 
+/**
+ * Runtime preference for how to apply structured output.
+ *
+ * - auto: choose based on provider capabilities (and allow safe downgrade from native -> prompt)
+ * - off: do not pass schema hints to providers (runtime can still validate/repair post-hoc)
+ * - prompt: always inject schema as prompt guidance
+ * - native: always use provider-native structured output when available (no auto downgrade)
+ */
+export type StructuredOutputPreference = 'auto' | 'off' | 'prompt' | 'native';
+
 export interface ProviderCapabilities {
   structuredOutput: StructuredOutputMode;
   streaming: boolean;
@@ -564,6 +574,7 @@ export interface ExecutionPolicy {
   validate: ValidateMode;
   audit: boolean;
   enableRepair: boolean;
+  structured: StructuredOutputPreference;
   /**
    * If true, refuse to run non-v2.2 modules (legacy/v0/v1 or missing formatVersion).
    * This is a gate for certification-style flows.

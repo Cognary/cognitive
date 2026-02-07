@@ -86,6 +86,7 @@ async function main() {
       validate: values.validate,
       noValidate: values['no-validate'],
       audit: values.audit,
+      structured: values.structured,
     });
   } catch (e) {
     console.error(`Error: ${e instanceof Error ? e.message : String(e)}`);
@@ -101,6 +102,7 @@ async function main() {
         validate: values.validate,
         noValidate: values['no-validate'],
         audit: values.audit,
+        structured: values.structured,
       });
     } catch (e) {
       console.error(`Error: ${e instanceof Error ? e.message : String(e)}`);
@@ -1095,6 +1097,7 @@ COMMANDS:
 OPTIONS:
   --profile <name>     Progressive complexity profile: core|default|strict|certified
   --validate <mode>    Validation mode: auto|on|off (overrides --no-validate)
+  --structured <mode>  Structured output strategy: auto|off|prompt|native
   --audit              Write an audit record to ~/.cognitive/audit/ (stderr prints path)
   -a, --args <str>      Arguments to pass to module
   -i, --input <json>    JSON input for module

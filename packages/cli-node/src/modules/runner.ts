@@ -12,6 +12,7 @@ import type {
   Provider, 
   ProviderCapabilities,
   JsonSchemaMode,
+  StructuredOutputPreference,
   CognitiveModule, 
   ModuleResult, 
   ModuleResultV21,
@@ -1151,6 +1152,12 @@ export interface RunOptions {
 
   // Progressive complexity policy (certified gates, validation defaults, etc.)
   policy?: ExecutionPolicy;
+
+  /**
+   * Structured output preference override (CLI/tests).
+   * If omitted, uses policy.structured (or auto).
+   */
+  structured?: StructuredOutputPreference;
 }
 
 // =============================================================================
@@ -1537,16 +1544,28 @@ function getProviderCapabilities(provider: Provider): ProviderCapabilities {
 function resolveJsonSchemaParams(
   module: CognitiveModule,
   provider: Provider,
-  validateOutput: boolean
-): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode } {
+  validateOutput: boolean,
+  structured: StructuredOutputPreference | undefined
+): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode; allowSchemaFallback?: boolean } {
   if (!validateOutput) return {};
   if (!module.outputSchema) return {};
 
+  const pref: StructuredOutputPreference = structured ?? 'auto';
+  if (pref === 'off') return {};
+
+  if (pref === 'prompt') {
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'prompt', allowSchemaFallback: false };
+  }
+  if (pref === 'native') {
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: false };
+  }
+
+  // auto: choose based on provider capabilities.
   const caps = getProviderCapabilities(provider);
   if (caps.structuredOutput === 'none') return {};
 
   const jsonSchemaMode: JsonSchemaMode = caps.structuredOutput === 'native' ? 'native' : 'prompt';
-  return { jsonSchema: module.outputSchema, jsonSchemaMode };
+  return { jsonSchema: module.outputSchema, jsonSchemaMode, allowSchemaFallback: true };
 }
 
 function isSchemaCompatibilityError(e: unknown): boolean {
@@ -1582,6 +1601,7 @@ export async function runModule(
     traceId,
     model: modelOverride,
     policy,
+    structured: structuredOverride,
   } = options;
   const { validateInput, validateOutput, reason: validateReason } = resolveValidationFlags(
     module,
@@ -1661,7 +1681,7 @@ export async function runModule(
     console.error(`Name: ${module.name} (${module.format})`);
     console.error(`Responsibility: ${module.responsibility}`);
     console.error(`Envelope: ${shouldUseEnvelope}`);
-    if (policy) {
+  if (policy) {
       console.error('--- Policy ---');
       console.error(
         JSON.stringify(
@@ -1673,6 +1693,7 @@ export async function runModule(
             validate_reason: validateReason,
             audit: policy.audit,
             enableRepair,
+            structured: structuredOverride ?? policy.structured,
             requireV22: policy.requireV22,
           },
           null,
@@ -1751,21 +1772,32 @@ export async function runModule(
 
   try {
     // Invoke provider
-    const schemaParams = resolveJsonSchemaParams(module, provider, validateOutput);
+    const schemaParams = resolveJsonSchemaParams(
+      module,
+      provider,
+      validateOutput,
+      structuredOverride ?? policy?.structured
+    );
+    const { allowSchemaFallback, ...invokeSchemaParams } = schemaParams;
     let result: InvokeResult;
     try {
       result = await provider.invoke({
         messages,
         // Progressive Complexity: only enforce schema at the provider layer when validation is enabled.
-        ...schemaParams,
+        ...invokeSchemaParams,
         temperature: 0.3,
       });
     } catch (e) {
       // If the provider rejects native structured output schemas, retry once in prompt mode.
-      if (schemaParams.jsonSchema && schemaParams.jsonSchemaMode === 'native' && isSchemaCompatibilityError(e)) {
+      if (
+        allowSchemaFallback &&
+        invokeSchemaParams.jsonSchema &&
+        invokeSchemaParams.jsonSchemaMode === 'native' &&
+        isSchemaCompatibilityError(e)
+      ) {
         result = await provider.invoke({
           messages,
-          jsonSchema: schemaParams.jsonSchema,
+          jsonSchema: invokeSchemaParams.jsonSchema,
           jsonSchemaMode: 'prompt',
           temperature: 0.3,
         });
@@ -1972,6 +2004,11 @@ export interface StreamOptions {
   traceId?: string;
   model?: string;  // Model identifier for meta.model
   policy?: ExecutionPolicy;
+  /**
+   * Structured output preference override (CLI/tests).
+   * If omitted, uses policy.structured (or auto).
+   */
+  structured?: StructuredOutputPreference;
 }
 
 /**
@@ -2008,6 +2045,7 @@ export async function* runModuleStream(
     traceId,
     model,
     policy,
+    structured: structuredOverride,
   } = options;
   const { validateInput, validateOutput } = resolveValidationFlags(module, policy, validateInputOpt, validateOutputOpt);
   const enableRepair = enableRepairOpt ?? policy?.enableRepair ?? true;
@@ -2096,13 +2134,19 @@ export async function* runModuleStream(
 
     // Invoke provider with streaming if supported
     let fullContent: string;
-    const schemaParams = resolveJsonSchemaParams(module, provider, validateOutput);
+    const schemaParams = resolveJsonSchemaParams(
+      module,
+      provider,
+      validateOutput,
+      structuredOverride ?? policy?.structured
+    );
+    const { allowSchemaFallback, ...invokeSchemaParams } = schemaParams;
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
       const stream = provider.invokeStream({
         messages,
-        ...schemaParams,
+        ...invokeSchemaParams,
         temperature: 0.3,
       });
       
@@ -2118,10 +2162,15 @@ export async function* runModuleStream(
         fullContent = streamResult.value.content;
       } catch (e) {
         // If streaming fails (e.g., schema rejected), retry once non-streaming in prompt mode.
-        if (schemaParams.jsonSchema && schemaParams.jsonSchemaMode === 'native' && isSchemaCompatibilityError(e)) {
+        if (
+          allowSchemaFallback &&
+          invokeSchemaParams.jsonSchema &&
+          invokeSchemaParams.jsonSchemaMode === 'native' &&
+          isSchemaCompatibilityError(e)
+        ) {
           const result = await provider.invoke({
             messages,
-            jsonSchema: schemaParams.jsonSchema,
+            jsonSchema: invokeSchemaParams.jsonSchema,
             jsonSchemaMode: 'prompt',
             temperature: 0.3,
           });
@@ -2137,14 +2186,19 @@ export async function* runModuleStream(
       try {
         result = await provider.invoke({
           messages,
-          ...schemaParams,
+          ...invokeSchemaParams,
           temperature: 0.3,
         });
       } catch (e) {
-        if (schemaParams.jsonSchema && schemaParams.jsonSchemaMode === 'native' && isSchemaCompatibilityError(e)) {
+        if (
+          allowSchemaFallback &&
+          invokeSchemaParams.jsonSchema &&
+          invokeSchemaParams.jsonSchemaMode === 'native' &&
+          isSchemaCompatibilityError(e)
+        ) {
           result = await provider.invoke({
             messages,
-            jsonSchema: schemaParams.jsonSchema,
+            jsonSchema: invokeSchemaParams.jsonSchema,
             jsonSchemaMode: 'prompt',
             temperature: 0.3,
           });

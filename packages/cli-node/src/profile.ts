@@ -1,10 +1,11 @@
-import type { ExecutionPolicy, ExecutionProfile, ValidateMode } from './types.js';
+import type { ExecutionPolicy, ExecutionProfile, StructuredOutputPreference, ValidateMode } from './types.js';
 
 export interface ResolvePolicyInput {
   profile?: string | null;
   validate?: string | null;
   noValidate?: boolean;
   audit?: boolean;
+  structured?: string | null;
 }
 
 function normalizeProfile(raw: string | null | undefined): ExecutionProfile {
@@ -24,6 +25,15 @@ function normalizeValidate(raw: string | null | undefined): ValidateMode {
   throw new Error(`Invalid --validate: ${raw}. Expected one of: auto|on|off`);
 }
 
+function normalizeStructured(raw: string | null | undefined): StructuredOutputPreference {
+  const v = (raw ?? '').trim().toLowerCase();
+  if (v === '' || v === 'auto') return 'auto';
+  if (v === 'off' || v === 'none' || v === 'false' || v === '0') return 'off';
+  if (v === 'prompt') return 'prompt';
+  if (v === 'native') return 'native';
+  throw new Error(`Invalid --structured: ${raw}. Expected one of: auto|off|prompt|native`);
+}
+
 export function resolveExecutionPolicy(input: ResolvePolicyInput): ExecutionPolicy {
   const profile = normalizeProfile(input.profile);
 
@@ -33,12 +43,14 @@ export function resolveExecutionPolicy(input: ResolvePolicyInput): ExecutionPoli
   let audit = false;
   let enableRepair = true;
   let requireV22 = false;
+  let structured: StructuredOutputPreference = 'auto';
 
   if (profile === 'strict') {
     validate = 'on';
     audit = false;
     enableRepair = true;
     requireV22 = false;
+    structured = 'auto';
   }
 
   if (profile === 'certified') {
@@ -46,6 +58,7 @@ export function resolveExecutionPolicy(input: ResolvePolicyInput): ExecutionPoli
     audit = true;
     enableRepair = false; // certification prefers fail-fast over runtime repair
     requireV22 = true;
+    structured = 'auto';
   }
 
   // CLI overrides.
@@ -59,6 +72,9 @@ export function resolveExecutionPolicy(input: ResolvePolicyInput): ExecutionPoli
   if (typeof input.audit === 'boolean') {
     audit = input.audit;
   }
+  if (input.structured != null) {
+    structured = normalizeStructured(input.structured);
+  }
 
   // Trigger rule: if audit is enabled and validate wasn't explicitly turned off,
   // force validation on (auditing without validation is usually not meaningful).
@@ -66,5 +82,5 @@ export function resolveExecutionPolicy(input: ResolvePolicyInput): ExecutionPoli
     validate = 'on';
   }
 
-  return { profile, validate, audit, enableRepair, requireV22 };
+  return { profile, validate, audit, enableRepair, structured, requireV22 };
 }

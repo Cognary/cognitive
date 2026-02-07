@@ -27,6 +27,7 @@ export function parseCliArgs(argv: string[]): CliParseResult {
       profile: { type: 'string' }, // progressive complexity profile
       validate: { type: 'string' }, // auto|on|off (overrides --no-validate)
       audit: { type: 'boolean', default: false }, // write audit record to ~/.cognitive/audit/
+      structured: { type: 'string' }, // auto|off|prompt|native (provider structured output strategy)
       args: { type: 'string', short: 'a' },
       input: { type: 'string', short: 'i' },
       module: { type: 'string', short: 'm' },
@@ -92,4 +93,3 @@ export function parseCliArgs(argv: string[]): CliParseResult {
     values: values as Record<string, unknown>,
   };
 }
-

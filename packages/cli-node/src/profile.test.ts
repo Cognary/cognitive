@@ -8,6 +8,7 @@ describe('resolveExecutionPolicy', () => {
     expect(p.validate).toBe('auto');
     expect(p.audit).toBe(false);
     expect(p.enableRepair).toBe(true);
+    expect(p.structured).toBe('auto');
     expect(p.requireV22).toBe(false);
   });
 
