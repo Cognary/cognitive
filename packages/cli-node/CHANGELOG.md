@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.10 - 2026-02-07
+
+- Fix: Gemini `responseSchema` compatibility by converting JSON-Schema `const` to `enum`.
+
 ## 2.2.9 - 2026-02-07
 
 - Fix: `cog core run` now prints the error envelope (instead of `Error: undefined`) when execution fails.

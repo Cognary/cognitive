@@ -44,6 +44,12 @@ export class GeminiProvider extends BaseProvider {
       if (obj && typeof obj === 'object') {
         const result: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
+          // Gemini's responseSchema does not accept JSON-Schema `const`.
+          // Convert `{ const: X }` into `{ enum: [X] }` for compatibility.
+          if (key === 'const') {
+            result.enum = [clean(value)];
+            continue;
+          }
           if (!unsupportedFields.includes(key)) {
             result[key] = clean(value);
           }
