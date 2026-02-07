@@ -16,6 +16,9 @@ cog run <module> [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
+| `--profile <name>` | | Progressive complexity: `core` \| `default` \| `strict` \| `certified` |
+| `--validate <mode>` | | Validation mode: `auto` \| `on` \| `off` (overrides `--no-validate`) |
+| `--audit` | | Write an audit record to `~/.cognitive/audit/` (stderr prints path) |
 | `--args <text>` | `-a` | Pass text input (mapped to `query` or `code`) |
 | `--input <json>` | `-i` | JSON input string |
 | `--pretty` | | Pretty-print JSON output |

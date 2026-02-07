@@ -20,6 +20,7 @@ import { run, list, pipe, init, add, update, remove, versions, compose, composeI
 import { listModules, getDefaultSearchPaths } from './modules/loader.js';
 import type { CommandContext } from './types.js';
 import { VERSION } from './version.js';
+import { resolveExecutionPolicy } from './profile.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -42,6 +43,9 @@ async function main() {
       help: { type: 'boolean', short: 'h', default: false },
       stdin: { type: 'boolean', default: false }, // core: read module prompt from stdin
       force: { type: 'boolean', default: false }, // core promote: overwrite existing target dir
+      profile: { type: 'string' }, // progressive complexity profile
+      validate: { type: 'string' }, // auto|on|off (overrides --no-validate)
+      audit: { type: 'boolean', default: false }, // write audit record to ~/.cognitive/audit/
       args: { type: 'string', short: 'a' },
       input: { type: 'string', short: 'i' },
       module: { type: 'string', short: 'm' },
@@ -113,10 +117,24 @@ async function main() {
     process.exit(1);
   }
 
+  let policy;
+  try {
+    policy = resolveExecutionPolicy({
+      profile: values.profile,
+      validate: values.validate,
+      noValidate: values['no-validate'],
+      audit: values.audit,
+    });
+  } catch (e) {
+    console.error(`Error: ${e instanceof Error ? e.message : String(e)}`);
+    process.exit(1);
+  }
+
   const ctx: CommandContext = {
     cwd: process.cwd(),
     provider,
     verbose: values.verbose,
+    policy,
   };
 
   try {
@@ -159,6 +177,7 @@ async function main() {
         const result = await run(moduleName, ctx, {
           args: values.args,
           input: values.input,
+          // policy.validate is resolved in run(); keep legacy flag compatibility here.
           noValidate: values['no-validate'],
           pretty: values.pretty,
           verbose: values.verbose,
@@ -492,6 +511,7 @@ async function main() {
         const result = await compose(moduleName, ctx, {
           args: values.args,
           input: values.input,
+          noValidate: values['no-validate'],
           maxDepth: values['max-depth'] ? parseInt(values['max-depth'] as string, 10) : undefined,
           timeout: values.timeout ? parseInt(values.timeout as string, 10) : undefined,
           trace: values.trace,
@@ -1023,6 +1043,9 @@ COMMANDS:
   doctor              Check environment and configuration
 
 OPTIONS:
+  --profile <name>     Progressive complexity profile: core|default|strict|certified
+  --validate <mode>    Validation mode: auto|on|off (overrides --no-validate)
+  --audit              Write an audit record to ~/.cognitive/audit/ (stderr prints path)
   -a, --args <str>      Arguments to pass to module
   -i, --input <json>    JSON input for module
   -m, --module <name>   Module path within repo (for add)

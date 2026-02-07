@@ -45,6 +45,38 @@ cog --version
 cog --help
 ```
 
+## Progressive Complexity (Profiles)
+
+The CLI supports **progressive complexity** via `--profile` (plus small overrides):
+
+| Profile | Intended Use | Defaults |
+|---------|--------------|----------|
+| `core` | 5-minute path, minimal enforcement | `--validate=off`, `--audit=false` |
+| `default` | day-to-day | `--validate=on`, `--audit=false` |
+| `strict` | higher assurance | `--validate=on`, `--audit=false` |
+| `certified` | strongest gates / publishable flows | `--validate=on`, `--audit=true`, requires v2.2 modules |
+
+Overrides:
+
+- `--validate auto|on|off` (legacy: `--no-validate` == `--validate off`)
+- `--audit` writes an audit record to `~/.cognitive/audit/` (path is printed to stderr)
+
+Examples:
+
+```bash
+# Minimal run (skip validation)
+cog run ./demo.md --args "hello" --profile core
+
+# Higher assurance
+cog run code-reviewer --args "..." --profile strict
+
+# Certified gate (refuses legacy modules)
+cog run code-reviewer --args "..." --profile certified
+
+# Force validation + write audit record
+cog run code-reviewer --args "..." --profile default --audit --validate on
+```
+
 ## Common Workflows
 
 ### 0. Minimal One-File Path

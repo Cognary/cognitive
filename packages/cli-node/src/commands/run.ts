@@ -9,6 +9,7 @@ import * as fs from 'node:fs/promises';
 import type { CognitiveModule } from '../types.js';
 import { findModule, getDefaultSearchPaths, loadSingleFileModule, runModule, runModuleStream } from '../modules/index.js';
 import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
+import { writeAuditRecord } from '../audit.js';
 
 export interface RunOptions {
   args?: string;
@@ -55,7 +56,23 @@ export async function run(
     }
   }
 
+  // Progressive Complexity gate: certified profile can refuse legacy modules.
+  if (ctx.policy?.requireV22) {
+    const fv = module.formatVersion;
+    if (fv !== 'v2.2') {
+      const errorEnvelope = attachContext(makeErrorEnvelope({
+        code: ErrorCodes.INVALID_INPUT,
+        message: `Certified profile requires v2.2 modules; got: ${fv ?? 'unknown'} (${module.format})`,
+        suggestion: "Migrate the module to v2.2 (module.yaml + prompt.md + schema.json), or use `--profile strict` / `--profile default`",
+      }), { module: moduleName, provider: ctx.provider.name });
+      return { success: false, error: errorEnvelope.error.message, data: errorEnvelope };
+    }
+  }
+
   try {
+    const policy = ctx.policy;
+    const startedAt = Date.now();
+
     // Parse input if provided as JSON
     let inputData: Record<string, unknown> | undefined;
     if (options.input) {
@@ -75,21 +92,52 @@ export async function run(
       }
     }
 
+    // Resolve validation/repair policy.
+    // Priority: explicit --no-validate > policy.validate > default(true)
+    const validate = (() => {
+      if (options.noValidate) return false;
+      if (!policy) return true;
+      if (policy.validate === 'off') return false;
+      if (policy.validate === 'on') return true;
+      // auto
+      return policy.profile !== 'core';
+    })();
+    const enableRepair = policy?.enableRepair ?? true;
+
     if (options.stream) {
       // Stream NDJSON events to stdout. Final exit code is determined by the end event.
       let finalOk: boolean | null = null;
+      let finalResult: unknown | null = null;
 
       for await (const ev of runModuleStream(module, ctx.provider, {
         args: options.args,
         input: inputData,
-        validateInput: !options.noValidate,
-        validateOutput: !options.noValidate,
+        validateInput: validate,
+        validateOutput: validate,
         useV22: true,
+        enableRepair,
       })) {
         // Write each event as one JSON line (NDJSON).
         process.stdout.write(JSON.stringify(ev) + '\n');
         if (ev.type === 'end' && ev.result) {
           finalOk = Boolean((ev.result as { ok?: boolean }).ok);
+          finalResult = ev.result as unknown;
+        }
+      }
+
+      if (policy?.audit) {
+        const rec = await writeAuditRecord({
+          ts: new Date().toISOString(),
+          kind: 'run',
+          policy,
+          provider: ctx.provider.name,
+          module: { name: module.name, version: module.version, location: module.location, formatVersion: module.formatVersion },
+          input: { args: options.args, input: inputData },
+          result: { ok: finalOk === true, streamed: true, envelope: finalResult },
+          notes: [`duration_ms=${Date.now() - startedAt}`],
+        });
+        if (rec) {
+          console.error(`Audit: ${rec.path}`);
         }
       }
 
@@ -103,15 +151,32 @@ export async function run(
         args: options.args,
         input: inputData,
         verbose: options.verbose || ctx.verbose,
-        validateInput: !options.noValidate,
-        validateOutput: !options.noValidate,
+        validateInput: validate,
+        validateOutput: validate,
         useV22: true, // Always use v2.2 envelope
+        enableRepair,
       });
 
       const output = attachContext(result as unknown as Record<string, unknown>, {
         module: moduleName,
         provider: ctx.provider.name,
       });
+
+      if (policy?.audit) {
+        const rec = await writeAuditRecord({
+          ts: new Date().toISOString(),
+          kind: 'run',
+          policy,
+          provider: ctx.provider.name,
+          module: { name: module.name, version: module.version, location: module.location, formatVersion: module.formatVersion },
+          input: { args: options.args, input: inputData },
+          result: output,
+          notes: [`duration_ms=${Date.now() - startedAt}`],
+        });
+        if (rec) {
+          console.error(`Audit: ${rec.path}`);
+        }
+      }
 
       // Always return full v2.2 envelope
       return {

@@ -11,6 +11,7 @@
 import type { CommandContext, CommandResult } from '../types.js';
 import { findModule, getDefaultSearchPaths, executeComposition } from '../modules/index.js';
 import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
+import { writeAuditRecord } from '../audit.js';
 
 function looksLikeCode(str: string): boolean {
   const codeIndicators = [
@@ -27,6 +28,8 @@ export interface ComposeOptions {
   args?: string;
   /** JSON input data */
   input?: string;
+  /** Disable validation */
+  noValidate?: boolean;
   /** Maximum composition depth */
   maxDepth?: number;
   /** Timeout in milliseconds */
@@ -61,7 +64,21 @@ export async function compose(
     };
   }
 
+  if (ctx.policy?.requireV22) {
+    if (module.formatVersion !== 'v2.2') {
+      const errorEnvelope = attachContext(makeErrorEnvelope({
+        code: ErrorCodes.INVALID_INPUT,
+        message: `Certified profile requires v2.2 modules; got: ${module.formatVersion ?? 'unknown'} (${module.format})`,
+        suggestion: "Migrate the module to v2.2, or run with `--profile strict` / `--profile default`",
+      }), { module: moduleName, provider: ctx.provider.name });
+      return { success: false, error: errorEnvelope.error.message, data: errorEnvelope };
+    }
+  }
+
   try {
+    const policy = ctx.policy;
+    const startedAt = Date.now();
+
     // Parse input if provided as JSON
     let inputData: Record<string, unknown> = {};
     if (options.input) {
@@ -98,7 +115,22 @@ export async function compose(
       {
         cwd: ctx.cwd,
         maxDepth: options.maxDepth,
-        timeoutMs: options.timeout
+        timeoutMs: options.timeout,
+        validateInput: (() => {
+          if (options.noValidate) return false;
+          if (!policy) return true;
+          if (policy.validate === 'off') return false;
+          if (policy.validate === 'on') return true;
+          return policy.profile !== 'core';
+        })(),
+        validateOutput: (() => {
+          if (options.noValidate) return false;
+          if (!policy) return true;
+          if (policy.validate === 'off') return false;
+          if (policy.validate === 'on') return true;
+          return policy.profile !== 'core';
+        })(),
+        enableRepair: policy?.enableRepair ?? true,
       }
     );
 
@@ -131,6 +163,29 @@ export async function compose(
         error: errorEnvelope.error.message,
         data: errorEnvelope,
       };
+    }
+
+    if (policy?.audit) {
+      const rec = await writeAuditRecord({
+        ts: new Date().toISOString(),
+        kind: 'compose',
+        policy,
+        provider: ctx.provider.name,
+        module: { name: module.name, version: module.version, location: module.location, formatVersion: module.formatVersion },
+        input: inputData,
+        result: {
+          ok: result.ok,
+          result: result.result,
+          moduleResults: result.moduleResults,
+          trace: result.trace,
+          totalTimeMs: result.totalTimeMs,
+          error: result.error,
+        },
+        notes: [`duration_ms=${Date.now() - startedAt}`],
+      });
+      if (rec) {
+        console.error(`Audit: ${rec.path}`);
+      }
     }
 
     // Return result

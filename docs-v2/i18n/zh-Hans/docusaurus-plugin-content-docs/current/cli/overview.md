@@ -46,3 +46,32 @@ cog validate my-module --v22
 cog add Cognary/cognitive -m code-simplifier
 cog compose code-review-pipeline --args "code" --trace
 ```
+
+## 渐进复杂度（Profiles）
+
+CLI 通过 `--profile` 实现“按需启用复杂度”的默认策略（并提供少量覆盖开关）：
+
+| Profile | 场景 | 默认策略 |
+|---------|------|----------|
+| `core` | 5 分钟跑通，最少约束 | `--validate=off`，`--audit=false` |
+| `default` | 日常使用 | `--validate=on`，`--audit=false` |
+| `strict` | 更高可靠性/更强约束 | `--validate=on`，`--audit=false` |
+| `certified` | 最强门禁/可发布流程 | `--validate=on`，`--audit=true`，并要求 v2.2 模块 |
+
+覆盖开关：
+
+- `--validate auto|on|off`（兼容：`--no-validate` 等价于 `--validate off`）
+- `--audit` 会把审计记录写入 `~/.cognitive/audit/`（路径输出到 stderr）
+
+示例：
+
+```bash
+# 极简：跳过校验
+cog run ./demo.md --args "hello" --profile core
+
+# 更严格
+cog run code-reviewer --args "..." --profile strict
+
+# certified：拒绝 legacy 模块
+cog run code-reviewer --args "..." --profile certified
+```

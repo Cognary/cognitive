@@ -486,6 +486,7 @@ export interface CommandContext {
   cwd: string;
   provider: Provider;
   verbose?: boolean;
+  policy?: ExecutionPolicy;
 }
 
 /**
@@ -508,6 +509,34 @@ export interface CommandResultV2 {
   ok: boolean;
   data?: unknown;
   error?: EnvelopeError;
+}
+
+// =============================================================================
+// Progressive Complexity (Profiles)
+// =============================================================================
+
+/**
+ * Execution profile:
+ * - core: minimal constraints (5-minute path)
+ * - default: safe defaults for day-to-day usage
+ * - strict: higher assurance (more enforcement)
+ * - certified: strongest gates (intended for publishable / regulated flows)
+ */
+export type ExecutionProfile = 'core' | 'default' | 'strict' | 'certified';
+
+/** Validation mode for input/output schemas and runtime enforcement. */
+export type ValidateMode = 'auto' | 'on' | 'off';
+
+export interface ExecutionPolicy {
+  profile: ExecutionProfile;
+  validate: ValidateMode;
+  audit: boolean;
+  enableRepair: boolean;
+  /**
+   * If true, refuse to run non-v2.2 modules (legacy/v0/v1 or missing formatVersion).
+   * This is a gate for certification-style flows.
+   */
+  requireV22: boolean;
 }
 
 // =============================================================================

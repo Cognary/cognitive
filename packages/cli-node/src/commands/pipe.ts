@@ -7,6 +7,7 @@ import * as readline from 'node:readline';
 import type { CommandContext, CommandResult } from '../types.js';
 import { findModule, getDefaultSearchPaths, runModule } from '../modules/index.js';
 import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
+import { writeAuditRecord } from '../audit.js';
 
 export interface PipeOptions {
   module: string;
@@ -35,6 +36,18 @@ export async function pipe(
     };
   }
 
+  if (ctx.policy?.requireV22) {
+    if (module.formatVersion !== 'v2.2') {
+      const errorEnvelope = attachContext(makeErrorEnvelope({
+        code: ErrorCodes.INVALID_INPUT,
+        message: `Certified profile requires v2.2 modules; got: ${module.formatVersion ?? 'unknown'} (${module.format})`,
+        suggestion: "Migrate the module to v2.2, or run with `--profile strict` / `--profile default`",
+      }), { module: options.module, provider: ctx.provider.name });
+      console.log(JSON.stringify(errorEnvelope));
+      return { success: false, error: errorEnvelope.error.message, data: errorEnvelope };
+    }
+  }
+
   // Read from stdin
   const rl = readline.createInterface({
     input: process.stdin,
@@ -50,6 +63,9 @@ export async function pipe(
   const input = lines.join('\n');
 
   try {
+    const policy = ctx.policy;
+    const startedAt = Date.now();
+
     // Check if input is JSON
     let inputData: Record<string, unknown> | undefined;
     try {
@@ -58,19 +74,45 @@ export async function pipe(
       // Not JSON, use as args
     }
 
+    const validate = (() => {
+      if (options.noValidate) return false;
+      if (!policy) return true;
+      if (policy.validate === 'off') return false;
+      if (policy.validate === 'on') return true;
+      return policy.profile !== 'core';
+    })();
+    const enableRepair = policy?.enableRepair ?? true;
+
     // Run module with v2.2 envelope format
     const result = await runModule(module, ctx.provider, {
       args: inputData ? undefined : input,
       input: inputData,
-      validateInput: !options.noValidate,
-      validateOutput: !options.noValidate,
+      validateInput: validate,
+      validateOutput: validate,
       useV22: true,  // Always use v2.2 envelope
+      enableRepair,
     });
 
     const output = attachContext(result as unknown as Record<string, unknown>, {
       module: options.module,
       provider: ctx.provider.name,
     });
+
+    if (policy?.audit) {
+      const rec = await writeAuditRecord({
+        ts: new Date().toISOString(),
+        kind: 'pipe',
+        policy,
+        provider: ctx.provider.name,
+        module: { name: module.name, version: module.version, location: module.location, formatVersion: module.formatVersion },
+        input: { raw: input, parsed: inputData },
+        result: output,
+        notes: [`duration_ms=${Date.now() - startedAt}`],
+      });
+      if (rec) {
+        console.error(`Audit: ${rec.path}`);
+      }
+    }
 
     // Output v2.2 envelope format to stdout
     console.log(JSON.stringify(output));

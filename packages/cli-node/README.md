@@ -55,6 +55,13 @@ cog core new                       # 生成 demo.md
 cog core run demo.md --args "..."  # 运行单文件模块
 cog core promote demo.md           # 升级为 v2 模块目录
 
+# 渐进复杂度（Profiles）
+cog run code-reviewer --args "..." --profile core       # 极简：跳过校验
+cog run code-reviewer --args "..." --profile default    # 默认：开启校验
+cog run code-reviewer --args "..." --profile strict     # 更严格：开启校验（更强门禁）
+cog run code-reviewer --args "..." --profile certified  # 最严格：要求 v2.2 + 审计
+# 覆盖开关：--validate auto|on|off，--audit（写入 ~/.cognitive/audit/）
+
 # 模块操作
 cog list                      # 列出模块
 cog run <module> --args "..." # 运行模块
