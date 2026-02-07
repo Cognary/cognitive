@@ -94,6 +94,9 @@ async function main() {
       'assets-dir': { type: 'string' },
       'tarball-base-url': { type: 'string' },
       remote: { type: 'boolean', default: false }, // registry verify: fetch index + tarballs over network
+      'fetch-timeout-ms': { type: 'string' },
+      'max-index-bytes': { type: 'string' },
+      'max-tarball-bytes': { type: 'string' },
     },
     allowPositionals: true,
   });
@@ -1035,10 +1038,27 @@ async function main() {
             (values.index as string | undefined) ??
             (remote ? defaultIndex : 'cognitive-registry.v2.json');
           const assetsDir = (values['assets-dir'] as string | undefined) ?? (remote ? undefined : 'dist/registry-assets');
+
+          const parseNumOpt = (key: string, raw: unknown): number | undefined => {
+            if (raw === undefined || raw === null || raw === '') return undefined;
+            const n = Number(raw);
+            if (!Number.isFinite(n) || n <= 0) {
+              throw new Error(`Invalid --${key}: ${String(raw)} (expected a positive number)`);
+            }
+            return Math.floor(n);
+          };
+
+          const fetchTimeoutMs = parseNumOpt('fetch-timeout-ms', values['fetch-timeout-ms']);
+          const maxIndexBytes = parseNumOpt('max-index-bytes', values['max-index-bytes']);
+          const maxTarballBytes = parseNumOpt('max-tarball-bytes', values['max-tarball-bytes']);
+
           const verified = await verifyRegistryAssets({
             registryIndexPath: indexPath,
             assetsDir,
             remote,
+            fetchTimeoutMs,
+            maxIndexBytes,
+            maxTarballBytes,
           });
           console.log(JSON.stringify(verified, null, values.pretty ? 2 : 0));
           if (!verified.ok) {

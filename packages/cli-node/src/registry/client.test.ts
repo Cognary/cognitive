@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { RegistryClient, type RegistryV1, type RegistryV2, type ModuleInfo } from './client.js';
+import { RegistryClient, DEFAULT_REGISTRY_URL, type RegistryV1, type RegistryV2, type ModuleInfo } from './client.js';
 
 // =============================================================================
 // Mock Data
@@ -389,13 +389,39 @@ describe('RegistryClient', () => {
       await expect(client.fetchRegistry(true)).rejects.toThrow('Network error');
     });
 
-    it('should throw on non-ok response', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
+	    it('should throw on non-ok response', async () => {
+	      global.fetch = vi.fn().mockResolvedValue({
+	        ok: false,
+	        status: 404,
+	        statusText: 'Not Found',
+	      });
+	      await expect(client.fetchRegistry(true)).rejects.toThrow('Failed to fetch registry: 404 Not Found');
+	    });
+
+      it('should fall back to raw main when latest release index is temporarily missing', async () => {
+        const fallbackUrl = 'https://raw.githubusercontent.com/Cognary/cognitive/main/cognitive-registry.v2.json';
+        global.fetch = vi.fn().mockImplementation(async (url: string) => {
+          if (url === DEFAULT_REGISTRY_URL) {
+            return {
+              ok: false,
+              status: 404,
+              statusText: 'Not Found',
+            };
+          }
+          if (url === fallbackUrl) {
+            return {
+              ok: true,
+              headers: { get: () => null },
+              json: () => Promise.resolve(mockV1Registry),
+            };
+          }
+          return { ok: false, status: 500, statusText: 'Unexpected URL' };
+        });
+
+        const c = new RegistryClient(DEFAULT_REGISTRY_URL);
+        const reg = await c.fetchRegistry(true);
+        expect(reg).toBeTruthy();
+        expect((global.fetch as any).mock.calls.map((c: any[]) => c[0])).toEqual([DEFAULT_REGISTRY_URL, fallbackUrl]);
       });
-      await expect(client.fetchRegistry(true)).rejects.toThrow('Failed to fetch registry: 404 Not Found');
-    });
   });
 });

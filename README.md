@@ -39,6 +39,21 @@ npm install -g cogn@2.2.7
 
 > `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.
 
+## Registry Index ("Latest" Strategy)
+
+By default, the CLI fetches the registry index from the **latest GitHub Release** asset:
+
+- `https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json`
+
+For reproducible builds, pin to a specific tag:
+
+- `https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json`
+
+Override via:
+
+- Env: `COGNITIVE_REGISTRY_URL`
+- CLI: `--registry <url>`
+
 ## Quick Start
 
 ```bash

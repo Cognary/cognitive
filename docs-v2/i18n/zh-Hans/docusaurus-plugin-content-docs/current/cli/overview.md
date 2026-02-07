@@ -92,4 +92,10 @@ cog registry verify --remote --index https://github.com/Cognary/cognitive/releas
 
 # 固定到某个 release tag（推荐用于可复现构建）
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
+
+# 调整远端校验限制（默认：15s、index 2MB、tarball 25MB）
+cog registry verify --remote \
+  --fetch-timeout-ms 20000 \
+  --max-index-bytes 2097152 \
+  --max-tarball-bytes 26214400
 ```

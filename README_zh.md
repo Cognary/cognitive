@@ -39,6 +39,21 @@ npm install -g cogn@2.2.7
 
 > `cogn` 是 `cognitive-modules-cli` 的别名包，两者提供相同的 `cog` 命令。
 
+## Registry Index（latest 策略）
+
+默认情况下，CLI 会从 **最新 GitHub Release** 的 assets 拉取 registry index：
+
+- `https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json`
+
+如需可复现（可固定版本），建议固定到具体 tag：
+
+- `https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json`
+
+覆盖方式：
+
+- 环境变量：`COGNITIVE_REGISTRY_URL`
+- CLI 参数：`--registry <url>`
+
 ## 快速开始
 
 ```bash

@@ -120,6 +120,12 @@ cog registry verify --remote --index https://github.com/Cognary/cognitive/releas
 
 # Pin to a specific release tag (recommended for reproducible builds)
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
+
+# Tune remote verification limits (defaults: 15s, 2MB index, 25MB tarball)
+cog registry verify --remote \
+  --fetch-timeout-ms 20000 \
+  --max-index-bytes 2097152 \
+  --max-tarball-bytes 26214400
 ```
 
 ### 4. Compose Workflows

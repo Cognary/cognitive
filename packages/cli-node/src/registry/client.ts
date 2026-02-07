@@ -162,6 +162,7 @@ export interface SearchResult {
 // https://github.com/<org>/<repo>/releases/latest/download/cognitive-registry.v2.json
 export const DEFAULT_REGISTRY_URL =
   'https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json';
+const FALLBACK_REGISTRY_URL = 'https://raw.githubusercontent.com/Cognary/cognitive/main/cognitive-registry.v2.json';
 const CACHE_DIR = join(homedir(), '.cognitive', 'cache');
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const REGISTRY_FETCH_TIMEOUT_MS = 10_000; // 10s
@@ -278,29 +279,47 @@ export class RegistryClient {
       }
     }
     
-    // Fetch from network
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
-    let data: RegistryV1 | RegistryV2;
+    const fetchOnce = async (url: string): Promise<RegistryV1 | RegistryV2> => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
+      try {
+        const response = await fetch(url, {
+          headers: { 'User-Agent': 'cognitive-runtime/2.2' },
+          signal: controller.signal,
+        });
 
+        if (!response.ok) {
+          // Allow callers to inspect status for fallback logic.
+          const err = new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
+          (err as any).status = response.status;
+          throw err;
+        }
+
+        return await this.parseRegistryResponse(response);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error(`Registry fetch timed out after ${REGISTRY_FETCH_TIMEOUT_MS}ms`);
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+
+    let data: RegistryV1 | RegistryV2;
     try {
-      const response = await fetch(this.registryUrl, {
-        headers: { 'User-Agent': 'cognitive-runtime/2.2' },
-        signal: controller.signal,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
+      data = await fetchOnce(this.registryUrl);
+    } catch (e) {
+      // Harden the "latest" strategy: right after publishing a GitHub Release,
+      // the index asset may not be uploaded yet (short 404 window). In that case,
+      // fall back to the repo-tracked index to keep `cog search/add` usable.
+      const status = (e as any)?.status;
+      const isDefaultUrl = this.registryUrl === DEFAULT_REGISTRY_URL;
+      if (isDefaultUrl && status === 404) {
+        data = await fetchOnce(FALLBACK_REGISTRY_URL);
+      } else {
+        throw e;
       }
-      
-      data = await this.parseRegistryResponse(response);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Registry fetch timed out after ${REGISTRY_FETCH_TIMEOUT_MS}ms`);
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
     }
     
     // Update cache
