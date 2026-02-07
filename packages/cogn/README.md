@@ -26,8 +26,8 @@ cog run code-reviewer --args "..."
 
 ## 更多信息
 
-- GitHub: https://github.com/ziel-io/cognitive-modules
-- 文档（仓库内）：README.md
+- GitHub: https://github.com/Cognary/cognitive
+- 文档: https://cognary.github.io/cognitive/
 
 ## 发布前检查
 

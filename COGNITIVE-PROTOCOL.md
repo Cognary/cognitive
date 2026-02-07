@@ -131,8 +131,8 @@ AI IDE 应该：
 
 ## 链接
 
-- **GitHub**: https://github.com/ziel-io/cognitive-modules
-- **文档**: https://ziel-io.github.io/cognitive-modules/
+- **GitHub**: https://github.com/Cognary/cognitive
+- **文档**: https://cognary.github.io/cognitive/
 - **规范**: [SPEC-v2.2.md](./SPEC-v2.2.md)
 
 ---
@@ -141,8 +141,7 @@ AI IDE 应该：
 
 如有兴趣原生支持 Cognitive Protocol，欢迎联系：
 
-- GitHub Issues: https://github.com/ziel-io/cognitive-modules/issues
-- Email: [your-email]
+- GitHub Issues: https://github.com/Cognary/cognitive/issues
 
 ---
 

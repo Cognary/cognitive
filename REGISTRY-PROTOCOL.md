@@ -37,7 +37,7 @@ The Cognitive Modules Registry provides:
 
 | Type | Description | Example |
 |------|-------------|---------|
-| **Official** | Maintained by Cognitive Modules project | `registry.cognitive-modules.dev` |
+| **Official** | Maintained by Cognitive Modules project | GitHub Releases + static index JSON |
 | **Community** | Community-maintained modules | GitHub repositories |
 | **Private** | Organization-specific | Self-hosted registry |
 
@@ -61,11 +61,11 @@ Each module in the registry MUST have an entry conforming to this schema:
   "metadata": {
     "description": "Review code and provide structured improvement suggestions",
     "description_zh": "审查代码并提供结构化的改进建议",
-    "author": "ziel-io",
+    "author": "Cognary",
     "license": "MIT",
-    "repository": "https://github.com/ziel-io/cognitive-modules",
-    "documentation": "https://cognitive-modules.dev/modules/code-reviewer",
-    "homepage": "https://cognitive-modules.dev",
+    "repository": "https://github.com/Cognary/cognitive",
+    "documentation": "https://cognary.github.io/cognitive/",
+    "homepage": "https://cognary.github.io/cognitive/",
     "keywords": ["code", "review", "security", "quality"],
     "tier": "decision"
   },
@@ -237,8 +237,8 @@ github:<owner>/<repo>[/<path>][@<ref>]
 ```
 
 Examples:
-- `github:ziel-io/cognitive-modules/cognitive/modules/code-reviewer`
-- `github:ziel-io/cognitive-modules/cognitive/modules/code-reviewer@v2.2.0`
+- `github:Cognary/cognitive/cognitive/modules/code-reviewer`
+- `github:Cognary/cognitive/cognitive/modules/code-reviewer@v2.2.7`
 - `github:myorg/my-modules/modules/custom-module@main`
 
 Notes:
@@ -444,7 +444,7 @@ Packages MAY be signed using GPG or Sigstore:
     "tarball": "...",
     "checksum": "sha256:...",
     "signature": "https://registry.../code-reviewer-2.2.0.sig",
-    "signing_key": "https://registry.../keys/ziel-io.pub"
+    "signing_key": "https://registry.../keys/cognary.pub"
   }
 }
 ```

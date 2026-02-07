@@ -7,7 +7,7 @@ This guide is for developers implementing a Cognitive Modules runtime who want t
 ### 1. Clone the Test Vectors
 
 ```bash
-git clone https://github.com/ziel-io/cognitive-modules.git
+git clone https://github.com/Cognary/cognitive.git
 cd cognitive-modules/spec/test-vectors
 ```
 
@@ -278,7 +278,7 @@ jobs:
       
       - name: Clone Cognitive Modules test vectors
         run: |
-          git clone --depth 1 https://github.com/ziel-io/cognitive-modules.git /tmp/cognitive
+          git clone --depth 1 https://github.com/Cognary/cognitive.git /tmp/cognitive
           cp -r /tmp/cognitive/spec/test-vectors ./test-vectors
       
       - name: Run conformance tests
@@ -324,6 +324,6 @@ If you've built a conformant implementation, we'd love to list it!
 
 ## Questions?
 
-- Open an issue on [GitHub](https://github.com/ziel-io/cognitive-modules/issues)
+- Open an issue on [GitHub](https://github.com/Cognary/cognitive/issues)
 - Read the [CONFORMANCE.md](./CONFORMANCE.md) for detailed requirements
 - Check [SPEC-v2.2.md](./SPEC-v2.2.md) for the full specification
