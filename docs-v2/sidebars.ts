@@ -63,6 +63,7 @@ const sidebars: SidebarsConfig = {
       label: 'Integration',
       collapsed: true,
       items: [
+        'integration/providers',
         'integration/http-api',
         'integration/mcp',
         'integration/ai-tools',
@@ -87,6 +88,7 @@ const sidebars: SidebarsConfig = {
         'registry/index',
         'registry/protocol',
         'registry/schema',
+        'registry/publishable-artifacts',
       ],
     },
     {

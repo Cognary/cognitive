@@ -90,6 +90,16 @@ cog run code-reviewer --args "..." --profile default --audit --validate on
 
 See [`cog core`](./core).
 
+### Provider Compatibility (Structured Output)
+
+If a provider rejects native JSON schema payloads, use:
+
+```bash
+cog run <module> --args "..." --structured prompt
+```
+
+See [Providers and Capabilities](../integration/providers).
+
 ### 1. Run a Module
 
 ```bash
@@ -137,6 +147,8 @@ cog registry verify --remote \
 # Control remote verification concurrency (default: 4; max: 8)
 cog registry verify --remote --concurrency 2
 ```
+
+See [Publishable Artifacts](../registry/publishable-artifacts).
 
 ### 3.2 Registry Fetch Hardening (Index Client)
 

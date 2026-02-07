@@ -57,6 +57,7 @@ docs-v2/
       migrate.md
 
     integration/                               # 已有
+      providers.md                             # 新增：providers 能力矩阵与 structured 策略
       http-api.md
       mcp.md
       ai-tools.md
@@ -79,6 +80,7 @@ docs-v2/
       index.md
       protocol.md
       schema.md
+      publishable-artifacts.md                 # 新增：可迁移/可发布产物清单（实践版）
 
     release-notes/                             # 已新增
       index.md
@@ -128,6 +130,7 @@ docs-v2/
 | `/docs/cli/validate` | `docs/cli/validate.md` |
 | `/docs/cli/migrate` | `docs/cli/migrate.md` |
 | `/docs/integration/http-api` | `docs/integration/http-api.md` |
+| `/docs/integration/providers` | `docs/integration/providers.md` |
 | `/docs/integration/mcp` | `docs/integration/mcp.md` |
 | `/docs/integration/ai-tools` | `docs/integration/ai-tools.md` |
 | `/docs/integration/agent-protocol` | `docs/integration/agent-protocol.md` |
@@ -148,6 +151,7 @@ docs-v2/
 | `/docs/registry` | `docs/registry/index.md` | `REGISTRY-PROTOCOL.md` |
 | `/docs/registry/protocol` | `docs/registry/protocol.md` | `REGISTRY-PROTOCOL.md` |
 | `/docs/registry/schema` | `docs/registry/schema.md` | `spec/registry-entry.schema.json` |
+| `/docs/registry/publishable-artifacts` | `docs/registry/publishable-artifacts.md` | `cog registry build/verify`（实践版清单） |
 | `/docs/release-notes` | `docs/release-notes/index.md` | `packages/cli-node/CHANGELOG.md`, `packages/cogn/CHANGELOG.md` |
 | `/docs/release-notes/v2.2.7` | `docs/release-notes/v2.2.7.md` | `packages/cli-node/CHANGELOG.md` |
 | `/docs/community/contributing` | `docs/community/contributing.md` | `README.md`（贡献部分） |

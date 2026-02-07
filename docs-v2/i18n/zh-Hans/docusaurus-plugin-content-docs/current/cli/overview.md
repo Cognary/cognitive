@@ -9,9 +9,12 @@ Cognitive Modules CLI 通过 npm 分发，命令为 `cog`。
 ## 安装
 
 ```bash
-npx cogn@2.2.8 --help
-npm install -g cogn@2.2.8
-# 或：npm install -g cognitive-modules-cli@2.2.8
+# 零安装
+npx cogn@latest --help
+
+# 全局安装
+npm install -g cogn@latest
+# 或：npm install -g cognitive-modules-cli@latest
 ```
 
 ## 命令列表
@@ -19,6 +22,7 @@ npm install -g cogn@2.2.8
 | 命令 | 说明 |
 |------|------|
 | `core <cmd>` | 极简路径：`new`/`run`/`schema`/`promote` |
+| `providers` | 列出 provider 与能力矩阵（structured + streaming） |
 | `list` | 列出模块 |
 | `run <module>` | 运行模块 |
 | `pipe --module <name>` | 管道模式 |
@@ -34,6 +38,7 @@ npm install -g cogn@2.2.8
 | `serve` | 启动 HTTP API |
 | `mcp` | 启动 MCP Server |
 | `doctor` | 环境检查 |
+| `registry <cmd>` | registry 产物：`list`/`info`/`build`/`verify` |
 
 ## 常用流程
 
@@ -54,13 +59,15 @@ CLI 通过 `--profile` 实现“按需启用复杂度”的默认策略（并提
 | Profile | 场景 | 默认策略 |
 |---------|------|----------|
 | `core` | 5 分钟跑通，最少约束 | `--validate=off`，`--audit=false` |
-| `default` | 日常使用 | `--validate=on`，`--audit=false` |
+| `default` | 日常使用 | `--validate=auto`，`--audit=false` |
 | `strict` | 更高可靠性/更强约束 | `--validate=on`，`--audit=false` |
 | `certified` | 最强门禁/可发布流程 | `--validate=on`，`--audit=true`，并要求 v2.2 + registry provenance/完整性门禁 |
 
 覆盖开关：
 
 - `--validate auto|on|off`（兼容：`--no-validate` 等价于 `--validate off`）
+- `--structured auto|off|prompt|native`（provider 层 structured 输出策略）
+  - `auto` 会选择合适策略，并在兼容性错误时允许一次 `native -> prompt` 降级（更稳定）
 - `--audit` 会把审计记录写入 `~/.cognitive/audit/`（路径输出到 stderr）
 
 示例：
@@ -68,6 +75,9 @@ CLI 通过 `--profile` 实现“按需启用复杂度”的默认策略（并提
 ```bash
 # 极简：跳过校验
 cog run ./demo.md --args "hello" --profile core
+
+# 强制 prompt JSON（当 provider 原生 schema 不兼容时）
+cog run ./demo.md --args "hello" --structured prompt
 
 # 更严格
 cog run code-reviewer --args "..." --profile strict
@@ -80,7 +90,7 @@ cog run code-reviewer --args "..." --profile certified
 
 ```bash
 # 构建 tarball 资产，并生成/更新 cognitive-registry.v2.json
-cog registry build --tag v2.2.8
+cog registry build --tag vX.Y.Z
 
 # 校验本地 tarball 是否与 registry v2 索引一致（checksum/size/files）
 cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
@@ -90,8 +100,8 @@ cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registr
 #   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 
-# 固定到某个 release tag（推荐用于可复现构建）
-cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json
+# 固定到某个 release tag（推荐用于可复现构建与校验）
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
 
 # 调整远端校验限制（默认：15s、index 2MB、tarball 25MB）
 cog registry verify --remote \
