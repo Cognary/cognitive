@@ -15,12 +15,10 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 ## Status
 
 - **Primary runtime**: Node.js CLI (`cognitive-modules-cli`, command `cog`)
-- **Python runtime**: legacy / not actively maintained
 
 ## Version
 
 - **Runtime (npm)**: `2.2.8`
-- **Python package (PyPI, legacy)**: `2.2.3` (not kept in sync; legacy)
 - **Spec**: v2.2
 
 ## Installation (Node.js)

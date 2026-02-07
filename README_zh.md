@@ -15,12 +15,10 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 ## 现状
 
 - **主运行时**：Node.js CLI（`cognitive-modules-cli`，命令 `cog`）
-- **Python 运行时**：遗留版本，当前不再作为主要维护目标
 
 ## 版本
 
 - **运行时（npm）**：`2.2.8`
-- **Python 包（PyPI，遗留）**：`2.2.3`（不再同步更新；遗留）
 - **规范**：v2.2
 
 ## 安装（Node.js）
