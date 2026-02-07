@@ -31,6 +31,7 @@ import type {
 } from '../types.js';
 
 const FRONTMATTER_REGEX = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?/;
+const SAFE_MODULE_NAME_REGEX = /^[a-z0-9][a-z0-9._-]*$/i;
 
 /**
  * Detect module format version
@@ -392,6 +393,191 @@ export async function loadModule(modulePath: string): Promise<CognitiveModule> {
   } else {
     return loadModuleV0(modulePath);
   }
+}
+
+// =============================================================================
+// Single-File Modules (Ad-hoc)
+// =============================================================================
+
+function coerceModuleName(name: unknown, fallback: string): string {
+  const raw = (typeof name === 'string' && name.trim().length > 0) ? name.trim() : fallback;
+  const normalized = raw
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  const lower = normalized.toLowerCase();
+  if (SAFE_MODULE_NAME_REGEX.test(lower)) return lower;
+  return fallback;
+}
+
+function defaultMetaSchema(): object {
+  return {
+    type: 'object',
+    additionalProperties: true,
+    required: ['confidence', 'risk', 'explain'],
+    properties: {
+      confidence: { type: 'number', minimum: 0, maximum: 1 },
+      risk: { type: 'string', enum: ['none', 'low', 'medium', 'high'] },
+      explain: { type: 'string', maxLength: 280 },
+    },
+  };
+}
+
+function defaultDataSchema(): object {
+  // Intentionally loose: the "5-minute" path should not fail on business fields.
+  return {
+    type: 'object',
+    additionalProperties: true,
+  };
+}
+
+function defaultInputSchema(): object {
+  // Matches runtime behavior: args are mapped to either query or code.
+  return {
+    type: 'object',
+    additionalProperties: true,
+    properties: {
+      query: { type: 'string' },
+      code: { type: 'string' },
+      args: { type: 'string' },
+    },
+  };
+}
+
+function defaultEnvelopeSchema(metaSchema: object): object {
+  // Used as a hint for structured output (provider jsonSchema). Validation uses metaSchema/dataSchema separately.
+  return {
+    type: 'object',
+    additionalProperties: true,
+    oneOf: [
+      {
+        type: 'object',
+        required: ['ok', 'meta', 'data'],
+        properties: {
+          ok: { const: true },
+          version: { type: 'string' },
+          meta: metaSchema,
+          data: { type: 'object', additionalProperties: true },
+        },
+      },
+      {
+        type: 'object',
+        required: ['ok', 'meta', 'error'],
+        properties: {
+          ok: { const: false },
+          version: { type: 'string' },
+          meta: metaSchema,
+          error: {
+            type: 'object',
+            additionalProperties: true,
+            required: ['code', 'message'],
+            properties: {
+              code: { type: 'string' },
+              message: { type: 'string' },
+              recoverable: { type: 'boolean' },
+            },
+          },
+          partial_data: { type: 'object', additionalProperties: true },
+        },
+      },
+    ],
+  };
+}
+
+function looksLikeMarkdownModule(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  return ext === '.md' || ext === '.markdown';
+}
+
+/**
+ * Load a single-file module (Markdown) with optional YAML frontmatter.
+ *
+ * This enables the "5-minute" path: one file runs, and the runtime generates a loose schema/envelope.
+ *
+ * File format:
+ * - Optional YAML frontmatter between --- ... --- (same as v1 MODULE.md)
+ * - Body is treated as prompt
+ */
+export async function loadSingleFileModule(filePath: string): Promise<CognitiveModule> {
+  const absPath = path.resolve(filePath);
+  if (!looksLikeMarkdownModule(absPath)) {
+    throw new Error(`Single-file modules currently support Markdown (.md) only: ${absPath}`);
+  }
+  const content = await fs.readFile(absPath, 'utf-8');
+
+  let manifest: Record<string, unknown> = {};
+  let prompt = content;
+
+  const match = content.match(FRONTMATTER_REGEX);
+  if (match) {
+    try {
+      const loaded = yaml.load(match[1]);
+      manifest = (loaded && typeof loaded === 'object') ? (loaded as Record<string, unknown>) : {};
+    } catch {
+      manifest = {};
+    }
+    prompt = (match[2] ?? '').trim();
+  }
+
+  const base = path.basename(absPath, path.extname(absPath));
+  const name = coerceModuleName(manifest.name, coerceModuleName(base, 'single-file-module'));
+
+  const tier = (manifest.tier as ModuleTier | undefined) ?? 'decision';
+  const responsibility = (manifest.responsibility as string | undefined)
+    ?? `Ad-hoc single-file module loaded from ${path.basename(absPath)}`;
+
+  const excludes = Array.isArray(manifest.excludes) ? (manifest.excludes as string[]) : [];
+
+  const metaSchema = defaultMetaSchema();
+  const dataSchema = defaultDataSchema();
+  const inputSchema = defaultInputSchema();
+  const envelopeSchema = defaultEnvelopeSchema(metaSchema);
+
+  // Keep validation permissive by default, but still enforce envelope meta shape.
+  const schemaStrictness: SchemaStrictness = (manifest.schema_strictness as SchemaStrictness) ?? 'low';
+
+  return {
+    name,
+    version: (manifest.version as string | undefined) ?? '0.1.0',
+    responsibility,
+    excludes,
+    constraints: manifest.constraints as ModuleConstraints | undefined,
+    policies: manifest.policies as ModulePolicies | undefined,
+    tools: manifest.tools as ToolsPolicy | undefined,
+    output: (manifest.output as OutputContract | undefined) ?? { envelope: true, format: 'json_lenient' },
+    failure: manifest.failure as FailureContract | undefined,
+    runtimeRequirements: manifest.runtime_requirements as RuntimeRequirements | undefined,
+
+    tier,
+    schemaStrictness,
+    overflow: {
+      enabled: true,
+      recoverable: true,
+      max_items: 20,
+      require_suggested_mapping: false,
+    },
+    enums: { strategy: 'extensible', unknown_tag: 'custom' },
+    compat: { accepts_v21_payload: true, runtime_auto_wrap: true, schema_output_alias: 'data' },
+    metaConfig: { risk_rule: 'explicit' },
+    composition: undefined,
+
+    context: (manifest.context as 'fork' | 'main' | undefined),
+    prompt: prompt.length > 0 ? prompt : content.trim(),
+
+    // Schemas:
+    // - outputSchema is used as provider jsonSchema hint (we want the full envelope)
+    // - metaSchema/dataSchema are used for runtime validation after wrapping/repair
+    inputSchema,
+    outputSchema: envelopeSchema,
+    dataSchema,
+    metaSchema,
+    errorSchema: undefined,
+
+    location: absPath,
+    format: 'v2',
+    formatVersion: 'v2.2',
+  };
 }
 
 /**

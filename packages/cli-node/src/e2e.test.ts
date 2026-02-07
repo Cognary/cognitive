@@ -14,7 +14,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import type { Provider, InvokeParams, InvokeResult } from './types.js';
 import { runModule, runModuleStream, makeErrorResponse, ERROR_CODES, type StreamEvent } from './modules/runner.js';
-import { loadModule } from './modules/loader.js';
+import { loadModule, loadSingleFileModule } from './modules/loader.js';
 import { validateModule } from './modules/validator.js';
 
 // =============================================================================
@@ -278,6 +278,37 @@ async function createTestModule(
   return modulePath;
 }
 
+/**
+ * Create a single-file module (Markdown with optional frontmatter).
+ */
+async function createSingleFileModule(
+  filename: string,
+  config: {
+    frontmatter?: Record<string, unknown>;
+    body?: string;
+  } = {}
+): Promise<string> {
+  const filePath = path.join(tempDir, filename);
+  const frontmatter = config.frontmatter ?? {
+    name: path.basename(filename, path.extname(filename)),
+    version: '0.1.0',
+    responsibility: 'Single-file module used for E2E tests',
+    tier: 'decision',
+  };
+  const body = config.body ?? 'Return a valid v2.2 envelope JSON.';
+
+  const yamlLines = Object.entries(frontmatter).flatMap(([k, v]) => {
+    if (Array.isArray(v)) {
+      return [`${k}:`, ...v.map(item => `  - ${String(item)}`)];
+    }
+    return [`${k}: ${String(v)}`];
+  });
+
+  const content = `---\n${yamlLines.join('\n')}\n---\n\n${body}\n`;
+  await fs.writeFile(filePath, content, 'utf-8');
+  return filePath;
+}
+
 // =============================================================================
 // Test Setup/Teardown
 // =============================================================================
@@ -320,6 +351,30 @@ describe('E2E: Module Loading', () => {
   it('should fail to load non-existent module', async () => {
     await expect(loadModule('/non/existent/path')).rejects.toThrow();
   });
+
+  it('should load a single-file module with generated schemas', async () => {
+    const filePath = await createSingleFileModule('single-file-module.md', {
+      frontmatter: {
+        name: 'single-file-module',
+        version: '0.1.0',
+        responsibility: 'Test single-file module loading',
+        tier: 'decision',
+        excludes: ['do_not_do_x'],
+      },
+      body: 'You are a test single-file module. Respond with a valid v2.2 envelope.',
+    });
+
+    const module = await loadSingleFileModule(filePath);
+
+    expect(module).toBeDefined();
+    expect(module.name).toBe('single-file-module');
+    expect(module.responsibility).toBe('Test single-file module loading');
+    expect(module.prompt).toContain('single-file module');
+    expect(module.format).toBe('v2');
+    expect(module.formatVersion).toBe('v2.2');
+    expect(module.metaSchema).toBeDefined();
+    expect(module.dataSchema).toBeDefined();
+  });
   
   it('should validate a valid module without errors', async () => {
     const modulePath = await createTestModule('valid-module');
@@ -359,6 +414,38 @@ describe('E2E: Module Execution', () => {
     expect(result.meta.confidence).toBeGreaterThan(0.9);
     expect(result.meta.risk).toBe('low');
     expect(result.data?.result).toBe('processed-result');
+  });
+
+  it('should execute single-file module and return valid envelope', async () => {
+    const filePath = await createSingleFileModule('run-single-file.md', {
+      frontmatter: {
+        name: 'run-single-file',
+        version: '0.1.0',
+        responsibility: 'Execute single-file module',
+        tier: 'decision',
+      },
+      body: 'Return a JSON v2.2 envelope with meta and data.',
+    });
+    const module = await loadSingleFileModule(filePath);
+
+    mockProvider.setDefaultResponse({
+      ok: true,
+      meta: {
+        confidence: 0.88,
+        risk: 'low',
+        explain: 'Single-file module executed',
+      },
+      data: {
+        result: 'ok',
+        rationale: 'This is a test rationale',
+      },
+    });
+
+    const result = await runModule(module, mockProvider, { args: 'hello' });
+    expect(result.ok).toBe(true);
+    expect(result.version).toBe('2.2');
+    expect(result.meta.explain).toContain('Single-file');
+    expect((result as any).data).toBeDefined();
   });
   
   it('should handle LLM returning markdown-wrapped JSON', async () => {

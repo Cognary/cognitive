@@ -4,7 +4,10 @@
  */
 
 import type { CommandContext, CommandResult } from '../types.js';
-import { findModule, getDefaultSearchPaths, runModule, runModuleStream } from '../modules/index.js';
+import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
+import type { CognitiveModule } from '../types.js';
+import { findModule, getDefaultSearchPaths, loadSingleFileModule, runModule, runModuleStream } from '../modules/index.js';
 import { ErrorCodes, attachContext, makeErrorEnvelope } from '../errors/index.js';
 
 export interface RunOptions {
@@ -21,21 +24,35 @@ export async function run(
   ctx: CommandContext,
   options: RunOptions = {}
 ): Promise<CommandResult> {
+  // Allow "single-file modules": if moduleName resolves to a file, load it directly.
+  let module: CognitiveModule | null = null;
+  const candidatePath = path.resolve(ctx.cwd, moduleName);
+  try {
+    const st = await fs.stat(candidatePath);
+    if (st.isFile()) {
+      module = await loadSingleFileModule(candidatePath);
+    }
+  } catch {
+    // Not a file path, fall back to module discovery.
+  }
+
   const searchPaths = getDefaultSearchPaths(ctx.cwd);
-  
-  // Find module
-  const module = await findModule(moduleName, searchPaths);
+
   if (!module) {
-    const errorEnvelope = attachContext(makeErrorEnvelope({
-      code: ErrorCodes.MODULE_NOT_FOUND,
-      message: `Module not found: ${moduleName}\nSearch paths: ${searchPaths.join(', ')}`,
-      suggestion: "Use 'cog list' to see installed modules or 'cog search' to find modules in registry",
-    }), { module: moduleName, provider: ctx.provider.name });
-    return {
-      success: false,
-      error: errorEnvelope.error.message,
-      data: errorEnvelope,
-    };
+    // Find module (directory-based)
+    module = await findModule(moduleName, searchPaths);
+    if (!module) {
+      const errorEnvelope = attachContext(makeErrorEnvelope({
+        code: ErrorCodes.MODULE_NOT_FOUND,
+        message: `Module not found: ${moduleName}\nSearch paths: ${searchPaths.join(', ')}`,
+        suggestion: "Use 'cog list' to see installed modules or 'cog search' to find modules in registry",
+      }), { module: moduleName, provider: ctx.provider.name });
+      return {
+        success: false,
+        error: errorEnvelope.error.message,
+        data: errorEnvelope,
+      };
+    }
   }
 
   try {
