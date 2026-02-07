@@ -10,6 +10,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { 
   Provider, 
+  ProviderCapabilities,
+  JsonSchemaMode,
   CognitiveModule, 
   ModuleResult, 
   ModuleResultV21,
@@ -1523,6 +1525,42 @@ function resolveValidationFlags(
   return { validateInput: true, validateOutput: true, reason: `auto: tier=${tier}` };
 }
 
+function getProviderCapabilities(provider: Provider): ProviderCapabilities {
+  const caps = provider.getCapabilities?.();
+  if (caps) return caps;
+  return {
+    structuredOutput: 'prompt',
+    streaming: provider.supportsStreaming?.() ?? false,
+  };
+}
+
+function resolveJsonSchemaParams(
+  module: CognitiveModule,
+  provider: Provider,
+  validateOutput: boolean
+): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode } {
+  if (!validateOutput) return {};
+  if (!module.outputSchema) return {};
+
+  const caps = getProviderCapabilities(provider);
+  if (caps.structuredOutput === 'none') return {};
+
+  const jsonSchemaMode: JsonSchemaMode = caps.structuredOutput === 'native' ? 'native' : 'prompt';
+  return { jsonSchema: module.outputSchema, jsonSchemaMode };
+}
+
+function isSchemaCompatibilityError(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e ?? '');
+  return (
+    msg.includes('responseSchema') ||
+    msg.includes('response_schema') ||
+    msg.includes('Invalid JSON payload') ||
+    msg.includes('INVALID_ARGUMENT') ||
+    msg.includes('Unknown name') ||
+    msg.includes('should be non-empty for OBJECT type')
+  );
+}
+
 // =============================================================================
 // Main Runner
 // =============================================================================
@@ -1713,12 +1751,28 @@ export async function runModule(
 
   try {
     // Invoke provider
-    const result = await provider.invoke({
-      messages,
-      // Progressive Complexity: only enforce schema at the provider layer when validation is enabled.
-      jsonSchema: validateOutput ? module.outputSchema : undefined,
-      temperature: 0.3,
-    });
+    const schemaParams = resolveJsonSchemaParams(module, provider, validateOutput);
+    let result: InvokeResult;
+    try {
+      result = await provider.invoke({
+        messages,
+        // Progressive Complexity: only enforce schema at the provider layer when validation is enabled.
+        ...schemaParams,
+        temperature: 0.3,
+      });
+    } catch (e) {
+      // If the provider rejects native structured output schemas, retry once in prompt mode.
+      if (schemaParams.jsonSchema && schemaParams.jsonSchemaMode === 'native' && isSchemaCompatibilityError(e)) {
+        result = await provider.invoke({
+          messages,
+          jsonSchema: schemaParams.jsonSchema,
+          jsonSchemaMode: 'prompt',
+          temperature: 0.3,
+        });
+      } else {
+        throw e;
+      }
+    }
 
     if (verbose) {
       console.error('--- Response ---');
@@ -2042,31 +2096,62 @@ export async function* runModuleStream(
 
     // Invoke provider with streaming if supported
     let fullContent: string;
+    const schemaParams = resolveJsonSchemaParams(module, provider, validateOutput);
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
       const stream = provider.invokeStream({
         messages,
-        jsonSchema: validateOutput ? module.outputSchema : undefined,
+        ...schemaParams,
         temperature: 0.3,
       });
       
       // Iterate through the async generator, yielding chunks as they arrive
       let streamResult: IteratorResult<string, InvokeResult>;
-      while (!(streamResult = await stream.next()).done) {
-        const chunk = streamResult.value;
-        yield makeEvent('delta', { delta: chunk });
+      try {
+        while (!(streamResult = await stream.next()).done) {
+          const chunk = streamResult.value;
+          yield makeEvent('delta', { delta: chunk });
+        }
+
+        // Get the final result (returned from the generator)
+        fullContent = streamResult.value.content;
+      } catch (e) {
+        // If streaming fails (e.g., schema rejected), retry once non-streaming in prompt mode.
+        if (schemaParams.jsonSchema && schemaParams.jsonSchemaMode === 'native' && isSchemaCompatibilityError(e)) {
+          const result = await provider.invoke({
+            messages,
+            jsonSchema: schemaParams.jsonSchema,
+            jsonSchemaMode: 'prompt',
+            temperature: 0.3,
+          });
+          fullContent = result.content;
+          yield makeEvent('delta', { delta: result.content });
+        } else {
+          throw e;
+        }
       }
-      
-      // Get the final result (returned from the generator)
-      fullContent = streamResult.value.content;
     } else {
       // Fallback to non-streaming invoke
-      const result = await provider.invoke({
-        messages,
-        jsonSchema: validateOutput ? module.outputSchema : undefined,
-        temperature: 0.3,
-      });
+      let result: InvokeResult;
+      try {
+        result = await provider.invoke({
+          messages,
+          ...schemaParams,
+          temperature: 0.3,
+        });
+      } catch (e) {
+        if (schemaParams.jsonSchema && schemaParams.jsonSchemaMode === 'native' && isSchemaCompatibilityError(e)) {
+          result = await provider.invoke({
+            messages,
+            jsonSchema: schemaParams.jsonSchema,
+            jsonSchemaMode: 'prompt',
+            temperature: 0.3,
+          });
+        } else {
+          throw e;
+        }
+      }
       fullContent = result.content;
       
       // Emit chunk event with full response

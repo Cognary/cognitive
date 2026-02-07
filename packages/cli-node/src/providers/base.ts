@@ -2,7 +2,7 @@
  * Base Provider - Abstract class for all LLM providers
  */
 
-import type { Provider, InvokeParams, InvokeResult } from '../types.js';
+import type { Provider, InvokeParams, InvokeResult, ProviderCapabilities } from '../types.js';
 
 export abstract class BaseProvider implements Provider {
   abstract name: string;
@@ -10,6 +10,13 @@ export abstract class BaseProvider implements Provider {
   abstract invoke(params: InvokeParams): Promise<InvokeResult>;
   
   abstract isConfigured(): boolean;
+
+  getCapabilities(): ProviderCapabilities {
+    return {
+      structuredOutput: 'prompt',
+      streaming: this.supportsStreaming(),
+    };
+  }
 
   /**
    * Check if this provider supports streaming.

@@ -7,10 +7,32 @@
 // Provider Interface
 // =============================================================================
 
+/**
+ * Provider structured output support levels.
+ *
+ * - none: provider does not accept a schema hint (runtime will still validate/repair post-hoc)
+ * - prompt: schema is injected into the prompt as guidance (best-effort)
+ * - native: provider supports a native structured output / response schema API surface
+ */
+export type StructuredOutputMode = 'none' | 'prompt' | 'native';
+
+/** If a schema is passed, how it should be applied. */
+export type JsonSchemaMode = Exclude<StructuredOutputMode, 'none'>;
+
+export interface ProviderCapabilities {
+  structuredOutput: StructuredOutputMode;
+  streaming: boolean;
+}
+
 export interface Provider {
   name: string;
   invoke(params: InvokeParams): Promise<InvokeResult>;
   isConfigured(): boolean;
+  /**
+   * Optional capability surface for "publish-grade" behavior parity.
+   * If absent, the runtime assumes structuredOutput='prompt' and streaming based on supportsStreaming().
+   */
+  getCapabilities?(): ProviderCapabilities;
   
   /**
    * Stream-based invoke (optional).
@@ -29,6 +51,7 @@ export interface Provider {
 export interface InvokeParams {
   messages: Message[];
   jsonSchema?: object;
+  jsonSchemaMode?: JsonSchemaMode;
   temperature?: number;
   maxTokens?: number;
 }

@@ -339,6 +339,8 @@ async function main() {
           const apiKeyStatus = p.configured ? 'API key set' : 'not configured';
           console.log(`  ${status} ${p.name}`);
           console.log(`      Model: ${p.model}`);
+          console.log(`      Structured output: ${p.structuredOutput}`);
+          console.log(`      Streaming: ${p.streaming ? 'yes' : 'no'}`);
           console.log(`      Status: ${apiKeyStatus}`);
           if (p.configured) hasConfiguredProvider = true;
         }

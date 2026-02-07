@@ -88,8 +88,23 @@ export class GeminiProvider extends BaseProvider {
    * Build request body for Gemini API
    */
   private buildRequestBody(params: InvokeParams): Record<string, unknown> {
+    // If the caller wants schema guidance but not native enforcement, inject the schema into the prompt.
+    // (Gemini's native responseSchema supports only a restricted schema subset and can reject valid JSON Schema.)
+    const mode = params.jsonSchemaMode ?? (params.jsonSchema ? 'prompt' : undefined);
+    let messages = params.messages;
+    if (params.jsonSchema && mode === 'prompt') {
+      const lastUserIdx = messages.findLastIndex(m => m.role === 'user');
+      if (lastUserIdx >= 0) {
+        messages = [...messages];
+        messages[lastUserIdx] = {
+          ...messages[lastUserIdx],
+          content: messages[lastUserIdx].content + this.buildJsonPrompt(params.jsonSchema),
+        };
+      }
+    }
+
     // Convert messages to Gemini format
-    const contents = params.messages
+    const contents = messages
       .filter(m => m.role !== 'system')
       .map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -97,7 +112,7 @@ export class GeminiProvider extends BaseProvider {
       }));
 
     // Add system instruction if present
-    const systemMessage = params.messages.find(m => m.role === 'system');
+    const systemMessage = messages.find(m => m.role === 'system');
     
     const body: Record<string, unknown> = {
       contents,
@@ -111,8 +126,8 @@ export class GeminiProvider extends BaseProvider {
       body.systemInstruction = { parts: [{ text: systemMessage.content }] };
     }
 
-    // Add JSON schema constraint if provided
-    if (params.jsonSchema) {
+    // Add JSON schema constraint if provided and caller requested native mode.
+    if (params.jsonSchema && mode === 'native') {
       const cleanedSchema = this.cleanSchemaForGemini(params.jsonSchema);
       body.generationConfig = {
         ...body.generationConfig as object,

@@ -1,8 +1,12 @@
 /**
  * Provider Registry
+ *
+ * Publish-grade note:
+ * Providers expose a small capability surface (structured output, streaming).
+ * The runner uses this to decide whether to pass native schemas or prompt-only guidance.
  */
 
-import type { Provider } from '../types.js';
+import type { Provider, ProviderCapabilities, StructuredOutputMode } from '../types.js';
 import { GeminiProvider } from './gemini.js';
 import { OpenAIProvider } from './openai.js';
 import { AnthropicProvider } from './anthropic.js';
@@ -64,15 +68,31 @@ export function getProvider(name?: string, model?: string): Provider {
   return factory(modelOverride);
 }
 
-export function listProviders(): Array<{ name: string; configured: boolean; model: string }> {
+function safeCapabilities(p: Provider): ProviderCapabilities {
+  const caps = p.getCapabilities?.();
+  if (caps) return caps;
+  return { structuredOutput: 'prompt', streaming: p.supportsStreaming?.() ?? false };
+}
+
+function providerRow(
+  name: string,
+  configured: boolean,
+  model: string,
+  make: () => Provider
+): { name: string; configured: boolean; model: string; structuredOutput: StructuredOutputMode; streaming: boolean } {
+  const caps = safeCapabilities(make());
+  return { name, configured, model, structuredOutput: caps.structuredOutput, streaming: caps.streaming };
+}
+
+export function listProviders(): Array<{ name: string; configured: boolean; model: string; structuredOutput: StructuredOutputMode; streaming: boolean }> {
   return [
-    { name: 'gemini', configured: !!process.env.GEMINI_API_KEY, model: 'gemini-3-flash' },
-    { name: 'openai', configured: !!process.env.OPENAI_API_KEY, model: 'gpt-5.2' },
-    { name: 'anthropic', configured: !!process.env.ANTHROPIC_API_KEY, model: 'claude-sonnet-4.5' },
-    { name: 'deepseek', configured: !!process.env.DEEPSEEK_API_KEY, model: 'deepseek-v3.2' },
-    { name: 'minimax', configured: !!process.env.MINIMAX_API_KEY, model: 'MiniMax-M2.1' },
-    { name: 'moonshot', configured: !!process.env.MOONSHOT_API_KEY, model: 'kimi-k2.5' },
-    { name: 'qwen', configured: !!(process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY), model: 'qwen3-max' },
-    { name: 'ollama', configured: true, model: 'llama4 (local)' },
+    providerRow('gemini', !!process.env.GEMINI_API_KEY, 'gemini-3-flash', () => new GeminiProvider('')),
+    providerRow('openai', !!process.env.OPENAI_API_KEY, 'gpt-5.2', () => new OpenAIProvider('')),
+    providerRow('anthropic', !!process.env.ANTHROPIC_API_KEY, 'claude-sonnet-4.5', () => new AnthropicProvider('')),
+    providerRow('deepseek', !!process.env.DEEPSEEK_API_KEY, 'deepseek-v3.2', () => new DeepSeekProvider('')),
+    providerRow('minimax', !!process.env.MINIMAX_API_KEY, 'MiniMax-M2.1', () => new MiniMaxProvider('')),
+    providerRow('moonshot', !!process.env.MOONSHOT_API_KEY, 'kimi-k2.5', () => new MoonshotProvider('')),
+    providerRow('qwen', !!(process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY), 'qwen3-max', () => new QwenProvider('')),
+    providerRow('ollama', true, 'llama4 (local)', () => new OllamaProvider()),
   ];
 }
