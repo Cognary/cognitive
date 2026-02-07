@@ -6,6 +6,21 @@ sidebar_position: 1
 
 Cognitive Modules 2.2 is distributed via npm. The CLI command is `cog`.
 
+## 5-Minute Quick Start
+
+If you just want to try Cognitive, you do not need to think about registry, conformance, or certification.
+
+```bash
+# Zero-install (recommended)
+npx cogn@2.2.7 --help
+
+# Install a module from this repo
+npx cogn@2.2.7 add Cognary/cognitive -m code-reviewer
+
+# Run it (returns a v2.2 envelope)
+npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass" --pretty
+```
+
 ## Install
 
 ```bash
@@ -40,6 +55,15 @@ cog add Cognary/cognitive -m code-reviewer --tag v1.0.0
 # List installed modules
 cog list
 ```
+
+## Progressive Complexity (Optional)
+
+Only enable the pieces you need:
+
+- Need **verifiable outputs**: write or tighten `schema.json` and run `cog validate --all`.
+- Need **auditability**: require `meta.explain` and `data.rationale`, and store envelope results/events.
+- Need **distribution**: publish registry indexes and GitHub Release tarballs, then install via `cog add <url>`.
+- Need **ecosystem trust**: add conformance tests and certification signals.
 
 ## Version Management
 
