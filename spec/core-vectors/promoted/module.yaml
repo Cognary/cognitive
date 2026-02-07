@@ -1,0 +1,23 @@
+name: demo
+version: 0.1.0
+responsibility: One-file core module (5-minute path)
+tier: decision
+excludes:
+  - do not make network calls
+  - do not write files
+schema_strictness: low
+overflow:
+  enabled: true
+  recoverable: true
+  max_items: 20
+  require_suggested_mapping: false
+enums:
+  strategy: extensible
+  unknown_tag: custom
+compat:
+  accepts_v21_payload: true
+  runtime_auto_wrap: true
+  schema_output_alias: data
+meta:
+  risk_rule: explicit
+
