@@ -102,6 +102,21 @@ describe('cog core', () => {
     }
   });
 
+  it('corePromote should refuse to write outside the current working directory', async () => {
+    const prevCwd = process.cwd();
+    try {
+      process.chdir(tempDir);
+      await coreNew('demo.md');
+
+      const outside = path.resolve(tempDir, '..', 'outside-target');
+      const result = await corePromote('demo.md', outside);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Refusing to promote outside current directory');
+    } finally {
+      process.chdir(prevCwd);
+    }
+  });
+
   it('coreRunText should execute an ad-hoc module from text (stdin path)', async () => {
     const provider: Provider = {
       name: 'core-test',

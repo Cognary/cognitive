@@ -159,6 +159,12 @@ function defaultPromoteDir(moduleName: string): string {
   return path.resolve(process.cwd(), 'cognitive', 'modules', moduleName);
 }
 
+function isPathWithinRoot(rootDir: string, targetPath: string): boolean {
+  const root = path.resolve(rootDir);
+  const target = path.resolve(targetPath);
+  return target === root || target.startsWith(root + path.sep);
+}
+
 function schemaJsonForV22(mod: Awaited<ReturnType<typeof loadSingleFileModule>>): object {
   return {
     meta: mod.metaSchema ?? {},
@@ -199,6 +205,12 @@ export async function corePromote(
   const mod = await loadSingleFileModule(abs);
 
   const targetDir = outDir ? path.resolve(process.cwd(), outDir) : defaultPromoteDir(mod.name);
+  const cwd = process.cwd();
+  // Promote is meant to generate a project-local v2 module directory. Refuse to write outside cwd
+  // (and especially refuse `--force` deletes) to prevent footguns like `--force /`.
+  if (!isPathWithinRoot(cwd, targetDir) || path.resolve(targetDir) === path.resolve(cwd)) {
+    return { success: false, error: `Refusing to promote outside current directory: ${targetDir}` };
+  }
   const moduleYamlPath = path.join(targetDir, 'module.yaml');
   const promptMdPath = path.join(targetDir, 'prompt.md');
   const schemaJsonPath = path.join(targetDir, 'schema.json');
@@ -358,7 +370,7 @@ export async function core(
           'cog core schema <file.md> [--pretty]',
           'cog core run <file.md> [--args "..."] [--pretty] [--stream] [--no-validate]',
           'cog core run --stdin [--args "..."] [--pretty] [--stream] [--no-validate]',
-          'cog core promote <file.md> [outDir] [--dry-run]',
+          'cog core promote <file.md> [outDir] [--dry-run] [--force]',
         ],
       },
     };

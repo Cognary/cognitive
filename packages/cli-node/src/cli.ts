@@ -92,6 +92,18 @@ async function main() {
     process.exit(0);
   }
 
+  // Guard Core-only flags so we don't silently ignore them on other commands.
+  if (command !== 'core') {
+    if (values.stdin) {
+      console.error('Error: --stdin is only supported for `cog core run --stdin`');
+      process.exit(1);
+    }
+    if (values.force) {
+      console.error('Error: --force is only supported for `cog core promote --force`');
+      process.exit(1);
+    }
+  }
+
   // Get provider
   let provider;
   try {
