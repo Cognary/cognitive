@@ -8,9 +8,6 @@ Includes tests for v2.2 features:
 """
 
 import json
-from pathlib import Path
-
-import pytest
 
 from cognitive.validator import validate_module, validate_v22_envelope
 

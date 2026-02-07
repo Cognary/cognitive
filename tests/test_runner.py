@@ -8,7 +8,6 @@ Includes tests for v2.2 features:
 """
 
 import json
-import pytest
 
 from cognitive.runner import (
     # Core functions
@@ -31,6 +30,18 @@ from cognitive.runner import (
     # v2.2 Utilities
     extract_meta,
     should_escalate,
+    # v2.2.1 Error builder
+    make_error_response,
+    make_success_response,
+    ENVELOPE_VERSION,
+    ERROR_PROPERTIES,
+    # v2.2.1 Hooks
+    on_before_call,
+    on_after_call,
+    on_error,
+    register_hook,
+    unregister_hook,
+    clear_hooks,
 )
 from cognitive.loader import (
     is_overflow_enabled,
@@ -874,21 +885,6 @@ class TestExtensibleEnumFormat:
 # v2.2.1 Features Tests
 # =============================================================================
 
-from cognitive.runner import (
-    # v2.2.1 Error builder
-    make_error_response,
-    make_success_response,
-    ENVELOPE_VERSION,
-    ERROR_PROPERTIES,
-    # v2.2.1 Hooks
-    on_before_call,
-    on_after_call,
-    on_error,
-    register_hook,
-    unregister_hook,
-    clear_hooks,
-)
-
 
 class TestMakeErrorResponse:
     """Test make_error_response helper function."""
@@ -1093,7 +1089,7 @@ class TestObservabilityHooks:
         def hook1(m, i, c): pass
         
         @on_after_call
-        def hook2(m, r, l): pass
+        def hook2(m, r, latency_ms): pass
         
         @on_error
         def hook3(m, e, p): pass

@@ -4,9 +4,7 @@ Tests v1/v2.1 to v2.2 migration functionality.
 """
 
 import json
-from pathlib import Path
 
-import pytest
 import yaml
 
 from cognitive.migrate import (

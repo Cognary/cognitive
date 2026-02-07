@@ -151,7 +151,7 @@ def _record_module_source(
         try:
             with open(manifest_path, 'r') as f:
                 manifest = json.load(f)
-        except:
+        except (OSError, json.JSONDecodeError):
             pass
     
     # Get current timestamp
@@ -184,7 +184,7 @@ def get_installed_module_info(name: str) -> Optional[dict]:
         with open(manifest_path, 'r') as f:
             manifest = json.load(f)
         return manifest.get(name)
-    except:
+    except (OSError, json.JSONDecodeError):
         return None
 
 
@@ -199,7 +199,7 @@ def get_module_version(module_path: Path) -> Optional[str]:
             with open(yaml_path, 'r') as f:
                 data = yaml.safe_load(f)
             return data.get("version")
-        except:
+        except (OSError, yaml.YAMLError, AttributeError, TypeError):
             pass
     
     # Try v1 format (MODULE.md with frontmatter)
@@ -216,7 +216,7 @@ def get_module_version(module_path: Path) -> Optional[str]:
                 if len(parts) >= 3:
                     meta = yaml.safe_load(parts[1])
                     return meta.get("version")
-        except:
+        except (OSError, yaml.YAMLError, AttributeError, TypeError):
             pass
     
     return None
@@ -244,9 +244,6 @@ def update_module(name: str) -> tuple[Path, str, str]:
     module_path = info.get("module_path")
     tag = info.get("tag")
     branch = info.get("branch", "main")
-    
-    # If installed with a specific tag, use that tag; otherwise use branch
-    ref = tag if tag else branch
     
     new_path = install_from_github_url(
         url=github_url,
@@ -289,7 +286,6 @@ def install_from_github_url(
                                 tag="v1.0.0")
     """
     # Parse shorthand (org/repo)
-    original_url = url
     if not url.startswith("http"):
         url = f"https://github.com/{url}"
     
@@ -357,8 +353,8 @@ def install_from_github_url(
             source = repo_root
             if not _is_valid_module(source):
                 raise ValueError(
-                    f"Repository root is not a valid module. "
-                    f"Use --module to specify the module path."
+                    "Repository root is not a valid module. "
+                    "Use --module to specify the module path."
                 )
         
         # Determine module name and version
@@ -494,7 +490,7 @@ def install_module(source: str, name: Optional[str] = None) -> Path:
         # Try registry first, then local
         try:
             return install_from_registry(source)
-        except:
+        except Exception:
             return install_from_local(Path(source), name)
 
 
@@ -516,7 +512,7 @@ def fetch_registry(url: Optional[str] = None, use_cache: bool = True) -> dict:
         try:
             with open(REGISTRY_CACHE, 'r') as f:
                 return json.load(f)
-        except:
+        except (OSError, json.JSONDecodeError):
             pass
     
     # Fetch from URL
@@ -586,5 +582,5 @@ def list_github_tags(url: str, limit: int = 10) -> list[str]:
         with urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode())
         return [tag["name"] for tag in data]
-    except URLError as e:
+    except URLError:
         return []

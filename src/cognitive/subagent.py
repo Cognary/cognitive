@@ -12,7 +12,7 @@ import re
 import json
 import copy
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 from dataclasses import dataclass, field
 
 

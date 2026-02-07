@@ -1,11 +1,5 @@
 """Tests for module registry."""
 
-import json
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from cognitive.registry import (
     find_module,
     list_modules,

@@ -11,7 +11,6 @@ Migration includes:
 import json
 import shutil
 from pathlib import Path
-from typing import Optional
 from datetime import datetime
 
 import yaml

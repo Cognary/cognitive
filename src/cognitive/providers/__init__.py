@@ -7,6 +7,7 @@ Supports both synchronous and streaming modes:
 """
 
 import json
+import importlib.util
 import os
 from pathlib import Path
 from typing import Optional, Iterator
@@ -337,36 +338,27 @@ def _call_stub(prompt: str) -> str:
 def check_provider_status() -> dict:
     """Check which providers are available and configured."""
     status = {}
+
+    def is_importable(module_name: str) -> bool:
+        return importlib.util.find_spec(module_name) is not None
     
     # OpenAI
-    try:
-        import openai
-        status["openai"] = {
-            "installed": True,
-            "configured": bool(os.environ.get("OPENAI_API_KEY")),
-        }
-    except ImportError:
-        status["openai"] = {"installed": False, "configured": False}
+    status["openai"] = {
+        "installed": is_importable("openai"),
+        "configured": bool(os.environ.get("OPENAI_API_KEY")),
+    }
     
     # Anthropic
-    try:
-        import anthropic
-        status["anthropic"] = {
-            "installed": True,
-            "configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
-        }
-    except ImportError:
-        status["anthropic"] = {"installed": False, "configured": False}
+    status["anthropic"] = {
+        "installed": is_importable("anthropic"),
+        "configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
+    }
     
     # MiniMax (uses OpenAI SDK)
-    try:
-        import openai
-        status["minimax"] = {
-            "installed": True,
-            "configured": bool(os.environ.get("MINIMAX_API_KEY")),
-        }
-    except ImportError:
-        status["minimax"] = {"installed": False, "configured": False}
+    status["minimax"] = {
+        "installed": is_importable("openai"),
+        "configured": bool(os.environ.get("MINIMAX_API_KEY")),
+    }
     
     # Ollama
     try:
@@ -375,7 +367,7 @@ def check_provider_status() -> dict:
         try:
             r = requests.get(f"{host}/api/tags", timeout=2)
             status["ollama"] = {"installed": True, "configured": r.status_code == 200}
-        except:
+        except Exception:
             status["ollama"] = {"installed": True, "configured": False}
     except ImportError:
         status["ollama"] = {"installed": False, "configured": False}

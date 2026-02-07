@@ -1,9 +1,5 @@
 """Tests for CLI commands."""
 
-import json
-from pathlib import Path
-
-import pytest
 from typer.testing import CliRunner
 
 from cognitive.cli import app

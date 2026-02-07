@@ -1,7 +1,5 @@
 """Tests for subagent orchestration."""
 
-import pytest
-
 from cognitive.subagent import (
     parse_calls,
     substitute_call_results,

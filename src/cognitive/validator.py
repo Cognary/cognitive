@@ -5,7 +5,6 @@ Supports v0, v1, v2.1, and v2.2 module formats.
 
 import json
 from pathlib import Path
-from typing import Optional, Literal
 
 import jsonschema
 import yaml
