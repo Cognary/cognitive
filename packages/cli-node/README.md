@@ -59,7 +59,7 @@ cog core promote demo.md           # 升级为 v2 模块目录
 cog run code-reviewer --args "..." --profile core       # 极简：跳过校验
 cog run code-reviewer --args "..." --profile default    # 默认：开启校验
 cog run code-reviewer --args "..." --profile strict     # 更严格：开启校验（更强门禁）
-cog run code-reviewer --args "..." --profile certified  # 最严格：要求 v2.2 + 审计
+cog run code-reviewer --args "..." --profile certified  # 最严格：v2.2 + 审计 + registry provenance/完整性门禁
 # 覆盖开关：--validate auto|on|off，--audit（写入 ~/.cognitive/audit/）
 
 # 模块操作

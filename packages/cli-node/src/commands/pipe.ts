@@ -91,6 +91,7 @@ export async function pipe(
       validateOutput: validate,
       useV22: true,  // Always use v2.2 envelope
       enableRepair,
+      policy,
     });
 
     const output = attachContext(result as unknown as Record<string, unknown>, {

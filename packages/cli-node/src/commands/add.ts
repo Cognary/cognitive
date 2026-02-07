@@ -20,6 +20,7 @@ import { createHash } from 'node:crypto';
 import type { CommandContext, CommandResult } from '../types.js';
 import { RegistryClient } from '../registry/client.js';
 import { extractTarGzFile } from '../registry/tar.js';
+import { PROVENANCE_SPEC, computeModuleIntegrity, writeModuleProvenance } from '../provenance.js';
 
 // Module storage paths
 const USER_MODULES_DIR = join(homedir(), '.cognitive', 'modules');
@@ -435,6 +436,7 @@ export async function addFromRegistry(
 ): Promise<CommandResult> {
   const { name: moduleName, version: requestedVersion } = parseModuleSpec(moduleSpec);
   const { name: customName, registry: registryUrl } = options;
+  const policy = ctx.policy;
   
   let tempDir: string | undefined;
   try {
@@ -457,6 +459,15 @@ export async function addFromRegistry(
     const downloadInfo = await client.getDownloadUrl(moduleName);
     
     if (downloadInfo.isGitHub && downloadInfo.githubInfo) {
+      if (policy?.profile === 'certified') {
+        return {
+          success: false,
+          error:
+            `Certified profile requires registry tarball provenance.\n` +
+            `Registry entry for '${moduleName}' resolves to a GitHub source, which is not allowed in --profile certified.\n` +
+            `Use a tarball-based registry entry (distribution.tarball + checksum), or run with --profile strict/default.`,
+        };
+      }
       const { org, repo, path, ref } = downloadInfo.githubInfo;
       
       // Use addFromGitHub() directly (not add() to avoid recursion)
@@ -575,6 +586,34 @@ export async function addFromRegistry(
     copyDir(sourcePath, targetPath);
 
     const version = await getModuleVersion(sourcePath);
+    // Write provenance + integrity (enables certified profile gating).
+    try {
+      const integrity = await computeModuleIntegrity(targetPath);
+      await writeModuleProvenance(targetPath, {
+        spec: PROVENANCE_SPEC,
+        createdAt: new Date().toISOString(),
+        source: {
+          type: 'registry',
+          registryUrl: registryUrl ?? null,
+          moduleName,
+          requestedVersion: requestedVersion ?? null,
+          resolvedVersion: version ?? null,
+          tarballUrl: downloadInfo.url,
+          checksum: downloadInfo.checksum,
+          sha256: actualSha256,
+          quality: {
+            // moduleInfo is typed loosely (v1/v2); best-effort extract for v2.
+            verified: (moduleInfo as any)?.quality?.verified,
+            conformance_level: (moduleInfo as any)?.quality?.conformance_level,
+            spec_version: (moduleInfo as any)?.identity?.spec_version,
+          },
+        },
+        integrity,
+      });
+    } catch (e) {
+      // If provenance fails, keep install but warn loudly (non-certified users can still run).
+      console.error(`Warning: failed to write provenance for ${safeInstallName}: ${(e as Error).message}`);
+    }
     await recordInstall(safeInstallName, {
       source: downloadInfo.url,
       githubUrl: downloadInfo.url,
@@ -622,6 +661,16 @@ export async function addFromGitHub(
 ): Promise<CommandResult> {
   const { org, repo, fullUrl } = parseGitHubUrl(url);
   const { module: modulePath, name, branch = 'main', tag } = options;
+  const policy = ctx.policy;
+
+  if (policy?.profile === 'certified') {
+    return {
+      success: false,
+      error:
+        `Certified profile requires registry tarball provenance; GitHub installs are not allowed.\n` +
+        `Use 'cog add <module>' against a tarball-based registry entry, or run with --profile strict/default.`,
+    };
+  }
   
   // Determine ref (tag takes priority)
   const ref = tag || branch;
@@ -677,6 +726,19 @@ export async function addFromGitHub(
       installedAt: targetPath,
       installedTime: new Date().toISOString(),
     });
+
+    // Best-effort provenance for non-certified installs (useful for audit/debug).
+    try {
+      const integrity = await computeModuleIntegrity(targetPath);
+      await writeModuleProvenance(targetPath, {
+        spec: PROVENANCE_SPEC,
+        createdAt: new Date().toISOString(),
+        source: { type: 'github', repoUrl: fullUrl, ref, modulePath: modulePath ?? null },
+        integrity,
+      });
+    } catch {
+      // ignore
+    }
     
     // Cleanup temp directory
     const tempDir = dirname(repoRoot);

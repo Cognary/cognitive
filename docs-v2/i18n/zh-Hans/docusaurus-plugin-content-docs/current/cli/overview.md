@@ -56,7 +56,7 @@ CLI 通过 `--profile` 实现“按需启用复杂度”的默认策略（并提
 | `core` | 5 分钟跑通，最少约束 | `--validate=off`，`--audit=false` |
 | `default` | 日常使用 | `--validate=on`，`--audit=false` |
 | `strict` | 更高可靠性/更强约束 | `--validate=on`，`--audit=false` |
-| `certified` | 最强门禁/可发布流程 | `--validate=on`，`--audit=true`，并要求 v2.2 模块 |
+| `certified` | 最强门禁/可发布流程 | `--validate=on`，`--audit=true`，并要求 v2.2 + registry provenance/完整性门禁 |
 
 覆盖开关：
 
@@ -72,6 +72,6 @@ cog run ./demo.md --args "hello" --profile core
 # 更严格
 cog run code-reviewer --args "..." --profile strict
 
-# certified：拒绝 legacy 模块
+# certified：拒绝 legacy 模块，并要求 registry provenance/完整性
 cog run code-reviewer --args "..." --profile certified
 ```

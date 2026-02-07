@@ -116,6 +116,7 @@ export async function compose(
         cwd: ctx.cwd,
         maxDepth: options.maxDepth,
         timeoutMs: options.timeout,
+        policy,
         validateInput: (() => {
           if (options.noValidate) return false;
           if (!policy) return true;

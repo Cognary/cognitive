@@ -70,7 +70,7 @@ cog run ./demo.md --args "hello" --profile core
 # Higher assurance
 cog run code-reviewer --args "..." --profile strict
 
-# Certified gate (refuses legacy modules)
+# Certified gate (refuses legacy modules + requires registry provenance/integrity)
 cog run code-reviewer --args "..." --profile certified
 
 # Force validation + write audit record

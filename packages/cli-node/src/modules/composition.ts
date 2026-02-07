@@ -18,6 +18,7 @@ import type {
   ModuleResult,
   ModuleInput,
   Provider,
+  ExecutionPolicy,
   EnvelopeResponseV22,
   EnvelopeMeta,
   RiskLevel
@@ -809,11 +810,12 @@ export class CompositionOrchestrator {
   private validateInput: boolean;
   private validateOutput: boolean;
   private enableRepair: boolean;
+  private policy?: ExecutionPolicy;
   
   constructor(
     provider: Provider,
     cwd: string = process.cwd(),
-    enforcement: { validateInput?: boolean; validateOutput?: boolean; enableRepair?: boolean } = {}
+    enforcement: { validateInput?: boolean; validateOutput?: boolean; enableRepair?: boolean; policy?: ExecutionPolicy } = {}
   ) {
     this.provider = provider;
     this.cwd = cwd;
@@ -821,6 +823,7 @@ export class CompositionOrchestrator {
     this.validateInput = enforcement.validateInput ?? true;
     this.validateOutput = enforcement.validateOutput ?? true;
     this.enableRepair = enforcement.enableRepair ?? true;
+    this.policy = enforcement.policy;
   }
   
   /**
@@ -1551,6 +1554,7 @@ export class CompositionOrchestrator {
         validateOutput: this.validateOutput,
         useV22: true,
         enableRepair: this.enableRepair,
+        policy: this.policy,
       });
       
       const endTime = Date.now();
@@ -1696,10 +1700,11 @@ export async function executeComposition(
     validateInput?: boolean;
     validateOutput?: boolean;
     enableRepair?: boolean;
+    policy?: ExecutionPolicy;
   } = {}
 ): Promise<CompositionResult> {
-  const { cwd = process.cwd(), validateInput, validateOutput, enableRepair, ...execOptions } = options;
-  const orchestrator = new CompositionOrchestrator(provider, cwd, { validateInput, validateOutput, enableRepair });
+  const { cwd = process.cwd(), validateInput, validateOutput, enableRepair, policy, ...execOptions } = options;
+  const orchestrator = new CompositionOrchestrator(provider, cwd, { validateInput, validateOutput, enableRepair, policy });
   return orchestrator.execute(moduleName, input, execOptions);
 }
 

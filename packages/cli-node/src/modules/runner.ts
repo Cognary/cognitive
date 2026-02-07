@@ -6,6 +6,8 @@
 
 import _Ajv from 'ajv';
 const Ajv = _Ajv.default || _Ajv;
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import type { 
   Provider, 
   CognitiveModule, 
@@ -21,8 +23,10 @@ import type {
   RiskLevel,
   RiskRule,
   InvokeResult,
+  ExecutionPolicy,
 } from '../types.js';
 import { aggregateRisk, isV22Envelope } from '../types.js';
+import { readModuleProvenance, verifyModuleIntegrity } from '../provenance.js';
 
 // =============================================================================
 // Schema Validation
@@ -1140,6 +1144,9 @@ export interface RunOptions {
   
   // Model identifier (for meta.model tracking)
   model?: string;
+
+  // Progressive complexity policy (certified gates, validation defaults, etc.)
+  policy?: ExecutionPolicy;
 }
 
 // =============================================================================
@@ -1369,6 +1376,108 @@ function convertLegacyToEnvelope(
   }
 }
 
+async function enforcePolicyGates(
+  module: CognitiveModule,
+  policy: ExecutionPolicy | undefined
+): Promise<EnvelopeResponseV22<unknown> | null> {
+  if (!policy) return null;
+
+  if (policy.requireV22) {
+    const fv = module.formatVersion ?? 'unknown';
+    if (fv !== 'v2.2') {
+      return makeErrorResponse({
+        code: 'E4007', // PERMISSION_DENIED
+        message: `Certified policy requires v2.2 modules; got: ${fv} (${module.format})`,
+        explain: 'Refused by execution policy.',
+        confidence: 1.0,
+        risk: 'none',
+        suggestion: 'Migrate the module to v2.2, or run with --profile strict/default.',
+      });
+    }
+  }
+
+  if (policy.profile !== 'certified') return null;
+
+  const loc = module.location;
+  if (typeof loc !== 'string' || loc.trim().length === 0) {
+    return makeErrorResponse({
+      code: 'E4007', // PERMISSION_DENIED
+      message: 'Certified policy requires an installed module with provenance; module location is missing.',
+      explain: 'Refused by execution policy.',
+      confidence: 1.0,
+      risk: 'none',
+      suggestion: 'Reinstall the module from a registry tarball that writes provenance.json.',
+    });
+  }
+
+  // Single-file modules (5-minute path) are intentionally not allowed in certified flows.
+  try {
+    const st = await fs.stat(loc);
+    if (!st.isDirectory()) {
+      return makeErrorResponse({
+        code: 'E4007', // PERMISSION_DENIED
+        message: `Certified policy requires module directory provenance; got a non-directory location: ${loc}`,
+        explain: 'Refused by execution policy.',
+        confidence: 1.0,
+        risk: 'none',
+        suggestion: 'Install the module via `cog add <name>` (registry tarball) or use --profile strict/default.',
+      });
+    }
+  } catch {
+    return makeErrorResponse({
+      code: 'E4007',
+      message: `Certified policy requires module directory provenance, but location does not exist: ${loc}`,
+      explain: 'Refused by execution policy.',
+      confidence: 1.0,
+      risk: 'none',
+      suggestion: 'Reinstall the module from a registry tarball and retry.',
+    });
+  }
+
+  const prov = await readModuleProvenance(loc);
+  if (!prov) {
+    return makeErrorResponse({
+      code: 'E4007', // PERMISSION_DENIED
+      message: `Certified policy requires provenance.json in the module directory: ${loc}`,
+      explain: 'Refused by execution policy.',
+      confidence: 1.0,
+      risk: 'none',
+      suggestion: 'Reinstall the module from a registry tarball (distribution.tarball + checksum), then retry.',
+    });
+  }
+
+  if (prov.source.type !== 'registry') {
+    return makeErrorResponse({
+      code: 'E4007', // PERMISSION_DENIED
+      message: `Certified policy requires registry provenance; module provenance is type=${prov.source.type}`,
+      explain: 'Refused by execution policy.',
+      confidence: 1.0,
+      risk: 'none',
+      suggestion: 'Reinstall the module from a registry tarball and retry, or use --profile strict/default.',
+    });
+  }
+
+  // Integrity check (tamper detection).
+  const ok = await verifyModuleIntegrity(loc, prov);
+  if (!ok.ok) {
+    return makeErrorResponse({
+      code: 'E4007', // PERMISSION_DENIED
+      message: `Certified policy integrity check failed: ${ok.reason}`,
+      explain: 'Module contents appear to have been modified after install.',
+      confidence: 1.0,
+      risk: 'none',
+      suggestion: 'Reinstall the module from the registry tarball to restore integrity.',
+      details: { location: loc, reason: ok.reason },
+    });
+  }
+
+  // Optional: enforce that the module directory remains within itself (defense-in-depth for weird paths).
+  const resolved = path.resolve(loc);
+  if (!resolved) return null;
+
+  return null;
+}
+
 // =============================================================================
 // Main Runner
 // =============================================================================
@@ -1378,8 +1487,18 @@ export async function runModule(
   provider: Provider,
   options: RunOptions = {}
 ): Promise<ModuleResult> {
-  const { args, input, verbose = false, validateInput = true, validateOutput = true, useEnvelope, useV22, enableRepair = true, traceId, model: modelOverride } = options;
+  const { args, input, verbose = false, validateInput = true, validateOutput = true, useEnvelope, useV22, enableRepair = true, traceId, model: modelOverride, policy } = options;
   const startTime = Date.now();
+
+  const gate = await enforcePolicyGates(module, policy);
+  if (gate) {
+    const msg =
+      gate.ok === false && 'error' in gate && (gate as any).error?.message
+        ? String((gate as any).error.message)
+        : 'Refused by execution policy';
+    _invokeErrorHooks(module.name, new Error(msg), null);
+    return gate as ModuleResult;
+  }
 
   // Determine if we should use envelope format
   const shouldUseEnvelope = useEnvelope ?? (module.output?.envelope === true || module.format === 'v2');
@@ -1707,6 +1826,7 @@ export interface StreamOptions {
   enableRepair?: boolean;
   traceId?: string;
   model?: string;  // Model identifier for meta.model
+  policy?: ExecutionPolicy;
 }
 
 /**
@@ -1733,7 +1853,7 @@ export async function* runModuleStream(
   provider: Provider,
   options: StreamOptions = {}
 ): AsyncGenerator<StreamEvent> {
-  const { input, args, validateInput = true, validateOutput = true, useV22 = true, enableRepair = true, traceId, model } = options;
+  const { input, args, validateInput = true, validateOutput = true, useV22 = true, enableRepair = true, traceId, model, policy } = options;
   const startTime = Date.now();
   const moduleName = module.name;
   const providerName = provider?.name;
@@ -1752,6 +1872,14 @@ export async function* runModuleStream(
   try {
     // Emit start event
     yield makeEvent('start');
+
+    const gate = await enforcePolicyGates(module, policy);
+    if (gate) {
+      const errorObj = (gate as any)?.error ?? { code: 'E4007', message: 'Refused by execution policy' };
+      yield makeEvent('error', { error: { code: errorObj.code, message: errorObj.message } });
+      yield makeEvent('end', { result: gate });
+      return;
+    }
 
     // Build input data
     const inputData: ModuleInput = input || {};

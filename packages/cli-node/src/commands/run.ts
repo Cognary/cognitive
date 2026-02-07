@@ -116,6 +116,7 @@ export async function run(
         validateOutput: validate,
         useV22: true,
         enableRepair,
+        policy,
       })) {
         // Write each event as one JSON line (NDJSON).
         process.stdout.write(JSON.stringify(ev) + '\n');
@@ -155,6 +156,7 @@ export async function run(
         validateOutput: validate,
         useV22: true, // Always use v2.2 envelope
         enableRepair,
+        policy,
       });
 
       const output = attachContext(result as unknown as Record<string, unknown>, {
