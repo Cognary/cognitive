@@ -10,11 +10,11 @@ Cognitive Modules CLI is distributed via npm and provides the `cog` command.
 
 ```bash
 # Zero-install
-npx cogn@2.2.7 --help
+npx cogn@2.2.8 --help
 
 # Global
-npm install -g cogn@2.2.7
-# or: npm install -g cognitive-modules-cli@2.2.7
+npm install -g cogn@2.2.8
+# or: npm install -g cognitive-modules-cli@2.2.8
 ```
 
 ## Command List
@@ -108,7 +108,7 @@ cog update code-simplifier
 
 ```bash
 # Build tarballs + regenerate cognitive-registry.v2.json
-cog registry build --tag v2.2.7
+cog registry build --tag v2.2.8
 
 # Verify local tarballs match the v2 registry index
 cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
@@ -119,7 +119,7 @@ cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registr
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 
 # Pin to a specific release tag (recommended for reproducible builds)
-cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json
 
 # Tune remote verification limits (defaults: 15s, 2MB index, 25MB tarball)
 cog registry verify --remote \

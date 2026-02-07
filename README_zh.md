@@ -19,7 +19,7 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 
 ## 版本
 
-- **运行时（npm）**：`2.2.7`
+- **运行时（npm）**：`2.2.8`
 - **Python 包（PyPI，遗留）**：`2.2.3`（不再同步更新；遗留）
 - **规范**：v2.2
 
@@ -27,14 +27,14 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 
 ```bash
 # 零安装快速体验
-npx cogn@2.2.7 --help
+npx cogn@2.2.8 --help
 
 # 或使用完整包名
-npx cognitive-modules-cli@2.2.7 --help
+npx cognitive-modules-cli@2.2.8 --help
 
 # 全局安装
-npm install -g cogn@2.2.7
-# 或：npm install -g cognitive-modules-cli@2.2.7
+npm install -g cogn@2.2.8
+# 或：npm install -g cognitive-modules-cli@2.2.8
 ```
 
 > `cogn` 是 `cognitive-modules-cli` 的别名包，两者提供相同的 `cog` 命令。
@@ -47,7 +47,7 @@ npm install -g cogn@2.2.7
 
 如需可复现（可固定版本），建议固定到具体 tag：
 
-- `https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json`
+- `https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json`
 
 覆盖方式：
 

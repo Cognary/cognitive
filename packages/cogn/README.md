@@ -6,19 +6,19 @@ Cognitive Modules CLI 的短名别名包，安装后提供 `cog` 命令。
 
 ```bash
 # 零安装运行
-npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass"
+npx cogn@2.2.8 run code-reviewer --args "def login(u,p): pass"
 
 # 列出模块
-npx cogn@2.2.7 list
+npx cogn@2.2.8 list
 
 # 查看帮助
-npx cogn@2.2.7 --help
+npx cogn@2.2.8 --help
 ```
 
 ## 全局安装
 
 ```bash
-npm install -g cogn@2.2.7
+npm install -g cogn@2.2.8
 
 # 然后直接使用
 cog run code-reviewer --args "..."

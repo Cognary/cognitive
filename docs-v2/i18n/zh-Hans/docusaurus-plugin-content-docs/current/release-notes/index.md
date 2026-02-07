@@ -8,7 +8,7 @@ sidebar_position: 1
 
 ## 最新版本
 
-- [v2.2.7](./v2.2.7)
+- [v2.2.8](./v2.2.8)
 
 ## 说明
 
@@ -19,8 +19,8 @@ sidebar_position: 1
 
 本发布线下，npm、PyPI 与 registry tarball 的版本号**有意不完全一致**：
 
-- npm（主运行时）：`cognitive-modules-cli@2.2.7` 与 `cogn@2.2.7`
-- registry tarball（GitHub Release 资产）：`*-2.2.7.tar.gz`
+- npm（主运行时）：`cognitive-modules-cli@2.2.8` 与 `cogn@2.2.8`
+- registry tarball（GitHub Release 资产）：`*-2.2.8.tar.gz`
 - PyPI（遗留，冻结）：`cognitive-modules@2.2.3`
 
 原因：Node.js 运行时与 registry assets 是主要维护对象；Python 包属于遗留，当前不再随发布线同步更新。

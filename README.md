@@ -19,7 +19,7 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ## Version
 
-- **Runtime (npm)**: `2.2.7`
+- **Runtime (npm)**: `2.2.8`
 - **Python package (PyPI, legacy)**: `2.2.3` (not kept in sync; legacy)
 - **Spec**: v2.2
 
@@ -27,14 +27,14 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.7 --help
+npx cogn@2.2.8 --help
 
 # Or use the full package name
-npx cognitive-modules-cli@2.2.7 --help
+npx cognitive-modules-cli@2.2.8 --help
 
 # Global installation
-npm install -g cogn@2.2.7
-# or: npm install -g cognitive-modules-cli@2.2.7
+npm install -g cogn@2.2.8
+# or: npm install -g cognitive-modules-cli@2.2.8
 ```
 
 > `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.
@@ -47,7 +47,7 @@ By default, the CLI fetches the registry index from the **latest GitHub Release*
 
 For reproducible builds, pin to a specific tag:
 
-- `https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json`
+- `https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json`
 
 Override via:
 

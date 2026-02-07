@@ -9,9 +9,9 @@ Cognitive Modules CLI 通过 npm 分发，命令为 `cog`。
 ## 安装
 
 ```bash
-npx cogn@2.2.7 --help
-npm install -g cogn@2.2.7
-# 或：npm install -g cognitive-modules-cli@2.2.7
+npx cogn@2.2.8 --help
+npm install -g cogn@2.2.8
+# 或：npm install -g cognitive-modules-cli@2.2.8
 ```
 
 ## 命令列表
@@ -80,7 +80,7 @@ cog run code-reviewer --args "..." --profile certified
 
 ```bash
 # 构建 tarball 资产，并生成/更新 cognitive-registry.v2.json
-cog registry build --tag v2.2.7
+cog registry build --tag v2.2.8
 
 # 校验本地 tarball 是否与 registry v2 索引一致（checksum/size/files）
 cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
@@ -91,7 +91,7 @@ cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registr
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 
 # 固定到某个 release tag（推荐用于可复现构建）
-cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json
 
 # 调整远端校验限制（默认：15s、index 2MB、tarball 25MB）
 cog registry verify --remote \

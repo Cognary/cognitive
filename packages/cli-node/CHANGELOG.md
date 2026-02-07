@@ -2,6 +2,12 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.8 - 2026-02-07
+
+- Fix: `npx cogn` alias compatibility on newer Node (exports + ESM). (Alias fix ships in `cogn@2.2.8`.)
+- Hardening: configurable registry index fetch limits (`--registry-timeout-ms`, `--registry-max-bytes`).
+- Hardening: remote registry verification supports bounded concurrency (`--concurrency`).
+
 ## 2.2.7 - 2026-02-06
 
 - Standardized v2.2 runtime behavior and cross-surface error envelope consistency (CLI/HTTP/MCP).
