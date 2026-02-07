@@ -21,6 +21,7 @@ import { listModules, getDefaultSearchPaths } from './modules/loader.js';
 import type { CommandContext } from './types.js';
 import { VERSION } from './version.js';
 import { resolveExecutionPolicy } from './profile.js';
+import { buildRegistryAssets, verifyRegistryAssets } from './registry/assets.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -75,6 +76,21 @@ async function main() {
       format: { type: 'string', short: 'f' },
       // Search options
       category: { type: 'string', short: 'c' },
+      // Registry build/verify options
+      'modules-dir': { type: 'string' },
+      'v1-registry': { type: 'string' },
+      'out-dir': { type: 'string' },
+      'registry-out': { type: 'string' },
+      namespace: { type: 'string' },
+      'runtime-min': { type: 'string' },
+      repository: { type: 'string' },
+      homepage: { type: 'string' },
+      license: { type: 'string' },
+      timestamp: { type: 'string' },
+      only: { type: 'string', multiple: true },
+      index: { type: 'string' },
+      'assets-dir': { type: 'string' },
+      'tarball-base-url': { type: 'string' },
     },
     allowPositionals: true,
   });
@@ -986,6 +1002,31 @@ async function main() {
           const client = new RegistryClient();
           await client.fetchRegistry(true);
           console.log('✓ Registry cache refreshed');
+        } else if (subCommand === 'build') {
+          const result = await buildRegistryAssets({
+            tag: values.tag ?? null,
+            tarballBaseUrl: (values['tarball-base-url'] as string | undefined) ?? null,
+            modulesDir: (values['modules-dir'] as string | undefined) ?? 'cognitive/modules',
+            v1RegistryPath: (values['v1-registry'] as string | undefined) ?? 'cognitive-registry.json',
+            outDir: (values['out-dir'] as string | undefined) ?? 'dist/registry-assets',
+            registryOut: (values['registry-out'] as string | undefined) ?? 'cognitive-registry.v2.json',
+            namespace: (values.namespace as string | undefined) ?? 'official',
+            runtimeMin: (values['runtime-min'] as string | undefined) ?? '2.2.0',
+            repository: (values.repository as string | undefined) ?? 'https://github.com/Cognary/cognitive',
+            homepage: (values.homepage as string | undefined) ?? 'https://cognary.github.io/cognitive/',
+            license: (values.license as string | undefined) ?? 'MIT',
+            timestamp: (values.timestamp as string | undefined) ?? null,
+            only: Array.isArray(values.only) ? (values.only as string[]) : (values.only ? [String(values.only)] : []),
+          });
+          console.log(JSON.stringify({ ok: true, ...result }, null, values.pretty ? 2 : 0));
+        } else if (subCommand === 'verify') {
+          const indexPath = (values.index as string | undefined) ?? 'cognitive-registry.v2.json';
+          const assetsDir = (values['assets-dir'] as string | undefined) ?? 'dist/registry-assets';
+          const verified = await verifyRegistryAssets({
+            registryIndexPath: indexPath,
+            assetsDir,
+          });
+          console.log(JSON.stringify(verified, null, values.pretty ? 2 : 0));
         } else {
           console.error(`Unknown registry subcommand: ${subCommand}`);
           console.error('');
@@ -994,6 +1035,8 @@ async function main() {
           console.error('  cog registry categories  List categories');
           console.error('  cog registry info <mod>  Show module details');
           console.error('  cog registry refresh     Refresh cache');
+          console.error('  cog registry build       Build registry tarballs + v2 index (local)');
+          console.error('  cog registry verify      Verify local tarballs against v2 index');
           process.exit(1);
         }
         break;
@@ -1033,7 +1076,7 @@ COMMANDS:
   remove <module>     Remove installed module
   versions <url>      List available versions
   search [query]      Search modules in registry
-  registry <cmd>      Registry commands (list, categories, info, refresh)
+  registry <cmd>      Registry commands (list, categories, info, refresh, build, verify)
   validate <module>   Validate module structure
   migrate <module>    Migrate module to v2.2 format
   pipe                Pipe mode (stdin/stdout)

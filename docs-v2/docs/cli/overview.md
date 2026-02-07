@@ -104,6 +104,16 @@ cog versions Cognary/cognitive
 cog update code-simplifier
 ```
 
+### 3.1 Build and Verify Registry Tarballs (Publishable Assets)
+
+```bash
+# Build tarballs + regenerate cognitive-registry.v2.json
+cog registry build --tag v2.2.7
+
+# Verify local tarballs match the v2 registry index
+cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+```
+
 ### 4. Compose Workflows
 
 ```bash

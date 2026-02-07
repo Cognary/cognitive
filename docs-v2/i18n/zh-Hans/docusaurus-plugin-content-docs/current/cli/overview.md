@@ -75,3 +75,13 @@ cog run code-reviewer --args "..." --profile strict
 # certified：拒绝 legacy 模块，并要求 registry provenance/完整性
 cog run code-reviewer --args "..." --profile certified
 ```
+
+## 可迁移/可发布（Registry Tarballs）
+
+```bash
+# 构建 tarball 资产，并生成/更新 cognitive-registry.v2.json
+cog registry build --tag v2.2.7
+
+# 校验本地 tarball 是否与 registry v2 索引一致（checksum/size/files）
+cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+```
