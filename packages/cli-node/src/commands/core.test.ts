@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { coreNew, coreSchema } from './core.js';
+import { coreNew, coreSchema, corePromote } from './core.js';
+import { loadModule } from '../modules/loader.js';
 
 describe('cog core', () => {
   let tempDir: string;
@@ -58,5 +59,28 @@ describe('cog core', () => {
       process.chdir(prevCwd);
     }
   });
-});
 
+  it('corePromote should create a v2 module directory that the loader can read', async () => {
+    const prevCwd = process.cwd();
+    try {
+      process.chdir(tempDir);
+      await coreNew('demo.md');
+
+      const promoteResult = await corePromote('demo.md');
+      expect(promoteResult.success).toBe(true);
+      const to = (promoteResult.data as { to: string }).to;
+      const moduleYaml = await fs.readFile(path.join(to, 'module.yaml'), 'utf-8');
+      const promptMd = await fs.readFile(path.join(to, 'prompt.md'), 'utf-8');
+      const schemaJson = await fs.readFile(path.join(to, 'schema.json'), 'utf-8');
+      expect(moduleYaml).toContain('name: demo');
+      expect(promptMd).toContain('Return a valid v2.2 envelope JSON');
+      expect(schemaJson).toContain('"meta"');
+
+      const loaded = await loadModule(to);
+      expect(loaded.name).toBe('demo');
+      expect(loaded.formatVersion).toBe('v2.2');
+    } finally {
+      process.chdir(prevCwd);
+    }
+  });
+});

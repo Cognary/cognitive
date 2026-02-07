@@ -108,6 +108,7 @@ async function main() {
       case 'core': {
         const sub = args[1];
         const target = args[2];
+        const rest = args.slice(3);
         const result = await core(sub, target, ctx, {
           args: values.args,
           input: values.input,
@@ -116,7 +117,7 @@ async function main() {
           verbose: values.verbose,
           stream: values.stream,
           dryRun: values['dry-run'],
-        });
+        }, rest);
 
         if (!result.success) {
           console.error(`Error: ${result.error}`);
@@ -1032,6 +1033,8 @@ EXAMPLES:
   cog core new demo.md
   cog core run demo.md --args "hello" --pretty
   cog core schema demo.md --pretty
+  cog core promote demo.md
+  cog core promote demo.md ./cognitive/modules/demo
 
   # Search and discover modules
   cog search code review           # Search by keywords
