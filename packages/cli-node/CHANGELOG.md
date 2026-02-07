@@ -2,6 +2,12 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.9 - 2026-02-07
+
+- Fix: `cog core run` now prints the error envelope (instead of `Error: undefined`) when execution fails.
+- Packaging: add stable `bin.js` entrypoint so publish/install doesn't depend on prebuilt `dist/` existing at publish-time.
+- Core: align core template placeholders with runtime substitution (`${query}` / `${code}`); missing fields are treated as empty for single-file modules.
+
 ## 2.2.8 - 2026-02-07
 
 - Fix: `npx cogn` alias compatibility on newer Node (exports + ESM). (Alias fix ships in `cogn@2.2.8`.)

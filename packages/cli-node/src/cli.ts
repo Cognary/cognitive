@@ -193,7 +193,14 @@ async function main() {
         }, rest);
 
         if (!result.success) {
-          console.error(`Error: ${result.error}`);
+          // Keep parity with `cog run`: if an error envelope exists, print it.
+          // This avoids confusing "Error: undefined" when the command returns a valid envelope
+          // but `error` string is not set.
+          if (result.data) {
+            console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+          } else {
+            console.error(`Error: ${result.error ?? 'Unknown error'}`);
+          }
           process.exit(1);
         }
 

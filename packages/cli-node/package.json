@@ -1,6 +1,6 @@
 {
   "name": "cognitive-modules-cli",
-  "version": "2.2.8",
+  "version": "2.2.9",
   "description": "Cognitive Modules - Structured AI Task Execution with version management",
   "type": "module",
   "main": "dist/index.js",
@@ -13,8 +13,8 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "cognitive-modules-cli": "dist/cli.js",
-    "cog": "dist/cli.js"
+    "cognitive-modules-cli": "bin.js",
+    "cog": "bin.js"
   },
   "scripts": {
     "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\"",
@@ -40,6 +40,7 @@
   "license": "MIT",
   "author": "ziel-io",
   "files": [
+    "bin.js",
     "dist",
     "README.md",
     "LICENSE",

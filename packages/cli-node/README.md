@@ -10,12 +10,12 @@ Node.js/TypeScript 版本的 Cognitive Modules CLI，提供 `cog` 命令。
 
 ```bash
 # 全局安装（推荐）
-npm install -g cogn@2.2.8
+npm install -g cogn@2.2.9
 # 或使用完整包名（同样提供 `cog` 命令）
-# npm install -g cognitive-modules-cli@2.2.8
+# npm install -g cognitive-modules-cli@2.2.9
 
 # 或使用 npx 零安装
-npx cogn@2.2.8 --help
+npx cogn@2.2.9 --help
 ```
 
 ## 快速开始
@@ -95,7 +95,7 @@ cog doctor
 # 可通过环境变量或全局参数覆盖：
 COGNITIVE_REGISTRY_URL=... cog search
 COGNITIVE_REGISTRY_TIMEOUT_MS=15000 COGNITIVE_REGISTRY_MAX_BYTES=2097152 cog search
-cog search --registry https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json
+cog search --registry https://github.com/Cognary/cognitive/releases/download/v2.2.9/cognitive-registry.v2.json
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 cog registry verify --remote --concurrency 2
 ```

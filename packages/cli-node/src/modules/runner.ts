@@ -1523,6 +1523,13 @@ export async function runModule(
     }
   }
 
+  // Single-file core modules promise "missing fields are empty".
+  // Ensure common placeholders like `${query}` / `${code}` don't leak into prompts.
+  if (typeof module.location === 'string' && /\.(md|markdown)$/i.test(module.location)) {
+    if (inputData.query === undefined) inputData.query = '';
+    if (inputData.code === undefined) inputData.code = '';
+  }
+
   // Invoke before hooks
   _invokeBeforeHooks(module.name, inputData, module);
 
