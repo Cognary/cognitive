@@ -40,6 +40,8 @@ async function main() {
     args: args.slice(1),
     options: {
       help: { type: 'boolean', short: 'h', default: false },
+      stdin: { type: 'boolean', default: false }, // core: read module prompt from stdin
+      force: { type: 'boolean', default: false }, // core promote: overwrite existing target dir
       args: { type: 'string', short: 'a' },
       input: { type: 'string', short: 'i' },
       module: { type: 'string', short: 'm' },
@@ -77,9 +79,11 @@ async function main() {
     if (command === 'core') {
       console.log(JSON.stringify({
         usage: [
-          'cog core new <file.md> [--dry-run]',
+          'cog core new [file.md] [--dry-run]',
           'cog core schema <file.md> [--pretty]',
           'cog core run <file.md> [--args \"...\"] [--pretty] [--stream] [--no-validate]',
+          'cog core run --stdin [--args \"...\"] [--pretty] [--stream] [--no-validate]',
+          'cog core promote <file.md> [outDir] [--dry-run] [--force]',
         ],
       }, null, values.pretty ? 2 : 0));
       process.exit(0);
@@ -106,9 +110,9 @@ async function main() {
   try {
     switch (command) {
       case 'core': {
-        const sub = args[1];
-        const target = args[2];
-        const rest = args.slice(3);
+        const sub = positionals[0];
+        const target = positionals[1];
+        const rest = positionals.slice(2);
         const result = await core(sub, target, ctx, {
           args: values.args,
           input: values.input,
@@ -117,6 +121,8 @@ async function main() {
           verbose: values.verbose,
           stream: values.stream,
           dryRun: values['dry-run'],
+          stdin: values.stdin,
+          force: values.force,
         }, rest);
 
         if (!result.success) {
@@ -124,7 +130,10 @@ async function main() {
           process.exit(1);
         }
 
-        console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+        // Stream mode prints events as NDJSON already (via `cog run`).
+        if (!(values.stream && sub === 'run')) {
+          console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+        }
         break;
       }
 
@@ -1013,6 +1022,8 @@ OPTIONS:
   --pretty              Pretty-print JSON output
   -V, --verbose         Verbose output
   --no-validate         Skip schema validation
+  --stdin               Read module prompt from stdin (for core run)
+  --force               Overwrite target directory (for core promote)
   -H, --host <host>     Server host (default: 0.0.0.0)
   -P, --port <port>     Server port (default: 8000)
   -d, --max-depth <n>   Max composition depth (default: 5)

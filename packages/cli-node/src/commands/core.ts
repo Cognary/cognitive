@@ -10,6 +10,7 @@
 import type { CommandContext, CommandResult } from '../types.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import * as os from 'node:os';
 import yaml from 'js-yaml';
 import { loadSingleFileModule } from '../modules/loader.js';
 import { run } from './run.js';
@@ -22,6 +23,8 @@ export interface CoreOptions {
   verbose?: boolean;
   stream?: boolean;
   dryRun?: boolean;
+  stdin?: boolean;
+  force?: boolean;
 }
 
 function ensureMdPath(p: string): string {
@@ -42,23 +45,40 @@ function coreTemplate(name: string): string {
     '---',
     `name: ${name}`,
     'version: 0.1.0',
-    'responsibility: "One-file core module"',
+    'responsibility: "One-file core module (5-minute path)"',
     'tier: decision',
+    'schema_strictness: low',
     'excludes:',
     '  - do not make network calls',
     '  - do not write files',
     '---',
     '',
-    'Return a valid v2.2 envelope JSON with meta and data.',
+    'You are a Cognitive Module. Return JSON only (no markdown).',
+    'Return a valid v2.2 envelope with meta + data.',
     '',
-    'Input:',
-    '- args: string (from --args)',
+    'INPUT (provided by runtime):',
+    '- query: natural language input (when --args looks like text)',
+    '- code: code input (when --args looks like code)',
+    '',
+    'You MUST treat missing fields as empty.',
+    '',
+    'INPUT VALUES:',
+    'query:',
+    '{{QUERY}}',
+    '',
+    'code:',
+    '{{CODE}}',
     '',
     'Output (requirements):',
+    '- ok: true',
     '- meta.confidence: 0-1',
     "- meta.risk: one of 'none' | 'low' | 'medium' | 'high' (or extensible enum when allowed)",
     '- meta.explain: <=280 chars',
-    '- data: your structured fields + data.rationale',
+    '- data.rationale: string (long-form explanation for auditing)',
+    '- data: your structured fields (plus data.rationale)',
+    '',
+    'Minimal example (shape only):',
+    '{ "ok": true, "meta": { "confidence": 0.8, "risk": "low", "explain": "..." }, "data": { "rationale": "...", "result": "..." } }',
     '',
   ].join('\n');
 }
@@ -173,7 +193,7 @@ function moduleYamlForV22(mod: Awaited<ReturnType<typeof loadSingleFileModule>>)
 export async function corePromote(
   filePath: string,
   outDir?: string,
-  options: { dryRun?: boolean } = {}
+  options: { dryRun?: boolean; force?: boolean } = {}
 ): Promise<CommandResult> {
   const abs = path.resolve(process.cwd(), filePath);
   const mod = await loadSingleFileModule(abs);
@@ -209,7 +229,10 @@ export async function corePromote(
   // Avoid overwriting an existing module directory silently.
   try {
     await fs.stat(targetDir);
-    return { success: false, error: `Target directory already exists: ${targetDir}` };
+    if (!options.force) {
+      return { success: false, error: `Target directory already exists: ${targetDir} (use --force to overwrite)` };
+    }
+    await fs.rm(targetDir, { recursive: true, force: true });
   } catch {
     // ok
   }
@@ -219,16 +242,88 @@ export async function corePromote(
   await fs.writeFile(promptMdPath, promptMd, 'utf-8');
   await fs.writeFile(schemaJsonPath, schemaJson, 'utf-8');
 
+  // Add minimal golden tests (schema validation mode) so `cog test <module>` works out of the box.
+  const testsDir = path.join(targetDir, 'tests');
+  await fs.mkdir(testsDir, { recursive: true });
+  const inputPath = path.join(testsDir, 'smoke.input.json');
+  const expectedPath = path.join(testsDir, 'smoke.expected.json');
+
+  const smokeInput = {
+    query: 'hello',
+  };
+
+  const smokeExpected = {
+    $validate: {
+      type: 'object',
+      required: ['ok', 'meta', 'data'],
+      properties: {
+        ok: { const: true },
+        meta: {
+          type: 'object',
+          required: ['confidence', 'risk', 'explain'],
+          properties: {
+            confidence: { type: 'number', minimum: 0, maximum: 1 },
+            risk: { type: 'string' },
+            explain: { type: 'string', maxLength: 280 },
+          },
+        },
+        data: {
+          type: 'object',
+          required: ['rationale'],
+          properties: {
+            rationale: { type: 'string' },
+          },
+        },
+      },
+    },
+  };
+
+  await fs.writeFile(inputPath, JSON.stringify(smokeInput, null, 2) + '\n', 'utf-8');
+  await fs.writeFile(expectedPath, JSON.stringify(smokeExpected, null, 2) + '\n', 'utf-8');
+
   return {
     success: true,
     data: {
       message: `Promoted one-file module to v2 directory`,
       from: abs,
       to: targetDir,
-      files,
+      files: [...files, inputPath, expectedPath],
       hint: `Run: cog run ${mod.name} --args "hello" --pretty`,
     },
   };
+}
+
+async function readAll(stream: NodeJS.ReadableStream): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(String(c))));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+    stream.on('error', reject);
+    // Ensure flow mode.
+    if (typeof (stream as unknown as { resume?: () => void }).resume === 'function') {
+      (stream as unknown as { resume: () => void }).resume();
+    }
+  });
+}
+
+export async function coreRunText(
+  markdownOrPrompt: string,
+  ctx: CommandContext,
+  options: CoreOptions = {}
+): Promise<CommandResult> {
+  const raw = markdownOrPrompt.trim();
+  const content = raw.startsWith('---') ? raw + '\n' : (coreTemplate('stdin-core') + '\n' + raw + '\n');
+
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'cog-core-stdin-'));
+  const file = path.join(dir, 'stdin.md');
+  await fs.writeFile(file, content, 'utf-8');
+
+  try {
+    return await coreRun(file, ctx, options);
+  } finally {
+    // Best-effort cleanup.
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 }
 
 export async function coreRun(
@@ -259,9 +354,10 @@ export async function core(
       success: true,
       data: {
         usage: [
-          'cog core new <file.md> [--dry-run]',
+          'cog core new [file.md] [--dry-run]',
           'cog core schema <file.md> [--pretty]',
           'cog core run <file.md> [--args "..."] [--pretty] [--stream] [--no-validate]',
+          'cog core run --stdin [--args "..."] [--pretty] [--stream] [--no-validate]',
           'cog core promote <file.md> [outDir] [--dry-run]',
         ],
       },
@@ -269,8 +365,8 @@ export async function core(
   }
 
   if (subcommand === 'new') {
-    if (!target) return { success: false, error: 'Usage: cog core new <file.md>' };
-    return coreNew(target, { dryRun: options.dryRun });
+    const file = target || 'demo.md';
+    return coreNew(file, { dryRun: options.dryRun });
   }
 
   if (subcommand === 'schema') {
@@ -279,14 +375,18 @@ export async function core(
   }
 
   if (subcommand === 'run') {
-    if (!target) return { success: false, error: 'Usage: cog core run <file.md> [--args "..."]' };
+    if (options.stdin) {
+      const inputText = await readAll(process.stdin);
+      return coreRunText(inputText, ctx, options);
+    }
+    if (!target) return { success: false, error: 'Usage: cog core run <file.md> [--args "..."] (or use --stdin)' };
     return coreRun(target, ctx, options);
   }
 
   if (subcommand === 'promote') {
     if (!target) return { success: false, error: 'Usage: cog core promote <file.md> [outDir]' };
     const outDir = rest[0];
-    return corePromote(target, outDir, { dryRun: options.dryRun });
+    return corePromote(target, outDir, { dryRun: options.dryRun, force: options.force });
   }
 
   return { success: false, error: `Unknown core subcommand: ${subcommand}` };
