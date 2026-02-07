@@ -383,6 +383,12 @@ async function main() {
         break;
       }
 
+      case 'providers': {
+        const providers = listProviders();
+        console.log(JSON.stringify({ providers }, null, values.pretty ? 2 : 0));
+        break;
+      }
+
       case 'add': {
         const url = args[1];
         if (!url || url.startsWith('-')) {
@@ -1075,6 +1081,7 @@ USAGE:
 
 COMMANDS:
   core <cmd>          Minimal "one-file" workflow (new, schema, run)
+  providers           List providers (capabilities + configuration)
   run <module>        Run a Cognitive Module
   test <module>       Run golden tests for a module
   compose <module>    Execute a composed module workflow
