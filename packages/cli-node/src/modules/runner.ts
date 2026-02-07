@@ -1557,7 +1557,11 @@ function resolveJsonSchemaParams(
     return { jsonSchema: module.outputSchema, jsonSchemaMode: 'prompt', allowSchemaFallback: false };
   }
   if (pref === 'native') {
-    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: false };
+    // "native" means "prefer native", not "fail hard on provider schema dialect mismatches".
+    // Some providers (notably Gemini) accept only a restricted schema subset and can reject
+    // otherwise-valid JSON Schema. Retrying once in prompt mode yields a much better UX while
+    // still keeping the initial attempt "native".
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true };
   }
 
   // auto: choose based on provider capabilities.

@@ -92,9 +92,10 @@ describe('runner structured output preference', () => {
       policy,
     });
 
-    expect(res.ok).toBe(false);
-    expect(provider.calls.length).toBe(1);
+    expect(res.ok).toBe(true);
+    expect(provider.calls.length).toBe(2);
     expect(provider.calls[0].jsonSchemaMode).toBe('native');
+    expect(provider.calls[1].jsonSchemaMode).toBe('prompt');
   });
 
   it('off: does not pass schema to provider', async () => {
@@ -115,4 +116,3 @@ describe('runner structured output preference', () => {
     expect(provider.calls[0].jsonSchemaMode).toBeUndefined();
   });
 });
-
