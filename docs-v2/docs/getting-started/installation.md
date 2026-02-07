@@ -25,6 +25,29 @@ npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass" --pretty
 
 You can also run a module defined in a single Markdown file (optional YAML frontmatter + prompt body).
 
+If you have `cog core` available, the most minimal path is:
+
+```bash
+cat <<'EOF' | cog core run --stdin --args "hello" --pretty
+Return a valid v2.2 envelope with meta and data. Put your answer in data.result.
+EOF
+```
+
+Or create a file template:
+
+```bash
+cog core new demo.md
+cog core run demo.md --args "hello" --pretty
+```
+
+Then promote it into a portable v2 module directory:
+
+```bash
+cog core promote demo.md
+```
+
+If you do not have `cog core` yet, the file-based method below works everywhere:
+
 ```bash
 cat > demo-single-file.md <<'EOF'
 ---

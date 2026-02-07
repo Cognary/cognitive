@@ -6,6 +6,18 @@ sidebar_position: 2
 
 This tutorial creates a simple v2.2 module and runs it with `cog`.
 
+## Fast Path (Core)
+
+If you want to start from a single file and then migrate to v2:
+
+```bash
+cog core new demo.md
+cog core run demo.md --args "hello" --pretty
+cog core promote demo.md
+```
+
+Then you can edit the generated `./cognitive/modules/<name>/` directory as a standard v2 module.
+
 ## Module Structure (v2.2)
 
 ```

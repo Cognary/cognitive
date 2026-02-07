@@ -25,6 +25,29 @@ npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass" --pretty
 
 你也可以用一个 Markdown 文件直接运行模块（可选 YAML frontmatter + prompt 正文）。
 
+如果你已经有 `cog core`，最小路径可以做到“零文件”：
+
+```bash
+cat <<'EOF' | cog core run --stdin --args "hello" --pretty
+请返回一个合法的 v2.2 envelope（meta + data）。把答案放在 data.result。
+EOF
+```
+
+或者生成模板文件：
+
+```bash
+cog core new demo.md
+cog core run demo.md --args "hello" --pretty
+```
+
+然后一键升级为可迁移的 v2 模块目录：
+
+```bash
+cog core promote demo.md
+```
+
+如果你暂时还没有 `cog core`，下面的“文件方式”在任何版本都可用：
+
 ```bash
 cat > demo-single-file.md <<'EOF'
 ---

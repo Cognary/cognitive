@@ -123,6 +123,7 @@ docs-v2/
 | `/docs/guide/programmatic-api` | `docs/guide/programmatic-api.md` |
 | `/docs/guide/testing` | `docs/guide/testing.md` |
 | `/docs/cli/overview` | `docs/cli/overview.md` |
+| `/docs/cli/core` | `docs/cli/core.md` |
 | `/docs/cli/run` | `docs/cli/run.md` |
 | `/docs/cli/validate` | `docs/cli/validate.md` |
 | `/docs/cli/migrate` | `docs/cli/migrate.md` |

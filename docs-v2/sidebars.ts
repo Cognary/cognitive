@@ -39,6 +39,7 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       items: [
         'cli/overview',
+        'cli/core',
         'cli/run',
         'cli/validate',
         'cli/migrate',

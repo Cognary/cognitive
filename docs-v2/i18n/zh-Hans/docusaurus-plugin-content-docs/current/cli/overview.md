@@ -18,6 +18,7 @@ npm install -g cogn@2.2.7
 
 | 命令 | 说明 |
 |------|------|
+| `core <cmd>` | 极简路径：`new`/`run`/`schema`/`promote` |
 | `list` | 列出模块 |
 | `run <module>` | 运行模块 |
 | `pipe --module <name>` | 管道模式 |
@@ -37,6 +38,8 @@ npm install -g cogn@2.2.7
 ## 常用流程
 
 ```bash
+cog core new
+cog core run demo.md --args "hello" --pretty
 cog run code-reviewer --args "your code" --pretty
 cog init my-module
 cog validate my-module --v22

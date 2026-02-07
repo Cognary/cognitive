@@ -50,6 +50,11 @@ echo "review this code" | cog pipe --module code-reviewer
 ## 命令
 
 ```bash
+# Core（单文件极简路径）
+cog core new                       # 生成 demo.md
+cog core run demo.md --args "..."  # 运行单文件模块
+cog core promote demo.md           # 升级为 v2 模块目录
+
 # 模块操作
 cog list                      # 列出模块
 cog run <module> --args "..." # 运行模块

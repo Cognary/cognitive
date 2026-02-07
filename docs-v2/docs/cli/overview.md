@@ -21,6 +21,7 @@ npm install -g cogn@2.2.7
 
 | Command | Description |
 |---------|-------------|
+| `core <cmd>` | Minimal workflow: `new`, `run`, `schema`, `promote` |
 | `list` | List installed modules |
 | `run <module>` | Run a module |
 | `pipe --module <name>` | Pipe mode (stdin/stdout) |
@@ -45,6 +46,10 @@ cog --help
 ```
 
 ## Common Workflows
+
+### 0. Minimal One-File Path
+
+See [`cog core`](./core).
 
 ### 1. Run a Module
 

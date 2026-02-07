@@ -33,6 +33,14 @@ cog run <module> [options]
 cog run code-reviewer --args "def foo(): pass" --pretty
 ```
 
+### Running a One-File Module
+
+```bash
+cog run ./demo-single-file.md --args "hello" --pretty
+```
+
+If you want an even smaller path (no file), see [`cog core`](./core) and `cog core run --stdin`.
+
 ### Using JSON input
 
 ```bash

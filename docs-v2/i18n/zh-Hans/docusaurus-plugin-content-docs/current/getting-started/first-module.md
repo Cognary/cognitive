@@ -6,6 +6,18 @@ sidebar_position: 2
 
 本教程创建一个 v2.2 模块并使用 `cog` 运行。
 
+## 快速路径（Core）
+
+如果你希望先用单文件跑通，再升级为 v2 目录结构：
+
+```bash
+cog core new demo.md
+cog core run demo.md --args "hello" --pretty
+cog core promote demo.md
+```
+
+之后你可以直接编辑生成的 `./cognitive/modules/<name>/`，它就是标准 v2 模块目录。
+
 ## 目录结构（v2.2）
 
 ```
