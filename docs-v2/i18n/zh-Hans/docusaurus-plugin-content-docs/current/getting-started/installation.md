@@ -21,6 +21,25 @@ npx cogn@2.2.7 add Cognary/cognitive -m code-reviewer
 npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass" --pretty
 ```
 
+### 单文件模块（临时/即用）
+
+你也可以用一个 Markdown 文件直接运行模块（可选 YAML frontmatter + prompt 正文）。
+
+```bash
+cat > demo-single-file.md <<'EOF'
+---
+name: demo-single-file
+version: 0.1.0
+responsibility: 单文件模块示例
+tier: decision
+---
+
+请返回一个合法的 v2.2 envelope JSON（包含 meta 和 data）。
+EOF
+
+npx cogn@2.2.7 run ./demo-single-file.md --args "hello" --pretty
+```
+
 ## 安装
 
 ```bash

@@ -21,6 +21,25 @@ npx cogn@2.2.7 add Cognary/cognitive -m code-reviewer
 npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass" --pretty
 ```
 
+### One-File Module (Ad-hoc)
+
+You can also run a module defined in a single Markdown file (optional YAML frontmatter + prompt body).
+
+```bash
+cat > demo-single-file.md <<'EOF'
+---
+name: demo-single-file
+version: 0.1.0
+responsibility: Demo single-file module
+tier: decision
+---
+
+Return a valid v2.2 envelope JSON with meta and data.
+EOF
+
+npx cogn@2.2.7 run ./demo-single-file.md --args "hello" --pretty
+```
+
 ## Install
 
 ```bash
