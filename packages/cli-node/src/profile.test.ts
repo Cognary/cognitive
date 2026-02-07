@@ -5,7 +5,7 @@ describe('resolveExecutionPolicy', () => {
   it('defaults to profile=default', () => {
     const p = resolveExecutionPolicy({});
     expect(p.profile).toBe('default');
-    expect(p.validate).toBe('on');
+    expect(p.validate).toBe('auto');
     expect(p.audit).toBe(false);
     expect(p.enableRepair).toBe(true);
     expect(p.requireV22).toBe(false);
@@ -36,4 +36,3 @@ describe('resolveExecutionPolicy', () => {
     expect(p2.validate).toBe('off');
   });
 });
-

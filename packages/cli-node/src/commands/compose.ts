@@ -117,21 +117,6 @@ export async function compose(
         maxDepth: options.maxDepth,
         timeoutMs: options.timeout,
         policy,
-        validateInput: (() => {
-          if (options.noValidate) return false;
-          if (!policy) return true;
-          if (policy.validate === 'off') return false;
-          if (policy.validate === 'on') return true;
-          return policy.profile !== 'core';
-        })(),
-        validateOutput: (() => {
-          if (options.noValidate) return false;
-          if (!policy) return true;
-          if (policy.validate === 'off') return false;
-          if (policy.validate === 'on') return true;
-          return policy.profile !== 'core';
-        })(),
-        enableRepair: policy?.enableRepair ?? true,
       }
     );
 

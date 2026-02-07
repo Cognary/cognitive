@@ -20,6 +20,8 @@ import type {
   EnvelopeResponseV22,
   EnvelopeMeta,
   ModuleResultData,
+  ModuleTier,
+  SchemaStrictness,
   RiskLevel,
   RiskRule,
   InvokeResult,
@@ -1478,6 +1480,49 @@ async function enforcePolicyGates(
   return null;
 }
 
+function resolveValidationFlags(
+  module: CognitiveModule,
+  policy: ExecutionPolicy | undefined,
+  validateInputOpt: boolean | undefined,
+  validateOutputOpt: boolean | undefined
+): { validateInput: boolean; validateOutput: boolean; reason: string } {
+  // Explicit overrides win.
+  if (typeof validateInputOpt === 'boolean' || typeof validateOutputOpt === 'boolean') {
+    const validateInput = typeof validateInputOpt === 'boolean' ? validateInputOpt : true;
+    const validateOutput = typeof validateOutputOpt === 'boolean' ? validateOutputOpt : true;
+    return { validateInput, validateOutput, reason: 'explicit validateInput/validateOutput' };
+  }
+
+  if (!policy) {
+    return { validateInput: true, validateOutput: true, reason: 'no policy (default on)' };
+  }
+
+  if (policy.validate === 'off') {
+    return { validateInput: false, validateOutput: false, reason: 'policy.validate=off' };
+  }
+
+  if (policy.validate === 'on') {
+    return { validateInput: true, validateOutput: true, reason: 'policy.validate=on' };
+  }
+
+  // auto: decide based on module intent.
+  const tier: ModuleTier = (module.tier as ModuleTier | undefined) ?? 'decision';
+  const strictness: SchemaStrictness = (module.schemaStrictness as SchemaStrictness | undefined) ?? 'medium';
+
+  // Certified/strict flows already set policy.validate=on in resolveExecutionPolicy().
+  // Keep auto conservative for exec/decision, permissive for exploration (unless strictness is explicitly high).
+  if (strictness === 'high') {
+    return { validateInput: true, validateOutput: true, reason: `auto: schema_strictness=high (tier=${tier})` };
+  }
+
+  if (tier === 'exploration') {
+    return { validateInput: false, validateOutput: false, reason: 'auto: tier=exploration' };
+  }
+
+  // exec + decision default to validation on.
+  return { validateInput: true, validateOutput: true, reason: `auto: tier=${tier}` };
+}
+
 // =============================================================================
 // Main Runner
 // =============================================================================
@@ -1487,7 +1532,26 @@ export async function runModule(
   provider: Provider,
   options: RunOptions = {}
 ): Promise<ModuleResult> {
-  const { args, input, verbose = false, validateInput = true, validateOutput = true, useEnvelope, useV22, enableRepair = true, traceId, model: modelOverride, policy } = options;
+  const {
+    args,
+    input,
+    verbose = false,
+    validateInput: validateInputOpt,
+    validateOutput: validateOutputOpt,
+    useEnvelope,
+    useV22,
+    enableRepair: enableRepairOpt,
+    traceId,
+    model: modelOverride,
+    policy,
+  } = options;
+  const { validateInput, validateOutput, reason: validateReason } = resolveValidationFlags(
+    module,
+    policy,
+    validateInputOpt,
+    validateOutputOpt
+  );
+  const enableRepair = enableRepairOpt ?? policy?.enableRepair ?? true;
   const startTime = Date.now();
 
   const gate = await enforcePolicyGates(module, policy);
@@ -1559,6 +1623,25 @@ export async function runModule(
     console.error(`Name: ${module.name} (${module.format})`);
     console.error(`Responsibility: ${module.responsibility}`);
     console.error(`Envelope: ${shouldUseEnvelope}`);
+    if (policy) {
+      console.error('--- Policy ---');
+      console.error(
+        JSON.stringify(
+          {
+            profile: policy.profile,
+            validate: policy.validate,
+            validateInput,
+            validateOutput,
+            validate_reason: validateReason,
+            audit: policy.audit,
+            enableRepair,
+            requireV22: policy.requireV22,
+          },
+          null,
+          2
+        )
+      );
+    }
     console.error('--- Input ---');
     console.error(JSON.stringify(inputData, null, 2));
     console.error('--- Prompt ---');
@@ -1632,7 +1715,8 @@ export async function runModule(
     // Invoke provider
     const result = await provider.invoke({
       messages,
-      jsonSchema: module.outputSchema,
+      // Progressive Complexity: only enforce schema at the provider layer when validation is enabled.
+      jsonSchema: validateOutput ? module.outputSchema : undefined,
       temperature: 0.3,
     });
 
@@ -1860,7 +1944,19 @@ export async function* runModuleStream(
   provider: Provider,
   options: StreamOptions = {}
 ): AsyncGenerator<StreamEvent> {
-  const { input, args, validateInput = true, validateOutput = true, useV22 = true, enableRepair = true, traceId, model, policy } = options;
+  const {
+    input,
+    args,
+    validateInput: validateInputOpt,
+    validateOutput: validateOutputOpt,
+    useV22 = true,
+    enableRepair: enableRepairOpt,
+    traceId,
+    model,
+    policy,
+  } = options;
+  const { validateInput, validateOutput } = resolveValidationFlags(module, policy, validateInputOpt, validateOutputOpt);
+  const enableRepair = enableRepairOpt ?? policy?.enableRepair ?? true;
   const startTime = Date.now();
   const moduleName = module.name;
   const providerName = provider?.name;
@@ -1951,7 +2047,7 @@ export async function* runModuleStream(
       // Use true streaming
       const stream = provider.invokeStream({
         messages,
-        jsonSchema: module.outputSchema,
+        jsonSchema: validateOutput ? module.outputSchema : undefined,
         temperature: 0.3,
       });
       
@@ -1968,7 +2064,7 @@ export async function* runModuleStream(
       // Fallback to non-streaming invoke
       const result = await provider.invoke({
         messages,
-        jsonSchema: module.outputSchema,
+        jsonSchema: validateOutput ? module.outputSchema : undefined,
         temperature: 0.3,
       });
       fullContent = result.content;

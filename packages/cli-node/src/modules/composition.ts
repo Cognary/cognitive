@@ -807,9 +807,9 @@ export class CompositionOrchestrator {
   private provider: Provider;
   private cwd: string;
   private searchPaths: string[];
-  private validateInput: boolean;
-  private validateOutput: boolean;
-  private enableRepair: boolean;
+  private validateInput?: boolean;
+  private validateOutput?: boolean;
+  private enableRepair?: boolean;
   private policy?: ExecutionPolicy;
   
   constructor(
@@ -820,9 +820,10 @@ export class CompositionOrchestrator {
     this.provider = provider;
     this.cwd = cwd;
     this.searchPaths = getDefaultSearchPaths(cwd);
-    this.validateInput = enforcement.validateInput ?? true;
-    this.validateOutput = enforcement.validateOutput ?? true;
-    this.enableRepair = enforcement.enableRepair ?? true;
+    // Leave undefined by default so the runner can apply policy-driven defaults (validate=auto).
+    this.validateInput = enforcement.validateInput;
+    this.validateOutput = enforcement.validateOutput;
+    this.enableRepair = enforcement.enableRepair;
     this.policy = enforcement.policy;
   }
   

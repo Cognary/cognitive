@@ -28,7 +28,8 @@ export function resolveExecutionPolicy(input: ResolvePolicyInput): ExecutionPoli
   const profile = normalizeProfile(input.profile);
 
   // Base defaults per profile.
-  let validate: ValidateMode = profile === 'core' ? 'off' : 'on';
+  // default: auto validation chooses based on module tier/strictness in the runner
+  let validate: ValidateMode = profile === 'core' ? 'off' : 'auto';
   let audit = false;
   let enableRepair = true;
   let requireV22 = false;

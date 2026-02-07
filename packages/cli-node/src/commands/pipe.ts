@@ -74,23 +74,11 @@ export async function pipe(
       // Not JSON, use as args
     }
 
-    const validate = (() => {
-      if (options.noValidate) return false;
-      if (!policy) return true;
-      if (policy.validate === 'off') return false;
-      if (policy.validate === 'on') return true;
-      return policy.profile !== 'core';
-    })();
-    const enableRepair = policy?.enableRepair ?? true;
-
     // Run module with v2.2 envelope format
     const result = await runModule(module, ctx.provider, {
       args: inputData ? undefined : input,
       input: inputData,
-      validateInput: validate,
-      validateOutput: validate,
       useV22: true,  // Always use v2.2 envelope
-      enableRepair,
       policy,
     });
 

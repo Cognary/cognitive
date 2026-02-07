@@ -155,6 +155,22 @@ async function main() {
     process.exit(1);
   }
 
+  // Progressive Complexity: `cog core ...` defaults to the `core` profile unless explicitly overridden.
+  // This keeps the "5-minute path" minimal by default (no schema enforcement unless requested).
+  if (command === 'core' && (values.profile === undefined || values.profile === null || String(values.profile).trim() === '')) {
+    try {
+      policy = resolveExecutionPolicy({
+        profile: 'core',
+        validate: values.validate,
+        noValidate: values['no-validate'],
+        audit: values.audit,
+      });
+    } catch (e) {
+      console.error(`Error: ${e instanceof Error ? e.message : String(e)}`);
+      process.exit(1);
+    }
+  }
+
   const parsePositive = (key: string, raw: unknown): number | undefined => {
     if (raw === undefined || raw === null || raw === '') return undefined;
     const n = Number(raw);

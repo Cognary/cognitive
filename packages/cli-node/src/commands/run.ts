@@ -92,18 +92,6 @@ export async function run(
       }
     }
 
-    // Resolve validation/repair policy.
-    // Priority: explicit --no-validate > policy.validate > default(true)
-    const validate = (() => {
-      if (options.noValidate) return false;
-      if (!policy) return true;
-      if (policy.validate === 'off') return false;
-      if (policy.validate === 'on') return true;
-      // auto
-      return policy.profile !== 'core';
-    })();
-    const enableRepair = policy?.enableRepair ?? true;
-
     if (options.stream) {
       // Stream NDJSON events to stdout. Final exit code is determined by the end event.
       let finalOk: boolean | null = null;
@@ -112,10 +100,7 @@ export async function run(
       for await (const ev of runModuleStream(module, ctx.provider, {
         args: options.args,
         input: inputData,
-        validateInput: validate,
-        validateOutput: validate,
         useV22: true,
-        enableRepair,
         policy,
       })) {
         // Write each event as one JSON line (NDJSON).
@@ -152,10 +137,7 @@ export async function run(
         args: options.args,
         input: inputData,
         verbose: options.verbose || ctx.verbose,
-        validateInput: validate,
-        validateOutput: validate,
         useV22: true, // Always use v2.2 envelope
-        enableRepair,
         policy,
       });
 
