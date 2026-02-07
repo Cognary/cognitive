@@ -10,11 +10,11 @@ Cognitive Modules CLI is distributed via npm and provides the `cog` command.
 
 ```bash
 # Zero-install
-npx cogn@2.2.8 --help
+npx cogn@latest --help
 
 # Global
-npm install -g cogn@2.2.8
-# or: npm install -g cognitive-modules-cli@2.2.8
+npm install -g cogn@latest
+# or: npm install -g cognitive-modules-cli@latest
 ```
 
 ## Command List
@@ -22,6 +22,7 @@ npm install -g cogn@2.2.8
 | Command | Description |
 |---------|-------------|
 | `core <cmd>` | Minimal workflow: `new`, `run`, `schema`, `promote` |
+| `providers` | List providers + capabilities (structured output + streaming) |
 | `list` | List installed modules |
 | `run <module>` | Run a module |
 | `pipe --module <name>` | Pipe mode (stdin/stdout) |
@@ -37,6 +38,7 @@ npm install -g cogn@2.2.8
 | `serve` | Start HTTP API server |
 | `mcp` | Start MCP server |
 | `doctor` | Environment check |
+| `registry <cmd>` | Registry index/tarballs: `list`, `info`, `build`, `verify` |
 
 ## Global Options
 
@@ -52,13 +54,15 @@ The CLI supports **progressive complexity** via `--profile` (plus small override
 | Profile | Intended Use | Defaults |
 |---------|--------------|----------|
 | `core` | 5-minute path, minimal enforcement | `--validate=off`, `--audit=false` |
-| `default` | day-to-day | `--validate=on`, `--audit=false` |
+| `default` | day-to-day | `--validate=auto`, `--audit=false` |
 | `strict` | higher assurance | `--validate=on`, `--audit=false` |
 | `certified` | strongest gates / publishable flows | `--validate=on`, `--audit=true`, requires v2.2 modules |
 
 Overrides:
 
 - `--validate auto|on|off` (legacy: `--no-validate` == `--validate off`)
+- `--structured auto|off|prompt|native` (provider-layer structured output)
+  - `auto` picks a provider-appropriate strategy and can downgrade `native -> prompt` once on compatibility errors (for stability)
 - `--audit` writes an audit record to `~/.cognitive/audit/` (path is printed to stderr)
 
 Examples:
@@ -66,6 +70,9 @@ Examples:
 ```bash
 # Minimal run (skip validation)
 cog run ./demo.md --args "hello" --profile core
+
+# Force prompt-based structured output (useful when a provider rejects native schemas)
+cog run ./demo.md --args "hello" --structured prompt
 
 # Higher assurance
 cog run code-reviewer --args "..." --profile strict
@@ -108,7 +115,7 @@ cog update code-simplifier
 
 ```bash
 # Build tarballs + regenerate cognitive-registry.v2.json
-cog registry build --tag v2.2.8
+cog registry build --tag vX.Y.Z
 
 # Verify local tarballs match the v2 registry index
 cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
@@ -119,7 +126,7 @@ cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registr
 cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 
 # Pin to a specific release tag (recommended for reproducible builds)
-cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
 
 # Tune remote verification limits (defaults: 15s, 2MB index, 25MB tarball)
 cog registry verify --remote \
