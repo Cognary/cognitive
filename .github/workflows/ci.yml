@@ -192,7 +192,7 @@ jobs:
 
       - name: Run Ruff linter
         run: |
-          ruff check src/ tests/ --output-format=github || true
+          ruff check src/ tests/ --output-format=github
 
   validate-modules:
     runs-on: ubuntu-latest

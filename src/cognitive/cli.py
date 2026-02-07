@@ -20,7 +20,6 @@ Commands:
 """
 
 import json
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -38,13 +37,12 @@ from .registry import (
     search_registry,
     fetch_registry,
     install_from_github_url,
-    update_module,
     get_installed_module_info,
     get_module_version,
     list_github_tags,
     USER_MODULES_DIR,
 )
-from .loader import load_module, detect_format
+from .loader import load_module
 from .runner import run_module
 from .subagent import run_with_subagents
 from .validator import validate_module
@@ -69,9 +67,9 @@ def list_cmd(
     
     if not modules:
         rprint("[yellow]No modules found.[/yellow]")
-        rprint(f"\nInstall modules with:")
-        rprint(f"  [cyan]cog install <source>[/cyan]")
-        rprint(f"  [cyan]cog init <name>[/cyan]")
+        rprint("\nInstall modules with:")
+        rprint("  [cyan]cog install <source>[/cyan]")
+        rprint("  [cyan]cog init <name>[/cyan]")
         return
     
     if format == "json":
@@ -215,7 +213,7 @@ def migrate_cmd(
         raise typer.Exit(1)
     
     if all_modules:
-        rprint(f"[cyan]→[/cyan] Migrating all modules to v2.2...")
+        rprint("[cyan]→[/cyan] Migrating all modules to v2.2...")
         if dry_run:
             rprint("[dim](dry run - no changes will be made)[/dim]")
         print()
@@ -248,27 +246,27 @@ def migrate_cmd(
         )
         
         if changes:
-            rprint(f"[cyan]Changes:[/cyan]")
+            rprint("[cyan]Changes:[/cyan]")
             for c in changes:
                 rprint(f"  - {c}")
             print()
         
         if warnings:
-            rprint(f"[yellow]⚠ Warnings:[/yellow]")
+            rprint("[yellow]⚠ Warnings:[/yellow]")
             for w in warnings:
                 rprint(f"  - {w}")
             print()
         
         if success:
             if dry_run:
-                rprint(f"[green]✓ Migration preview complete[/green]")
-                rprint(f"  Run without --dry-run to apply changes")
+                rprint("[green]✓ Migration preview complete[/green]")
+                rprint("  Run without --dry-run to apply changes")
             else:
                 rprint(f"[green]✓ Module '{module}' migrated to v2.2[/green]")
-                rprint(f"\nValidate with:")
+                rprint("\nValidate with:")
                 rprint(f"  [cyan]cogn validate {module} --v22[/cyan]")
         else:
-            rprint(f"[red]✗ Migration failed[/red]")
+            rprint("[red]✗ Migration failed[/red]")
             raise typer.Exit(1)
 
 
@@ -286,7 +284,7 @@ def install_cmd(
         is_valid, errors, warnings = validate_module(str(target))
         
         if not is_valid:
-            rprint(f"[red]✗ Installed module failed validation:[/red]")
+            rprint("[red]✗ Installed module failed validation:[/red]")
             for e in errors:
                 rprint(f"  - {e}")
             uninstall_module(target.name)
@@ -343,7 +341,7 @@ def add_cmd(
         is_valid, errors, warnings = validate_module(str(target))
         
         if not is_valid:
-            rprint(f"[red]✗ Installed module failed validation:[/red]")
+            rprint("[red]✗ Installed module failed validation:[/red]")
             for e in errors:
                 rprint(f"  - {e}")
             uninstall_module(target.name)
@@ -359,7 +357,7 @@ def add_cmd(
         if warnings:
             rprint(f"[yellow]  Warnings: {len(warnings)}[/yellow]")
         
-        rprint(f"\nRun with:")
+        rprint("\nRun with:")
         rprint(f"  [cyan]cog run {target.name} --args \"your input\"[/cyan]")
         
     except Exception as e:
@@ -395,7 +393,7 @@ def update_cmd(
     info = get_installed_module_info(module)
     if not info:
         rprint(f"[red]✗ Module not found or not installed from GitHub: {module}[/red]")
-        rprint(f"  Only modules installed with 'cog add' can be updated.")
+        rprint("  Only modules installed with 'cog add' can be updated.")
         raise typer.Exit(1)
     
     github_url = info.get("github_url")
@@ -491,7 +489,7 @@ def uninstall_cmd(
     
     if not target.exists():
         rprint(f"[red]Module not found in global location: {module}[/red]")
-        rprint(f"  (Only modules in ~/.cognitive/modules can be uninstalled)")
+        rprint("  (Only modules in ~/.cognitive/modules can be uninstalled)")
         raise typer.Exit(1)
     
     if uninstall_module(module):
@@ -528,15 +526,15 @@ def init_cmd(
         )
         
         rprint(f"[green]✓ Created module at: {module_path}[/green]")
-        rprint(f"\nFiles created:")
-        rprint(f"  - MODULE.md (edit this)")
-        rprint(f"  - schema.json")
+        rprint("\nFiles created:")
+        rprint("  - MODULE.md (edit this)")
+        rprint("  - schema.json")
         if not no_examples:
-            rprint(f"  - examples/input.json")
-            rprint(f"  - examples/output.json")
-        rprint(f"\nNext steps:")
-        rprint(f"  1. Edit [cyan]MODULE.md[/cyan] to add your instructions")
-        rprint(f"  2. Edit [cyan]schema.json[/cyan] to define input/output")
+            rprint("  - examples/input.json")
+            rprint("  - examples/output.json")
+        rprint("\nNext steps:")
+        rprint("  1. Edit [cyan]MODULE.md[/cyan] to add your instructions")
+        rprint("  2. Edit [cyan]schema.json[/cyan] to define input/output")
         rprint(f"  3. Run [cyan]cog validate {name}[/cyan] to check")
         
     except Exception as e:
@@ -566,7 +564,7 @@ def search_cmd(
         table.add_row(r["name"], r["description"], r["version"])
     
     console.print(table)
-    rprint(f"\nInstall with: [cyan]cog install registry:<name>[/cyan]")
+    rprint("\nInstall with: [cyan]cog install registry:<name>[/cyan]")
 
 
 @app.command("registry")
@@ -622,8 +620,8 @@ def doctor_cmd():
     rprint(f"Current model: [cyan]{status['current_model']}[/cyan]")
     
     rprint("\n[cyan]Module Search Paths:[/cyan]")
-    rprint(f"  1. ./cognitive/modules (project-local)")
-    rprint(f"  2. ~/.cognitive/modules (user-global)")
+    rprint("  1. ./cognitive/modules (project-local)")
+    rprint("  2. ~/.cognitive/modules (user-global)")
     
     modules = list_modules()
     rprint(f"\n[cyan]Installed Modules:[/cyan] {len(modules)}")
@@ -661,11 +659,11 @@ def info_cmd(
     rprint(f"[bold cyan]{meta.get('name', module)}[/bold cyan] v{meta.get('version', '?')}")
     rprint(f"[dim]Format: {m['format']}[/dim]")
     
-    rprint(f"\n[bold]Responsibility:[/bold]")
+    rprint("\n[bold]Responsibility:[/bold]")
     rprint(f"  {meta.get('responsibility', 'Not specified')}")
     
     if 'excludes' in meta:
-        rprint(f"\n[bold]Excludes:[/bold]")
+        rprint("\n[bold]Excludes:[/bold]")
         for exc in meta['excludes']:
             rprint(f"  - {exc}")
     
@@ -675,7 +673,7 @@ def info_cmd(
         rprint(f"\n[bold]Context:[/bold] {ctx} ({ctx_desc})")
     
     if 'constraints' in meta:
-        rprint(f"\n[bold]Constraints:[/bold]")
+        rprint("\n[bold]Constraints:[/bold]")
         for k, v in meta['constraints'].items():
             status = "[green]✓[/green]" if v else "[red]✗[/red]"
             rprint(f"  {status} {k}")
@@ -686,7 +684,7 @@ def info_cmd(
     # Show installation info if available
     install_info = get_installed_module_info(meta.get('name', module))
     if install_info:
-        rprint(f"\n[bold]Installation:[/bold]")
+        rprint("\n[bold]Installation:[/bold]")
         if install_info.get("github_url"):
             rprint(f"  Source: {install_info['github_url']}")
         if install_info.get("tag"):
@@ -722,7 +720,7 @@ def serve_cmd(
         rprint("  [cyan]pip install cognitive-modules[server][/cyan]")
         raise typer.Exit(1)
     
-    rprint(f"[green]Starting Cognitive API server...[/green]")
+    rprint("[green]Starting Cognitive API server...[/green]")
     rprint(f"  Host: {host}")
     rprint(f"  Port: {port}")
     rprint(f"  Docs: http://{host if host != '0.0.0.0' else 'localhost'}:{port}/docs")
