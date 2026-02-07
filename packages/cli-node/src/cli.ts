@@ -1027,6 +1027,9 @@ async function main() {
             assetsDir,
           });
           console.log(JSON.stringify(verified, null, values.pretty ? 2 : 0));
+          if (!verified.ok) {
+            process.exit(1);
+          }
         } else {
           console.error(`Unknown registry subcommand: ${subCommand}`);
           console.error('');

@@ -14,20 +14,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: "3.11"
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: packages/cli-node/package-lock.json
 
-      - name: Build tarball assets
+      - name: Install CLI Dependencies
+        working-directory: packages/cli-node
+        run: npm ci --no-audit --no-fund
+
+      - name: Build CLI
+        working-directory: packages/cli-node
+        run: npm run build
+
+      - name: Build Registry Tarballs + Index
         run: |
-          python3 scripts/build-registry-assets.py \
+          node packages/cli-node/dist/cli.js registry build \
             --tag "${{ github.event.release.tag_name }}" \
             --timestamp "${{ github.event.release.published_at }}"
+
+      - name: Verify Registry Tarballs Match Index
+        run: |
+          node packages/cli-node/dist/cli.js registry verify \
+            --index cognitive-registry.v2.json \
+            --assets-dir dist/registry-assets
 
       - name: Upload release assets (tarballs + registry index)
         uses: softprops/action-gh-release@v2
         with:
-          # Registry index is published from the repo (main branch) via raw.githubusercontent.com.
           files: |
             dist/registry-assets/*.tar.gz
+            cognitive-registry.v2.json
