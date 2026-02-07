@@ -1025,9 +1025,15 @@ async function main() {
           console.log(JSON.stringify({ ok: true, ...result }, null, values.pretty ? 2 : 0));
         } else if (subCommand === 'verify') {
           const remote = Boolean(values.remote);
+          const defaultIndex =
+            (typeof process.env.COGNITIVE_REGISTRY_URL === 'string' && process.env.COGNITIVE_REGISTRY_URL.trim()
+              ? process.env.COGNITIVE_REGISTRY_URL.trim()
+              : undefined) ??
+            ctx.registryUrl ??
+            DEFAULT_REGISTRY_URL;
           const indexPath =
             (values.index as string | undefined) ??
-            (remote ? (ctx.registryUrl ?? DEFAULT_REGISTRY_URL) : 'cognitive-registry.v2.json');
+            (remote ? defaultIndex : 'cognitive-registry.v2.json');
           const assetsDir = (values['assets-dir'] as string | undefined) ?? (remote ? undefined : 'dist/registry-assets');
           const verified = await verifyRegistryAssets({
             registryIndexPath: indexPath,

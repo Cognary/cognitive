@@ -63,6 +63,15 @@ function isHttpUrl(maybeUrl: string): boolean {
   }
 }
 
+function tarballFileName(tarballRef: string): string {
+  if (isHttpUrl(tarballRef)) {
+    // Ignore query/hash and use the URL pathname for a stable filename.
+    const u = new URL(tarballRef);
+    return path.basename(u.pathname);
+  }
+  return path.basename(tarballRef);
+}
+
 async function fetchTextWithLimit(url: string, maxBytes: number, timeoutMs: number): Promise<string> {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
@@ -92,6 +101,7 @@ async function fetchTextWithLimit(url: string, maxBytes: number, timeoutMs: numb
           if (value) {
             total += value.byteLength;
             if (total > maxBytes) {
+              controller.abort();
               throw new Error(`Remote payload too large: ${total} bytes (max ${maxBytes})`);
             }
             buf += decoder.decode(value, { stream: true });
@@ -652,7 +662,7 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
       const expectedFiles: string[] = Array.isArray(dist.files) ? dist.files.map(String) : [];
 
       if (!tarballUrl) throw new Error('Missing distribution.tarball');
-      const fileName = path.basename(tarballUrl);
+      const fileName = tarballFileName(tarballUrl);
       const tarPath = path.join(assetsDir, fileName);
 
       if (wantRemote) {
@@ -747,7 +757,7 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
         try {
           const dist = (entry as any).distribution ?? {};
           const tarballUrl = String(dist.tarball ?? '');
-          const fileName = tarballUrl ? path.basename(tarballUrl) : '';
+          const fileName = tarballUrl ? tarballFileName(tarballUrl) : '';
           const tarPath = fileName ? path.join(assetsDir, fileName) : '';
           if (tarPath) {
             await fs.rm(tarPath, { force: true });
