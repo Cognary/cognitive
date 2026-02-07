@@ -15,3 +15,4 @@ export * from './validate.js';
 export * from './migrate.js';
 export * from './test.js';
 export * from './search.js';
+export * from './core.js';

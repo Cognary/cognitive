@@ -16,7 +16,7 @@
 
 import { parseArgs } from 'node:util';
 import { getProvider, listProviders } from './providers/index.js';
-import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo, validate, validateAll, migrate, migrateAll, test, testAll, search, listCategories, info } from './commands/index.js';
+import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo, validate, validateAll, migrate, migrateAll, test, testAll, search, listCategories, info, core } from './commands/index.js';
 import { listModules, getDefaultSearchPaths } from './modules/loader.js';
 import type { CommandContext } from './types.js';
 import { VERSION } from './version.js';
@@ -39,6 +39,7 @@ async function main() {
   const { values, positionals } = parseArgs({
     args: args.slice(1),
     options: {
+      help: { type: 'boolean', short: 'h', default: false },
       args: { type: 'string', short: 'a' },
       input: { type: 'string', short: 'i' },
       module: { type: 'string', short: 'm' },
@@ -72,6 +73,21 @@ async function main() {
     allowPositionals: true,
   });
 
+  if (values.help) {
+    if (command === 'core') {
+      console.log(JSON.stringify({
+        usage: [
+          'cog core new <file.md> [--dry-run]',
+          'cog core schema <file.md> [--pretty]',
+          'cog core run <file.md> [--args \"...\"] [--pretty] [--stream] [--no-validate]',
+        ],
+      }, null, values.pretty ? 2 : 0));
+      process.exit(0);
+    }
+    printHelp();
+    process.exit(0);
+  }
+
   // Get provider
   let provider;
   try {
@@ -89,6 +105,28 @@ async function main() {
 
   try {
     switch (command) {
+      case 'core': {
+        const sub = args[1];
+        const target = args[2];
+        const result = await core(sub, target, ctx, {
+          args: values.args,
+          input: values.input,
+          noValidate: values['no-validate'],
+          pretty: values.pretty,
+          verbose: values.verbose,
+          stream: values.stream,
+          dryRun: values['dry-run'],
+        });
+
+        if (!result.success) {
+          console.error(`Error: ${result.error}`);
+          process.exit(1);
+        }
+
+        console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+        break;
+      }
+
       case 'run': {
         const moduleName = args[1];
         if (!moduleName || moduleName.startsWith('-')) {
@@ -942,6 +980,7 @@ USAGE:
   cog <command> [options]
 
 COMMANDS:
+  core <cmd>          Minimal "one-file" workflow (new, schema, run)
   run <module>        Run a Cognitive Module
   test <module>       Run golden tests for a module
   compose <module>    Execute a composed module workflow
@@ -989,6 +1028,11 @@ OPTIONS:
   -h, --help            Show this help
 
 EXAMPLES:
+  # One-file Core (no registry required)
+  cog core new demo.md
+  cog core run demo.md --args "hello" --pretty
+  cog core schema demo.md --pretty
+
   # Search and discover modules
   cog search code review           # Search by keywords
   cog search                       # List all available modules

@@ -144,12 +144,14 @@ describe('RegistryClient', () => {
   });
 
   describe('getDownloadUrl (checksum propagation)', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       client = new RegistryClient('https://example.com/registry.json');
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockV2Registry),
       });
+      // Ensure we don't read a stale on-disk cache from previous test runs.
+      await client.fetchRegistry(true);
     });
 
     it('should return checksum when module has tarball source', async () => {
