@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.11 - 2026-02-07
+
+- Alias package aligned with `cognitive-modules-cli@2.2.11`.
+
 ## 2.2.10 - 2026-02-07
 
 - Alias package aligned with `cognitive-modules-cli@2.2.10`.

@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.11 - 2026-02-07
+
+- Fix: Gemini `responseSchema` compatibility by dropping non-string `enum`/`const` constraints (Gemini rejects boolean enums).
+
 ## 2.2.10 - 2026-02-07
 
 - Fix: Gemini `responseSchema` compatibility by converting JSON-Schema `const` to `enum`.

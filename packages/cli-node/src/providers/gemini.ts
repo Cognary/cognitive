@@ -44,10 +44,32 @@ export class GeminiProvider extends BaseProvider {
       if (obj && typeof obj === 'object') {
         const result: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
-          // Gemini's responseSchema does not accept JSON-Schema `const`.
-          // Convert `{ const: X }` into `{ enum: [X] }` for compatibility.
+          // Gemini's responseSchema has a restricted schema subset.
+          // In particular:
+          // - `const` is not supported
+          // - `enum` values appear to be string-only in the API surface
           if (key === 'const') {
-            result.enum = [clean(value)];
+            // Preserve type info as best-effort but drop the exact-value constraint.
+            // (Core runtime will still validate/repair the envelope.)
+            if (value === null) {
+              // Leave unconstrained; null typing is not consistently supported.
+            } else if (typeof value === 'boolean') {
+              result.type = 'boolean';
+            } else if (typeof value === 'number') {
+              result.type = 'number';
+            } else if (typeof value === 'string') {
+              result.type = 'string';
+              // String enums are supported, so we can keep a single-value constraint.
+              result.enum = [value];
+            }
+            continue;
+          }
+          if (key === 'enum') {
+            if (Array.isArray(value) && value.every((v) => typeof v === 'string')) {
+              result.enum = value.map((v) => v);
+            } else {
+              // Drop non-string enums for Gemini compatibility.
+            }
             continue;
           }
           if (!unsupportedFields.includes(key)) {
