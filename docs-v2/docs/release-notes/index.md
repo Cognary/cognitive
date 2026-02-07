@@ -17,9 +17,10 @@ For strict cross-interface output consistency, default outputs follow envelope f
 
 ## Versioning Across Registries
 
-Version numbers are kept identical across npm, PyPI, and registry tarballs for this release line.
+Version numbers are intentionally **not** identical across all registries for the 2.2.x line.
 
 - npm (primary runtime): `cognitive-modules-cli@2.2.7` and `cogn@2.2.7`
-- PyPI (legacy): `cognitive-modules@2.2.3`
+- Registry tarballs (GitHub Release assets): `*-2.2.7.tar.gz`
+- PyPI (legacy, frozen): `cognitive-modules@2.2.3`
 
-Rationale: Node.js runtime and registry assets are the actively maintained path; the Python package is legacy and not kept in sync.
+Rationale: the Node.js runtime and registry assets are actively maintained; the Python package is legacy and not currently released in lockstep.
