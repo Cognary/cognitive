@@ -112,6 +112,14 @@ cog registry build --tag v2.2.7
 
 # Verify local tarballs match the v2 registry index
 cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+
+# Verify remote "latest" registry (fetch index + tarballs and validate integrity)
+# Default registry index strategy:
+#   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+
+# Pin to a specific release tag (recommended for reproducible builds)
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
 ```
 
 ### 4. Compose Workflows

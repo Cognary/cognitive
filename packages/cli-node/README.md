@@ -88,6 +88,14 @@ cog mcp                       # 启动 MCP 服务（Claude Code / Cursor）
 
 # 环境检查
 cog doctor
+
+# Registry（索引与分发）
+# 默认 registry index（latest）：
+#   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+# 可通过环境变量或全局参数覆盖：
+COGNITIVE_REGISTRY_URL=... cog search
+cog search --registry https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 ```
 
 ## 开发

@@ -84,4 +84,12 @@ cog registry build --tag v2.2.7
 
 # 校验本地 tarball 是否与 registry v2 索引一致（checksum/size/files）
 cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+
+# 校验远端 registry（拉取 index + tarball 并校验完整性）
+# 默认 "latest" registry index 策略：
+#   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+
+# 固定到某个 release tag（推荐用于可复现构建）
+cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/v2.2.7/cognitive-registry.v2.json
 ```

@@ -784,6 +784,10 @@ export async function add(
   ctx: CommandContext,
   options: AddOptions = {}
 ): Promise<CommandResult> {
+  // Allow a global registry override via ctx.registryUrl unless explicitly set.
+  if (!options.registry && ctx.registryUrl) {
+    options = { ...options, registry: ctx.registryUrl };
+  }
   // Determine source type
   if (isGitHubSource(source)) {
     return addFromGitHub(source, ctx, options);

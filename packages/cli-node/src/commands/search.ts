@@ -23,9 +23,10 @@ export async function search(
   options: SearchOptions = {}
 ): Promise<CommandResult> {
   const { category, limit = 20, registry } = options;
+  const registryUrl = registry ?? ctx.registryUrl;
   
   try {
-    const client = new RegistryClient(registry);
+    const client = new RegistryClient(registryUrl);
     
     let results: SearchResult[];
     
@@ -116,7 +117,7 @@ export async function listCategories(
   options: { registry?: string } = {}
 ): Promise<CommandResult> {
   try {
-    const client = new RegistryClient(options.registry);
+    const client = new RegistryClient(options.registry ?? ctx.registryUrl);
     const categories = await client.getCategories();
     
     return {
@@ -147,7 +148,7 @@ export async function info(
   options: { registry?: string } = {}
 ): Promise<CommandResult> {
   try {
-    const client = new RegistryClient(options.registry);
+    const client = new RegistryClient(options.registry ?? ctx.registryUrl);
     const module = await client.getModule(moduleName);
     
     if (!module) {

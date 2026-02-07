@@ -22,6 +22,7 @@ import type { CommandContext } from './types.js';
 import { VERSION } from './version.js';
 import { resolveExecutionPolicy } from './profile.js';
 import { buildRegistryAssets, verifyRegistryAssets } from './registry/assets.js';
+import { DEFAULT_REGISTRY_URL } from './registry/client.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -76,6 +77,7 @@ async function main() {
       format: { type: 'string', short: 'f' },
       // Search options
       category: { type: 'string', short: 'c' },
+      registry: { type: 'string' }, // override registry index URL (or use env COGNITIVE_REGISTRY_URL)
       // Registry build/verify options
       'modules-dir': { type: 'string' },
       'v1-registry': { type: 'string' },
@@ -91,6 +93,7 @@ async function main() {
       index: { type: 'string' },
       'assets-dir': { type: 'string' },
       'tarball-base-url': { type: 'string' },
+      remote: { type: 'boolean', default: false }, // registry verify: fetch index + tarballs over network
     },
     allowPositionals: true,
   });
@@ -151,6 +154,7 @@ async function main() {
     provider,
     verbose: values.verbose,
     policy,
+    registryUrl: (values.registry as string | undefined) ?? undefined,
   };
 
   try {
@@ -1020,11 +1024,15 @@ async function main() {
           });
           console.log(JSON.stringify({ ok: true, ...result }, null, values.pretty ? 2 : 0));
         } else if (subCommand === 'verify') {
-          const indexPath = (values.index as string | undefined) ?? 'cognitive-registry.v2.json';
-          const assetsDir = (values['assets-dir'] as string | undefined) ?? 'dist/registry-assets';
+          const remote = Boolean(values.remote);
+          const indexPath =
+            (values.index as string | undefined) ??
+            (remote ? (ctx.registryUrl ?? DEFAULT_REGISTRY_URL) : 'cognitive-registry.v2.json');
+          const assetsDir = (values['assets-dir'] as string | undefined) ?? (remote ? undefined : 'dist/registry-assets');
           const verified = await verifyRegistryAssets({
             registryIndexPath: indexPath,
             assetsDir,
+            remote,
           });
           console.log(JSON.stringify(verified, null, values.pretty ? 2 : 0));
           if (!verified.ok) {
@@ -1040,6 +1048,7 @@ async function main() {
           console.error('  cog registry refresh     Refresh cache');
           console.error('  cog registry build       Build registry tarballs + v2 index (local)');
           console.error('  cog registry verify      Verify local tarballs against v2 index');
+          console.error('  cog registry verify --remote --index <url>  Verify remote index+tarballs');
           process.exit(1);
         }
         break;
@@ -1116,6 +1125,7 @@ OPTIONS:
   --all                 Process all modules (for validate/migrate)
   -f, --format <fmt>    Output format: text or json (for validate)
   -c, --category <cat>  Filter by category (for search)
+  --registry <url>      Override registry index URL (or set env COGNITIVE_REGISTRY_URL)
   -l, --limit <n>       Limit results (for search, versions)
   -v, --version         Show version
   -h, --help            Show this help
@@ -1186,6 +1196,7 @@ ENVIRONMENT:
   DASHSCOPE_API_KEY   Alibaba Qwen (通义千问)
   OLLAMA_HOST         Ollama local (default: localhost:11434)
   COG_MODEL           Override default model for any provider
+  COGNITIVE_REGISTRY_URL  Override registry index URL
 `);
 }
 

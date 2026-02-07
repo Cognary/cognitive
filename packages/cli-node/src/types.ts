@@ -487,6 +487,11 @@ export interface CommandContext {
   provider: Provider;
   verbose?: boolean;
   policy?: ExecutionPolicy;
+  /**
+   * Registry index override for commands that talk to the registry.
+   * If omitted, the RegistryClient default strategy is used.
+   */
+  registryUrl?: string;
 }
 
 /**

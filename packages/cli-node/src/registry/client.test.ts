@@ -372,17 +372,17 @@ describe('RegistryClient', () => {
       }
     });
 
-    it('should reject oversized registry payload via content-length', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        headers: {
-          get: (name: string) => (name.toLowerCase() === 'content-length' ? String(1024 * 1024 + 1) : null),
-        },
-        json: () => Promise.resolve(mockV1Registry),
-      });
+	    it('should reject oversized registry payload via content-length', async () => {
+	      global.fetch = vi.fn().mockResolvedValue({
+	        ok: true,
+	        headers: {
+	          get: (name: string) => (name.toLowerCase() === 'content-length' ? String(2 * 1024 * 1024 + 1) : null),
+	        },
+	        json: () => Promise.resolve(mockV1Registry),
+	      });
 
-      await expect(client.fetchRegistry(true)).rejects.toThrow('Registry payload too large');
-    });
+	      await expect(client.fetchRegistry(true)).rejects.toThrow('Registry payload too large');
+	    });
 
     it('should throw on network error', async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));

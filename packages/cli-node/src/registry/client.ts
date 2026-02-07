@@ -154,11 +154,18 @@ export interface SearchResult {
 // Constants
 // =============================================================================
 
-const DEFAULT_REGISTRY_URL = 'https://raw.githubusercontent.com/Cognary/cognitive/main/cognitive-registry.v2.json';
+// "Latest" registry strategy:
+// Prefer GitHub Releases "latest" download, so clients get a coherent set of
+// (index + tarballs) that match an actual published release.
+//
+// This URL is stable across releases:
+// https://github.com/<org>/<repo>/releases/latest/download/cognitive-registry.v2.json
+export const DEFAULT_REGISTRY_URL =
+  'https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json';
 const CACHE_DIR = join(homedir(), '.cognitive', 'cache');
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const REGISTRY_FETCH_TIMEOUT_MS = 10_000; // 10s
-const MAX_REGISTRY_BYTES = 1024 * 1024; // 1MB
+const MAX_REGISTRY_BYTES = 2 * 1024 * 1024; // 2MB
 
 // =============================================================================
 // Registry Client
@@ -168,8 +175,13 @@ export class RegistryClient {
   private registryUrl: string;
   private cache: { data: RegistryV1 | RegistryV2 | null; timestamp: number } = { data: null, timestamp: 0 };
 
-  constructor(registryUrl: string = DEFAULT_REGISTRY_URL) {
-    this.registryUrl = registryUrl;
+  constructor(registryUrl?: string) {
+    const fromEnv = process.env.COGNITIVE_REGISTRY_URL;
+    const selected =
+      (typeof registryUrl === 'string' && registryUrl.trim() ? registryUrl.trim() : undefined) ??
+      (typeof fromEnv === 'string' && fromEnv.trim() ? fromEnv.trim() : undefined) ??
+      DEFAULT_REGISTRY_URL;
+    this.registryUrl = selected;
   }
 
   private async parseRegistryResponse(response: Response): Promise<RegistryV1 | RegistryV2> {

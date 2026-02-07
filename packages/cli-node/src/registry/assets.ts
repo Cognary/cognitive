@@ -26,8 +26,11 @@ export interface BuildRegistryOptions {
 
 export interface VerifyRegistryOptions {
   registryIndexPath: string;
-  assetsDir: string;
+  assetsDir?: string;
   maxTarballBytes?: number;
+  remote?: boolean;
+  fetchTimeoutMs?: number;
+  maxIndexBytes?: number;
 }
 
 export interface RegistryBuildResult {
@@ -49,6 +52,185 @@ export interface RegistryVerifyResult {
   passed: number;
   failed: number;
   failures: Array<{ module: string; reason: string }>;
+}
+
+function isHttpUrl(maybeUrl: string): boolean {
+  try {
+    const u = new URL(maybeUrl);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+async function fetchTextWithLimit(url: string, maxBytes: number, timeoutMs: number): Promise<string> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+    }
+
+    const contentLength = res.headers?.get('content-length');
+    if (contentLength) {
+      const n = Number(contentLength);
+      if (!Number.isNaN(n) && n > maxBytes) {
+        throw new Error(`Remote payload too large: ${n} bytes (max ${maxBytes})`);
+      }
+    }
+
+    if (res.body && typeof res.body.getReader === 'function') {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let total = 0;
+      let buf = '';
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            total += value.byteLength;
+            if (total > maxBytes) {
+              throw new Error(`Remote payload too large: ${total} bytes (max ${maxBytes})`);
+            }
+            buf += decoder.decode(value, { stream: true });
+          }
+        }
+        buf += decoder.decode();
+      } finally {
+        reader.releaseLock();
+      }
+      return buf;
+    }
+
+    const text = await res.text();
+    const byteLen = Buffer.byteLength(text, 'utf-8');
+    if (byteLen > maxBytes) {
+      throw new Error(`Remote payload too large: ${byteLen} bytes (max ${maxBytes})`);
+    }
+    return text;
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new Error(`Fetch timed out after ${timeoutMs}ms`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function downloadToFileWithSha256(
+  url: string,
+  outPath: string,
+  maxBytes: number,
+  timeoutMs: number
+): Promise<{ sha256: string; sizeBytes: number }> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  await fs.mkdir(path.dirname(outPath), { recursive: true });
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch tarball: ${res.status} ${res.statusText}`);
+    }
+
+    const contentLength = res.headers?.get('content-length');
+    if (contentLength) {
+      const n = Number(contentLength);
+      if (!Number.isNaN(n) && n > maxBytes) {
+        throw new Error(`Tarball too large: ${n} bytes (max ${maxBytes})`);
+      }
+    }
+
+    if (!res.body) {
+      throw new Error('Tarball fetch returned no body');
+    }
+
+    const h = createHash('sha256');
+    const ws = createWriteStream(outPath, { flags: 'w', mode: 0o644 });
+    let total = 0;
+
+    const writeChunk = async (chunk: Buffer) => {
+      if (!chunk.length) return;
+      const ok = ws.write(chunk);
+      if (ok) return;
+      await new Promise<void>((resolveDrain, rejectDrain) => {
+        const onDrain = () => {
+          cleanup();
+          resolveDrain();
+        };
+        const onError = (err: Error) => {
+          cleanup();
+          rejectDrain(err);
+        };
+        const cleanup = () => {
+          ws.off('drain', onDrain);
+          ws.off('error', onError);
+        };
+        ws.once('drain', onDrain);
+        ws.once('error', onError);
+      });
+    };
+
+    try {
+      // Prefer the Web ReadableStream reader API when available.
+      const body: any = res.body as any;
+      if (body && typeof body.getReader === 'function') {
+        const reader = body.getReader();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (!value) continue;
+            const buf = Buffer.from(value);
+            total += buf.length;
+            if (total > maxBytes) {
+              controller.abort();
+              throw new Error(`Tarball too large: ${total} bytes (max ${maxBytes})`);
+            }
+            h.update(buf);
+            await writeChunk(buf);
+          }
+        } finally {
+          reader.releaseLock?.();
+        }
+      } else {
+        // Fallback: async iteration (Node fetch supports this for ReadableStream in newer runtimes).
+        const stream: any = res.body as any;
+        for await (const chunk of stream as AsyncIterable<Uint8Array>) {
+          const buf = Buffer.from(chunk);
+          total += buf.length;
+          if (total > maxBytes) {
+            controller.abort();
+            throw new Error(`Tarball too large: ${total} bytes (max ${maxBytes})`);
+          }
+          h.update(buf);
+          await writeChunk(buf);
+        }
+      }
+
+      ws.end();
+      await finished(ws as any);
+    } catch (e) {
+      try {
+        ws.destroy();
+      } catch {
+        // ignore
+      }
+      throw e;
+    }
+
+    return { sha256: h.digest('hex'), sizeBytes: total };
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new Error(`Tarball fetch timed out after ${timeoutMs}ms`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 function nowIsoUtc(): string {
@@ -431,13 +613,34 @@ function isValidModuleDir(dirPath: string): Promise<boolean> {
 }
 
 export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise<RegistryVerifyResult> {
-  const registryRaw = await fs.readFile(opts.registryIndexPath, 'utf-8');
+  const maxIndexBytes = opts.maxIndexBytes ?? 2 * 1024 * 1024; // 2MB
+  const fetchTimeoutMs = opts.fetchTimeoutMs ?? 15_000; // 15s
+  const maxTarballBytes = opts.maxTarballBytes ?? 25 * 1024 * 1024; // 25MB
+
+  const wantRemote = Boolean(opts.remote) || isHttpUrl(opts.registryIndexPath);
+
+  let registryRaw: string;
+  if (wantRemote) {
+    if (!isHttpUrl(opts.registryIndexPath)) {
+      throw new Error(`--remote requires an http(s) registry index URL, got: ${opts.registryIndexPath}`);
+    }
+    registryRaw = await fetchTextWithLimit(opts.registryIndexPath, maxIndexBytes, fetchTimeoutMs);
+  } else {
+    registryRaw = await fs.readFile(opts.registryIndexPath, 'utf-8');
+  }
+
   const registry = JSON.parse(registryRaw) as any;
   const modules = (registry.modules ?? {}) as Record<string, any>;
 
   const failures: RegistryVerifyResult['failures'] = [];
   let checked = 0;
   let passed = 0;
+
+  const tmpAssetsRoot = wantRemote && !opts.assetsDir ? await fs.mkdtemp(path.join(tmpdir(), 'cog-reg-assets-')) : null;
+  const assetsDir = opts.assetsDir ?? tmpAssetsRoot ?? '';
+  if (!wantRemote && !assetsDir) {
+    throw new Error('Local verify requires --assets-dir (directory containing tarballs)');
+  }
 
   for (const [name, entry] of Object.entries(modules)) {
     checked += 1;
@@ -450,7 +653,23 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
 
       if (!tarballUrl) throw new Error('Missing distribution.tarball');
       const fileName = path.basename(tarballUrl);
-      const tarPath = path.join(opts.assetsDir, fileName);
+      const tarPath = path.join(assetsDir, fileName);
+
+      if (wantRemote) {
+        if (!isHttpUrl(tarballUrl)) {
+          throw new Error(`Remote verify requires http(s) tarball URL, got: ${tarballUrl}`);
+        }
+        const downloaded = await downloadToFileWithSha256(tarballUrl, tarPath, maxTarballBytes, fetchTimeoutMs);
+        if (Number.isFinite(sizeBytes) && downloaded.sizeBytes !== sizeBytes) {
+          throw new Error(`Size mismatch: expected ${sizeBytes}, got ${downloaded.sizeBytes}`);
+        }
+        const m = checksum.match(/^sha256:([a-f0-9]{64})$/);
+        if (!m) throw new Error(`Unsupported checksum format: ${checksum}`);
+        const expectedSha = m[1];
+        if (downloaded.sha256 !== expectedSha) {
+          throw new Error(`Checksum mismatch: expected ${expectedSha}, got ${downloaded.sha256}`);
+        }
+      }
 
       const st = await fs.stat(tarPath);
       if (!Number.isFinite(sizeBytes)) throw new Error('Missing distribution.size_bytes');
@@ -522,7 +741,26 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
       passed += 1;
     } catch (e) {
       failures.push({ module: name, reason: e instanceof Error ? e.message : String(e) });
+    } finally {
+      // If we downloaded tarballs into a temp dir, keep disk usage bounded.
+      if (wantRemote && tmpAssetsRoot) {
+        try {
+          const dist = (entry as any).distribution ?? {};
+          const tarballUrl = String(dist.tarball ?? '');
+          const fileName = tarballUrl ? path.basename(tarballUrl) : '';
+          const tarPath = fileName ? path.join(assetsDir, fileName) : '';
+          if (tarPath) {
+            await fs.rm(tarPath, { force: true });
+          }
+        } catch {
+          // ignore cleanup errors (best effort)
+        }
+      }
     }
+  }
+
+  if (tmpAssetsRoot) {
+    await fs.rm(tmpAssetsRoot, { recursive: true, force: true });
   }
 
   return {
