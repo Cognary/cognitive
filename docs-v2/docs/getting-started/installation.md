@@ -77,12 +77,10 @@ cog list
 
 ## Progressive Complexity (Optional)
 
-Only enable the pieces you need:
+Only enable the pieces you need. Cognitive 2.2 is designed for a "5-minute happy path" and a "protocol-grade path"
+without forcing everyone to adopt the full stack on day one.
 
-- Need **verifiable outputs**: write or tighten `schema.json` and run `cog validate --all`.
-- Need **auditability**: require `meta.explain` and `data.rationale`, and store envelope results/events.
-- Need **distribution**: publish registry indexes and GitHub Release tarballs, then install via `cog add <url>`.
-- Need **ecosystem trust**: add conformance tests and certification signals.
+Read next: [Progressive Complexity](./progressive-complexity)
 
 ## Version Management
 

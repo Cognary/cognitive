@@ -46,6 +46,11 @@ cog serve --port 8000
 cog mcp
 ```
 
+如果你希望“协议化”，但只在需要时才引入复杂度：
+
+- [渐进复杂（升级触发器）](./getting-started/progressive-complexity)
+- [Killer Use Case](./getting-started/use-cases)
+
 ---
 
 ## 核心特性

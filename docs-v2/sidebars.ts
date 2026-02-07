@@ -14,6 +14,8 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/installation',
         'getting-started/first-module',
+        'getting-started/progressive-complexity',
+        'getting-started/use-cases',
         'getting-started/llm-config',
       ],
     },
@@ -118,6 +120,7 @@ const sidebars: SidebarsConfig = {
         'spec/cep/events',
         'spec/cep/conformance',
         'spec/cep/registry',
+        'spec/cep/artifacts',
       ],
     },
   ],

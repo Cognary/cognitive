@@ -37,6 +37,8 @@ docs-v2/
     getting-started/                           # 已有
       installation.md
       first-module.md
+      progressive-complexity.md
+      use-cases.md
       llm-config.md
 
     guide/                                     # 已有
@@ -96,6 +98,7 @@ docs-v2/
         events.md
         conformance.md
         registry.md
+        artifacts.md
 ```
 
 ## 4) 路由清单
@@ -109,6 +112,8 @@ docs-v2/
 | `/docs/spec` | `docs/spec.md` |
 | `/docs/getting-started/installation` | `docs/getting-started/installation.md` |
 | `/docs/getting-started/first-module` | `docs/getting-started/first-module.md` |
+| `/docs/getting-started/progressive-complexity` | `docs/getting-started/progressive-complexity.md` |
+| `/docs/getting-started/use-cases` | `docs/getting-started/use-cases.md` |
 | `/docs/getting-started/llm-config` | `docs/getting-started/llm-config.md` |
 | `/docs/guide/module-format` | `docs/guide/module-format.md` |
 | `/docs/guide/arguments` | `docs/guide/arguments.md` |
@@ -159,6 +164,7 @@ docs-v2/
 | `/docs/spec/cep/events` | `docs/spec/cep/events.md` | `cep.events.v2.2`：streaming 事件模型（可重建最终 envelope） |
 | `/docs/spec/cep/conformance` | `docs/spec/cep/conformance.md` | `cep.conformance.v2.2`：测试向量与一致性断言 |
 | `/docs/spec/cep/registry` | `docs/spec/cep/registry.md` | `cep.registry`（草案）：发现与分发（安全模型优先） |
+| `/docs/spec/cep/artifacts` | `docs/spec/cep/artifacts.md` | `cep.artifacts`：可迁移/可发布产物清单（tarball 为载体） |
 
 ## 5) 国际化路由规则
 

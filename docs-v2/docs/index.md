@@ -46,6 +46,11 @@ cog serve --port 8000
 cog mcp
 ```
 
+If you want a "protocol-grade" path, but only when needed:
+
+- [Progressive Complexity](./getting-started/progressive-complexity)
+- [Killer Use Cases](./getting-started/use-cases)
+
 ---
 
 ## Core Features

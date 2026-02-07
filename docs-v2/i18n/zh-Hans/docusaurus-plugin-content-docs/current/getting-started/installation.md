@@ -75,12 +75,10 @@ cog list
 
 ## 渐进复杂（可选）
 
-只在需要时才开启更严格的部分：
+只在需要时才引入复杂度。Cognitive 2.2 的设计目标是：既能让你 5 分钟跑通，也能逐步演进到“协议级”的严谨体系，
+而不强迫所有人一上来就把 registry / conformance / certification 全部吃下去。
 
-- 需要 **可验证**：完善/收紧 `schema.json`，并执行 `cog validate --all`。
-- 需要 **可审计**：强制 `meta.explain` + `data.rationale`，并落盘 envelope/事件流结果。
-- 需要 **分发**：发布 registry index 与 GitHub Release tarball，再通过 `cog add <url>` 安装。
-- 需要 **生态背书**：加入 conformance 测试与 certification 信号。
+下一步建议阅读：[渐进复杂（升级触发器）](./progressive-complexity)
 
 ## 版本管理
 

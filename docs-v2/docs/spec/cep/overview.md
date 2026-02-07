@@ -45,3 +45,7 @@ CEP is designed to start simple and only add structure when you need it:
 - 5-minute adoption: run modules via CLI/HTTP/MCP and consume the same envelope and error structure.
 - Add verification: enable strict schema validation and conformance checks when outputs must be provably correct.
 - Add distribution: move from local modules to registry indexes and signed release assets when you need reproducible installs.
+
+See also:
+
+- [Publishable Artifacts](./artifacts)

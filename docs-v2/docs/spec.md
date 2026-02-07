@@ -25,6 +25,7 @@ Cognitive Modules is a specification for defining verifiable, structured AI task
 - [cep.events.v2.2](./spec/cep/events)
 - [cep.conformance.v2.2](./spec/cep/conformance)
 - [cep.registry (Draft)](./spec/cep/registry)
+- [Publishable Artifacts](./spec/cep/artifacts)
 
 ## Module Structure
 
