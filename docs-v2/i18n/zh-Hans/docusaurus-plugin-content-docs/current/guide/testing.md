@@ -52,5 +52,5 @@ my-module/
 
 ## 建议
 
-- 使用 `npx cogn@2.2.12 validate` 做结构校验
-- CI 中可调用 `npx cogn@2.2.12 run` 并对比期望文件
+- 使用 `npx cogn@2.2.13 validate` 做结构校验
+- CI 中可调用 `npx cogn@2.2.13 run` 并对比期望文件

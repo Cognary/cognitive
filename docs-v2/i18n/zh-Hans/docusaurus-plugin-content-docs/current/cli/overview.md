@@ -4,17 +4,17 @@ sidebar_position: 1
 
 # CLI 概览（Node.js）
 
-Cognitive Modules CLI 通过 npm 分发。推荐入口是 `npx cogn@2.2.12 ...`（避免 PATH/二进制冲突导致误用）。
+Cognitive Modules CLI 通过 npm 分发。推荐入口是 `npx cogn@2.2.13 ...`（避免 PATH/二进制冲突导致误用）。
 
 ## 安装
 
 ```bash
 # 零安装
-npx cogn@2.2.12 --help
+npx cogn@2.2.13 --help
 
 # 全局安装
-npm install -g cogn@2.2.12
-# 或：npm install -g cognitive-modules-cli@2.2.12
+npm install -g cogn@2.2.13
+# 或：npm install -g cognitive-modules-cli@2.2.13
 ```
 
 ## 命令列表
@@ -43,13 +43,13 @@ npm install -g cogn@2.2.12
 ## 常用流程
 
 ```bash
-npx cogn@2.2.12 core new
-npx cogn@2.2.12 core run demo.md --args "hello" --pretty
-npx cogn@2.2.12 run code-reviewer --args "your code" --pretty
-npx cogn@2.2.12 init my-module
-npx cogn@2.2.12 validate my-module --v22
-npx cogn@2.2.12 add Cognary/cognitive -m code-simplifier
-npx cogn@2.2.12 compose code-review-pipeline --args "code" --trace
+npx cogn@2.2.13 core new
+npx cogn@2.2.13 core run demo.md --args "hello" --pretty
+npx cogn@2.2.13 run code-reviewer --args "your code" --pretty
+npx cogn@2.2.13 init my-module
+npx cogn@2.2.13 validate my-module --v22
+npx cogn@2.2.13 add Cognary/cognitive -m code-simplifier
+npx cogn@2.2.13 compose code-review-pipeline --args "code" --trace
 ```
 
 ## 渐进复杂度（Profiles）
@@ -74,43 +74,43 @@ CLI 通过 `--profile` 实现“按需启用复杂度”的默认策略（并提
 
 ```bash
 # 极简：跳过校验
-npx cogn@2.2.12 run ./demo.md --args "hello" --profile core
+npx cogn@2.2.13 run ./demo.md --args "hello" --profile core
 
 # 强制 prompt JSON（当 provider 原生 schema 不兼容时）
-npx cogn@2.2.12 run ./demo.md --args "hello" --structured prompt
+npx cogn@2.2.13 run ./demo.md --args "hello" --structured prompt
 
 # 更严格
-npx cogn@2.2.12 run code-reviewer --args "..." --profile strict
+npx cogn@2.2.13 run code-reviewer --args "..." --profile strict
 
 # certified：拒绝 legacy 模块，并要求 registry provenance/完整性
-npx cogn@2.2.12 run code-reviewer --args "..." --profile certified
+npx cogn@2.2.13 run code-reviewer --args "..." --profile certified
 ```
 
 ## 可迁移/可发布（Registry Tarballs）
 
 ```bash
 # 构建 tarball 资产，并生成/更新 cognitive-registry.v2.json
-npx cogn@2.2.12 registry build --tag vX.Y.Z
+npx cogn@2.2.13 registry build --tag vX.Y.Z
 
 # 校验本地 tarball 是否与 registry v2 索引一致（checksum/size/files）
-npx cogn@2.2.12 registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+npx cogn@2.2.13 registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
 
 # 校验远端 registry（拉取 index + tarball 并校验完整性）
 # 默认 "latest" registry index 策略：
 #   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
-npx cogn@2.2.12 registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+npx cogn@2.2.13 registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 
 # 固定到某个 release tag（推荐用于可复现构建与校验）
-npx cogn@2.2.12 registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
+npx cogn@2.2.13 registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
 
 # 调整远端校验限制（默认：15s、index 2MB、tarball 25MB）
-npx cogn@2.2.12 registry verify --remote \
+npx cogn@2.2.13 registry verify --remote \
   --fetch-timeout-ms 20000 \
   --max-index-bytes 2097152 \
   --max-tarball-bytes 26214400
 
 # 控制远端校验并发（默认：4；最大：8）
-npx cogn@2.2.12 registry verify --remote --concurrency 2
+npx cogn@2.2.13 registry verify --remote --concurrency 2
 ```
 
 ## Registry 拉取严谨化（Index Client）
@@ -123,7 +123,7 @@ npx cogn@2.2.12 registry verify --remote --concurrency 2
 CLI 覆盖：
 
 ```bash
-npx cogn@2.2.12 search "code" --registry-timeout-ms 15000 --registry-max-bytes 2097152
+npx cogn@2.2.13 search "code" --registry-timeout-ms 15000 --registry-max-bytes 2097152
 ```
 
 或环境变量：

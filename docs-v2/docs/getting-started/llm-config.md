@@ -6,6 +6,11 @@ sidebar_position: 3
 
 Cognitive Modules (Node CLI) supports multiple LLM providers. The CLI auto-selects a provider based on which API key is present, or you can force one with `--provider`.
 
+Notes:
+
+- If multiple provider API keys are set, the CLI will auto-select the first provider it finds. Prefer passing `--provider ...` explicitly to avoid surprises.
+- If you have `GEMINI_API_KEY` set, Gemini becomes the default provider unless overridden. If your Gemini account does not support the default model, set `--model ...` or use a different provider.
+
 ## Supported Providers
 
 | Provider | Environment Variable |
@@ -23,14 +28,14 @@ Cognitive Modules (Node CLI) supports multiple LLM providers. The CLI auto-selec
 
 ```bash
 export OPENAI_API_KEY=sk-xxx
-npx cogn@2.2.12 run code-reviewer --args "your code" --provider openai --model gpt-4o
+npx cogn@2.2.13 run code-reviewer --args "your code" --provider openai --model gpt-4o
 ```
 
 ## Example: Anthropic
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-xxx
-npx cogn@2.2.12 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
+npx cogn@2.2.13 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
 ```
 
 ## Example: Ollama (Local)
@@ -38,7 +43,7 @@ npx cogn@2.2.12 run code-reviewer --args "your code" --provider anthropic --mode
 ```bash
 # Install and start Ollama separately
 export OLLAMA_HOST=http://localhost:11434
-npx cogn@2.2.12 run code-reviewer --args "your code" --provider ollama --model llama3.1
+npx cogn@2.2.13 run code-reviewer --args "your code" --provider ollama --model llama3.1
 ```
 
 ## Model Override
@@ -49,5 +54,5 @@ npx cogn@2.2.12 run code-reviewer --args "your code" --provider ollama --model l
 ## Check Configuration
 
 ```bash
-npx cogn@2.2.12 doctor
+npx cogn@2.2.13 doctor
 ```

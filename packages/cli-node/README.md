@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/cognitive-modules-cli.svg)](https://www.npmjs.com/package/cognitive-modules-cli)
 
-Node.js/TypeScript 版本的 Cognitive Modules CLI。文档统一使用明确入口 `npx cogn@2.2.12 ...`，避免 PATH/命令冲突。
+Node.js/TypeScript 版本的 Cognitive Modules CLI。文档统一使用明确入口 `npx cogn@2.2.13 ...`，避免 PATH/命令冲突。
 
 > 这是 [cognitive-modules](../../README.md) monorepo 的一部分。
 
@@ -10,11 +10,11 @@ Node.js/TypeScript 版本的 Cognitive Modules CLI。文档统一使用明确入
 
 ```bash
 # 零安装（推荐）
-npx cogn@2.2.12 --help
+npx cogn@2.2.13 --help
 
 # 全局安装（可选）
-npm install -g cogn@2.2.12
-# 或：npm install -g cognitive-modules-cli@2.2.12
+npm install -g cogn@2.2.13
+# 或：npm install -g cognitive-modules-cli@2.2.13
 ```
 
 ## 快速开始
@@ -24,16 +24,16 @@ npm install -g cogn@2.2.12
 export OPENAI_API_KEY=sk-xxx
 
 # 查看 providers 能力矩阵（结构化输出/流式）
-npx cogn@2.2.12 providers --pretty
+npx cogn@2.2.13 providers --pretty
 
 # 运行模块
-npx cogn@2.2.12 run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cogn@2.2.13 run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 
 # 列出模块
-npx cogn@2.2.12 list
+npx cogn@2.2.13 list
 
 # 管道模式
-echo "review this code" | npx cogn@2.2.12 pipe --module code-reviewer
+echo "review this code" | npx cogn@2.2.13 pipe --module code-reviewer
 ```
 
 ## 支持的 Provider
@@ -53,14 +53,14 @@ echo "review this code" | npx cogn@2.2.12 pipe --module code-reviewer
 
 ```bash
 # Core（单文件极简路径）
-npx cogn@2.2.12 core new                       # 生成 demo.md
-npx cogn@2.2.12 core run demo.md --args "..."  # 运行单文件模块
-npx cogn@2.2.12 core promote demo.md           # 升级为 v2 模块目录
+npx cogn@2.2.13 core new                       # 生成 demo.md
+npx cogn@2.2.13 core run demo.md --args "..."  # 运行单文件模块
+npx cogn@2.2.13 core promote demo.md           # 升级为 v2 模块目录
 
 # 渐进复杂度（Profiles）
-npx cogn@2.2.12 run code-reviewer --args "..." --profile core       # 极简：跳过校验
-npx cogn@2.2.12 run code-reviewer --args "..." --profile standard   # 推荐：日常默认
-npx cogn@2.2.12 run code-reviewer --args "..." --profile certified  # 最严格：v2.2 + 审计 + registry provenance/完整性门禁
+npx cogn@2.2.13 run code-reviewer --args "..." --profile core       # 极简：跳过校验
+npx cogn@2.2.13 run code-reviewer --args "..." --profile standard   # 推荐：日常默认
+npx cogn@2.2.13 run code-reviewer --args "..." --profile certified  # 最严格：v2.2 + 审计 + registry provenance/完整性门禁
 # 兼容别名（不推荐写进新文档）：
 # - default -> standard
 # - strict  -> standard（deprecated preset）
@@ -70,41 +70,41 @@ npx cogn@2.2.12 run code-reviewer --args "..." --profile certified  # 最严格�
 # - --audit（写入 ~/.cognitive/audit/）
 
 # 模块操作
-npx cogn@2.2.12 list                      # 列出模块
-npx cogn@2.2.12 run <module> --args "..." # 运行模块
-npx cogn@2.2.12 add <url> -m <module>     # 从 GitHub 添加模块
-npx cogn@2.2.12 update <module>           # 更新模块
-npx cogn@2.2.12 remove <module>           # 删除模块
-npx cogn@2.2.12 versions <url>            # 查看可用版本
-npx cogn@2.2.12 init <name>               # 创建新模块
-npx cogn@2.2.12 pipe --module <name>      # 管道模式
+npx cogn@2.2.13 list                      # 列出模块
+npx cogn@2.2.13 run <module> --args "..." # 运行模块
+npx cogn@2.2.13 add <url> -m <module>     # 从 GitHub 添加模块
+npx cogn@2.2.13 update <module>           # 更新模块
+npx cogn@2.2.13 remove <module>           # 删除模块
+npx cogn@2.2.13 versions <url>            # 查看可用版本
+npx cogn@2.2.13 init <name>               # 创建新模块
+npx cogn@2.2.13 pipe --module <name>      # 管道模式
 
 # 组合执行
-npx cogn@2.2.12 compose <module> --args "..."
-npx cogn@2.2.12 compose-info <module>
+npx cogn@2.2.13 compose <module> --args "..."
+npx cogn@2.2.13 compose-info <module>
 
 # 校验与迁移
-npx cogn@2.2.12 validate <module> --v22
-npx cogn@2.2.12 validate --all
-npx cogn@2.2.12 migrate <module> --dry-run
-npx cogn@2.2.12 migrate --all --no-backup
+npx cogn@2.2.13 validate <module> --v22
+npx cogn@2.2.13 validate --all
+npx cogn@2.2.13 migrate <module> --dry-run
+npx cogn@2.2.13 migrate --all --no-backup
 
 # 服务器
-npx cogn@2.2.12 serve --port 8000         # 启动 HTTP API 服务
-npx cogn@2.2.12 mcp                       # 启动 MCP 服务（Claude Code / Cursor）
+npx cogn@2.2.13 serve --port 8000         # 启动 HTTP API 服务
+npx cogn@2.2.13 mcp                       # 启动 MCP 服务（Claude Code / Cursor）
 
 # 环境检查
-npx cogn@2.2.12 doctor
+npx cogn@2.2.13 doctor
 
 # Registry（索引与分发）
 # 默认 registry index（latest）：
 #   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 # 可通过环境变量或全局参数覆盖：
-COGNITIVE_REGISTRY_URL=... npx cogn@2.2.12 search
-COGNITIVE_REGISTRY_TIMEOUT_MS=15000 COGNITIVE_REGISTRY_MAX_BYTES=2097152 npx cogn@2.2.12 search
-npx cogn@2.2.12 search --registry https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
-npx cogn@2.2.12 registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
-npx cogn@2.2.12 registry verify --remote --concurrency 2
+COGNITIVE_REGISTRY_URL=... npx cogn@2.2.13 search
+COGNITIVE_REGISTRY_TIMEOUT_MS=15000 COGNITIVE_REGISTRY_MAX_BYTES=2097152 npx cogn@2.2.13 search
+npx cogn@2.2.13 search --registry https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
+npx cogn@2.2.13 registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+npx cogn@2.2.13 registry verify --remote --concurrency 2
 ```
 
 ## 开发

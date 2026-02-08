@@ -9,7 +9,7 @@ Run a Cognitive Module.
 ## Syntax
 
 ```bash
-npx cogn@2.2.12 run <module> [options]
+npx cogn@2.2.13 run <module> [options]
 ```
 
 ## Options
@@ -33,27 +33,27 @@ npx cogn@2.2.12 run <module> [options]
 ### Using --args
 
 ```bash
-npx cogn@2.2.12 run code-reviewer --args "def foo(): pass" --pretty
+npx cogn@2.2.13 run code-reviewer --args "def foo(): pass" --pretty
 ```
 
 ### Running a One-File Module
 
 ```bash
-npx cogn@2.2.12 run ./demo-single-file.md --args "hello" --pretty
+npx cogn@2.2.13 run ./demo-single-file.md --args "hello" --pretty
 ```
 
-If you want an even smaller path (no file), see [`core`](./core) and `npx cogn@2.2.12 core run --stdin`.
+If you want an even smaller path (no file), see [`core`](./core) and `npx cogn@2.2.13 core run --stdin`.
 
 ### Using JSON input
 
 ```bash
-npx cogn@2.2.12 run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
+npx cogn@2.2.13 run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
 ```
 
 ### Specify Provider/Model
 
 ```bash
-npx cogn@2.2.12 run code-reviewer --args "code" --provider openai --model gpt-4o
+npx cogn@2.2.13 run code-reviewer --args "code" --provider openai --model gpt-4o
 ```
 
 ## Output

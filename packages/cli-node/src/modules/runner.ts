@@ -2268,8 +2268,9 @@ export async function runModule(
           }
         }
       }
-    } else if (enableRepair) {
-      // Repair error envelopes to ensure they have proper meta fields
+    } else if (!response.ok && enableRepair) {
+      // Repair error envelopes to ensure they have proper meta fields.
+      // Important: do not run this on successful envelopes when validation is disabled.
       response = repairErrorEnvelope(response as unknown as Record<string, unknown>);
       response.version = ENVELOPE_VERSION;
     }

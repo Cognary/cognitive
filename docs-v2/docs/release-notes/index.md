@@ -8,7 +8,7 @@ This section tracks runtime and package changes for Cognitive 2.2.x.
 
 ## Latest
 
-- [v2.2.12](./v2.2.12)
+- [v2.2.13](./v2.2.13)
 
 ## Notes
 

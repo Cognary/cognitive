@@ -95,7 +95,7 @@ Conformance is a prerequisite for certification.
 **Automated Verification:**
 
 ```bash
-npx cogn@2.2.12 validate my-module --v22
+npx cogn@2.2.13 validate my-module --v22
 # Must pass all checks
 ```
 
