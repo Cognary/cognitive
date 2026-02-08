@@ -673,8 +673,9 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
 
   const localTarPath = async (moduleName: string, tarballRef: string): Promise<string> => {
     const fileName = tarballFileName(tarballRef);
-    // Avoid collisions when we download into a temp dir (remote verify).
-    if (wantRemote && tmpAssetsRoot && !opts.assetsDir) {
+    // Avoid collisions on remote verify (query strings can produce identical basenames).
+    // Even when the caller provides --assets-dir, we isolate per module to keep verification correct.
+    if (wantRemote) {
       const p = path.join(assetsDir, moduleName, fileName);
       await fs.mkdir(path.dirname(p), { recursive: true });
       return p;

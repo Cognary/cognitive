@@ -322,6 +322,7 @@ describe('registry assets', () => {
     const root = tmpPath('cog-reg-assets-remote-collide');
     const modulesDir = path.join(root, 'modules');
     const outDir = path.join(root, 'dist');
+    const downloadDir = path.join(root, 'downloads');
     const v1Path = path.join(root, 'v1.json');
     const registryOut = path.join(root, 'registry.v2.json');
 
@@ -402,12 +403,17 @@ describe('registry assets', () => {
       const verified = await verifyRegistryAssets({
         registryIndexPath: indexUrl,
         remote: true,
+        assetsDir: downloadDir,
         concurrency: 2,
       });
 
       expect(verified.ok).toBe(true);
       expect(verified.failed).toBe(0);
       expect(verified.passed).toBe(2);
+
+      // Both files should exist and be isolated per-module to avoid basename collisions.
+      await expect(fs.stat(path.join(downloadDir, 'a', 'bundle.tar.gz'))).resolves.toBeTruthy();
+      await expect(fs.stat(path.join(downloadDir, 'b', 'bundle.tar.gz'))).resolves.toBeTruthy();
     } finally {
       globalThis.fetch = originalFetch;
       await fs.rm(root, { recursive: true, force: true });
