@@ -13,7 +13,10 @@ export class GeminiProvider extends BaseProvider {
   private model: string;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
 
-  constructor(apiKey?: string, model = 'gemini-3-flash') {
+  // Default model is intentionally overrideable via `--model`.
+  // If this model is not available for a user's account/API version, they should pass an
+  // explicit model id (or switch providers) rather than relying on implicit defaults.
+  constructor(apiKey?: string, model = 'gemini-3-pro-preview') {
     super();
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
     this.model = model;

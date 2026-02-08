@@ -117,7 +117,7 @@ export function listProviders(): Array<{
   streaming: boolean;
 }> {
   return [
-    providerRow('gemini', !!process.env.GEMINI_API_KEY, 'gemini-3-flash', () => new GeminiProvider('')),
+    providerRow('gemini', !!process.env.GEMINI_API_KEY, 'gemini-3-pro-preview', () => new GeminiProvider('')),
     providerRow('openai', !!process.env.OPENAI_API_KEY, 'gpt-5.2', () => new OpenAIProvider('')),
     providerRow('anthropic', !!process.env.ANTHROPIC_API_KEY, 'claude-sonnet-4.5', () => new AnthropicProvider('')),
     providerRow('deepseek', !!process.env.DEEPSEEK_API_KEY, 'deepseek-v3.2', () => new DeepSeekProvider('')),
