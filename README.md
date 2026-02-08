@@ -25,14 +25,14 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.12 --help
+npx cogn@2.2.13 --help
 
 # Or use the full package name
-npx cognitive-modules-cli@2.2.12 --help
+npx cognitive-modules-cli@2.2.13 --help
 
 # Global installation
-npm install -g cogn@2.2.12
-# or: npm install -g cognitive-modules-cli@2.2.12
+npm install -g cogn@2.2.13
+# or: npm install -g cognitive-modules-cli@2.2.13
 ```
 
 > `cogn` is an alias package for `cognitive-modules-cli`. Docs use `npx cogn@<version> ...` as the canonical entrypoint.
@@ -63,14 +63,14 @@ Override via:
 export OPENAI_API_KEY=sk-xxx
 
 # 5-minute path: run a one-file "Core" module from stdin (prints a v2.2 envelope)
-cat <<'EOF' | npx cogn@2.2.12 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.13 core run --stdin --args "hello" --pretty
 Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
 EOF
 ```
 
 Notes:
 
-- The recommended, unambiguous entrypoint is `npx cogn@2.2.12 ...` (avoids any `cog` binary conflicts on your machine).
+- The recommended, unambiguous entrypoint is `npx cogn@2.2.13 ...` (avoids any `cog` binary conflicts on your machine).
 - When passing `--provider/--model`, put them after the command, e.g. `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`.
 
 ## v2.2 Response Format
@@ -114,48 +114,48 @@ All modules return the unified v2.2 envelope format:
 
 ```bash
 # Recommended (no global install needed):
-# npx cogn@2.2.12 <command> ...
+# npx cogn@2.2.13 <command> ...
 
 # Module management
-npx cogn@2.2.12 list
-npx cogn@2.2.12 add <url> --module <path>
-npx cogn@2.2.12 update <module>
-npx cogn@2.2.12 remove <module>
-npx cogn@2.2.12 versions <url>
+npx cogn@2.2.13 list
+npx cogn@2.2.13 add <url> --module <path>
+npx cogn@2.2.13 update <module>
+npx cogn@2.2.13 remove <module>
+npx cogn@2.2.13 versions <url>
 
 # Run modules
-npx cogn@2.2.12 run <module> --args "..."
-npx cogn@2.2.12 run <module> --input '{"query":"..."}'
+npx cogn@2.2.13 run <module> --args "..."
+npx cogn@2.2.13 run <module> --input '{"query":"..."}'
 
 # Composition
-npx cogn@2.2.12 compose <module> --args "..."
-npx cogn@2.2.12 compose-info <module>
+npx cogn@2.2.13 compose <module> --args "..."
+npx cogn@2.2.13 compose-info <module>
 
 # Validation & migration
-npx cogn@2.2.12 validate <module> --v22
-npx cogn@2.2.12 validate --all
-npx cogn@2.2.12 migrate <module> --dry-run
-npx cogn@2.2.12 migrate --all --no-backup
+npx cogn@2.2.13 validate <module> --v22
+npx cogn@2.2.13 validate --all
+npx cogn@2.2.13 migrate <module> --dry-run
+npx cogn@2.2.13 migrate --all --no-backup
 
 # Other
-npx cogn@2.2.12 pipe --module <name>
-npx cogn@2.2.12 init [name]
-npx cogn@2.2.12 doctor
-npx cogn@2.2.12 serve --port 8000
-npx cogn@2.2.12 mcp
+npx cogn@2.2.13 pipe --module <name>
+npx cogn@2.2.13 init [name]
+npx cogn@2.2.13 doctor
+npx cogn@2.2.13 serve --port 8000
+npx cogn@2.2.13 mcp
 ```
 
 ## Built-in Modules (Repository)
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
-| `code-reviewer` | decision | Code review | `npx cogn@2.2.12 run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.12 run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | Task priority sorting | `npx cogn@2.2.12 run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API design | `npx cogn@2.2.12 run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.12 run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.12 run ui-component-generator --args "button component"` |
-| `product-analyzer` | exploration | Product analysis | `npx cogn@2.2.12 run product-analyzer --args "health product"` |
+| `code-reviewer` | decision | Code review | `npx cogn@2.2.13 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.13 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | Task priority sorting | `npx cogn@2.2.13 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API design | `npx cogn@2.2.13 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.13 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.13 run ui-component-generator --args "button component"` |
+| `product-analyzer` | exploration | Product analysis | `npx cogn@2.2.13 run product-analyzer --args "health product"` |
 
 ## Module Format (v2.2)
 
@@ -230,7 +230,7 @@ See `docs-v2/docs/integration/providers.md`.
 Check config:
 
 ```bash
-npx cogn@2.2.12 doctor
+npx cogn@2.2.13 doctor
 ```
 
 ## Development (Node.js)

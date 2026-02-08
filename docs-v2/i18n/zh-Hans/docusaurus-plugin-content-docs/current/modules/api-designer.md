@@ -32,7 +32,7 @@ sidebar_position: 5
 ## 使用
 
 ```bash
-npx cogn@2.2.12 run api-designer --args "用户系统 CRUD API" --pretty
+npx cogn@2.2.13 run api-designer --args "用户系统 CRUD API" --pretty
 ```
 
 ## 输出示例

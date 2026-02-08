@@ -62,6 +62,39 @@ class SchemaSensitiveProvider implements Provider {
 }
 
 describe('runner structured output preference', () => {
+  it('does not convert ok=true envelopes into errors when validateOutput=false (repair applies to errors only)', async () => {
+    class SimpleProvider implements Provider {
+      name = 'simple';
+      isConfigured(): boolean {
+        return true;
+      }
+      async invoke(_params: InvokeParams): Promise<InvokeResult> {
+        return {
+          // Intentionally omit `version` to exercise v2.2 wrapping/repair without validation.
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 0.9, risk: 'low', explain: 'ok' },
+            data: { rationale: 'r', result: 'x' },
+          }),
+        };
+      }
+    }
+
+    const provider = new SimpleProvider();
+    const module = makeModule();
+    const policy = makePolicy({ validate: 'off', enableRepair: true });
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      policy,
+    });
+
+    expect(res.ok).toBe(true);
+    expect((res as any).error).toBeUndefined();
+    expect((res as any).data?.result).toBe('x');
+  });
+
   it('auto(validate=auto): tier=exploration disables provider schema hints but keeps post-hoc output validation', async () => {
     const provider = new SchemaSensitiveProvider();
     const module = makeModule();

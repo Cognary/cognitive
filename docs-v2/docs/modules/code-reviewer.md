@@ -32,7 +32,7 @@ Review code and provide structured improvement suggestions.
 ## Usage
 
 ```bash
-npx cogn@2.2.12 run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cogn@2.2.13 run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 ```
 
 ## Output Example

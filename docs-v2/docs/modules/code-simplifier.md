@@ -47,7 +47,7 @@ Simplify code while preserving behavior (v2.2 format).
 ## Usage
 
 ```bash
-npx cogn@2.2.12 run code-simplifier --args "function calculate(x) { 
+npx cogn@2.2.13 run code-simplifier --args "function calculate(x) { 
   if (x > 0) { return x * 2; } 
   else { return x * 2; } 
 }" --pretty
