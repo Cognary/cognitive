@@ -1,0 +1,38 @@
+name: Cognitive PR Review Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  cognitive-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Compute Diff
+        id: diff
+        run: |
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          git diff --unified=0 "origin/${{ github.base_ref }}...${{ github.sha }}" > pr.diff
+          echo "diff_path=pr.diff" >> "$GITHUB_OUTPUT"
+
+      - name: Run Cognitive Module (code-reviewer)
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          # Keep flags after the command so npx doesn't swallow them.
+          cat "${{ steps.diff.outputs.diff_path }}" | npx cogn@2.2.12 run code-reviewer --stdin --pretty --profile standard --structured auto > cognitive.json
+
+      - name: Enforce Risk Threshold
+        run: node scripts/check-risk.mjs cognitive.json
+

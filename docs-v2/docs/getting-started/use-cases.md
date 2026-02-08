@@ -48,3 +48,13 @@ Composition becomes a "protocol feature" when:
 
 This is the boundary where Cognitive is no longer "a CLI tool", but "a workflow contract system".
 
+## 4) PR Review Gate (CI)
+
+Turn AI code review into a CI gate:
+
+- Run `code-reviewer` on the PR diff
+- Block merges when `meta.risk === "high"`
+
+Start here:
+
+- `getting-started/pr-review-gate`
