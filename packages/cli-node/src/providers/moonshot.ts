@@ -21,6 +21,37 @@ export class MoonshotProvider extends BaseProvider {
     return !!this.apiKey;
   }
 
+  private buildRequestBody(params: InvokeParams): Record<string, unknown> {
+    // Moonshot (Kimi) model-specific constraints:
+    // - Some Kimi models reject arbitrary temperatures (e.g. `kimi-k2.5` only allows 1).
+    const model = this.model;
+    let temperature = params.temperature ?? 0.7;
+    if (model === 'kimi-k2.5') temperature = 1;
+
+    const body: Record<string, unknown> = {
+      model,
+      messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
+      temperature,
+      max_tokens: params.maxTokens ?? 4096,
+    };
+
+    // Add JSON mode if schema provided
+    if (params.jsonSchema) {
+      body.response_format = { type: 'json_object' };
+      const lastUserIdx = params.messages.findLastIndex((m) => m.role === 'user');
+      if (lastUserIdx >= 0) {
+        const messages = [...params.messages];
+        messages[lastUserIdx] = {
+          ...messages[lastUserIdx],
+          content: messages[lastUserIdx].content + this.buildJsonPrompt(params.jsonSchema),
+        };
+        body.messages = messages.map((m) => ({ role: m.role, content: m.content }));
+      }
+    }
+
+    return body;
+  }
+
   async invoke(params: InvokeParams): Promise<InvokeResult> {
     if (!this.isConfigured()) {
       throw new Error('Moonshot API key not configured. Set MOONSHOT_API_KEY environment variable.');
@@ -28,26 +59,7 @@ export class MoonshotProvider extends BaseProvider {
 
     const url = `${this.baseUrl}/chat/completions`;
 
-    const body: Record<string, unknown> = {
-      model: this.model,
-      messages: params.messages.map(m => ({ role: m.role, content: m.content })),
-      temperature: params.temperature ?? 0.7,
-      max_tokens: params.maxTokens ?? 4096,
-    };
-
-    // Add JSON mode if schema provided
-    if (params.jsonSchema) {
-      body.response_format = { type: 'json_object' };
-      const lastUserIdx = params.messages.findLastIndex(m => m.role === 'user');
-      if (lastUserIdx >= 0) {
-        const messages = [...params.messages];
-        messages[lastUserIdx] = {
-          ...messages[lastUserIdx],
-          content: messages[lastUserIdx].content + this.buildJsonPrompt(params.jsonSchema),
-        };
-        body.messages = messages.map(m => ({ role: m.role, content: m.content }));
-      }
-    }
+    const body = this.buildRequestBody(params);
 
     const response = await fetch(url, {
       method: 'POST',
