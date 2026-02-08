@@ -1,0 +1,47 @@
+{
+  "$test": {
+    "name": "parse-retry-standard",
+    "description": "standard profile retries once on invalid JSON and succeeds on the second provider response",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "runtime": {
+    "policy": {
+      "profile": "standard"
+    },
+    "module": {
+      "name": "vector-parse-retry",
+      "version": "0.0.0",
+      "responsibility": "vector",
+      "prompt": "Return JSON only.",
+      "excludes": [],
+      "format": "v2",
+      "formatVersion": "v2.2",
+      "tier": "decision",
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "args": "hello",
+    "provider": {
+      "capabilities": {
+        "structuredOutput": "prompt",
+        "streaming": false
+      },
+      "responses": [
+        {
+          "content": "Sure! Here is the JSON:\n{ ok: true, meta: { confidence: 1, risk: none, explain: ok }, data: { rationale: r, result: hello } }"
+        },
+        {
+          "content": "{ \"ok\": true, \"meta\": { \"confidence\": 1, \"risk\": \"none\", \"explain\": \"ok\" }, \"data\": { \"rationale\": \"r\", \"result\": \"hello\" } }"
+        }
+      ]
+    },
+    "expect": {
+      "ok": true,
+      "invocations": 2,
+      "parse_retries": 1
+    }
+  }
+}

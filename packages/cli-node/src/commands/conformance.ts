@@ -13,10 +13,12 @@ import type { ErrorObject } from 'ajv';
 const Ajv = _Ajv.default || _Ajv;
 import _addFormats from 'ajv-formats';
 const addFormats = (_addFormats as any).default || _addFormats;
-import type { CommandContext, CommandResult } from '../types.js';
+import type { CognitiveModule, CommandContext, CommandResult, ExecutionPolicy, Provider, ProviderCapabilities } from '../types.js';
+import { runModule } from '../modules/runner.js';
+import { resolveExecutionPolicy } from '../profile.js';
 
 type ConformanceLevel = 1 | 2 | 3;
-type ConformanceSuite = 'envelope' | 'stream' | 'registry' | 'all';
+type ConformanceSuite = 'envelope' | 'stream' | 'registry' | 'runtime' | 'all';
 
 export type ConformanceFailurePhase =
   | 'read'
@@ -24,7 +26,9 @@ export type ConformanceFailurePhase =
   | 'schema'
   | 'entry'
   | 'event'
-  | 'end.result';
+  | 'end.result'
+  | 'runtime.invoke'
+  | 'runtime.expect';
 
 export type ConformanceVectorResult = {
   file: string;
@@ -109,8 +113,8 @@ function clampLevel(n: number | undefined): ConformanceLevel {
 
 function clampSuite(s: string | undefined): ConformanceSuite {
   const v = (s ?? 'envelope').trim();
-  if (v === 'envelope' || v === 'stream' || v === 'registry' || v === 'all') return v;
-  throw new Error(`Invalid --suite: ${v} (expected envelope|stream|registry|all)`);
+  if (v === 'envelope' || v === 'stream' || v === 'registry' || v === 'runtime' || v === 'all') return v;
+  throw new Error(`Invalid --suite: ${v} (expected envelope|stream|registry|runtime|all)`);
 }
 
 function formatAjvErrors(errors: ErrorObject[] | null | undefined): string {
@@ -358,6 +362,226 @@ function validateRegistryVectors(specDir: string, level: ConformanceLevel): Conf
   return results;
 }
 
+type RuntimeVector = {
+  $test?: {
+    name?: string;
+    description?: string;
+    expects?: 'accept' | 'reject';
+    conformance_level?: number;
+  };
+  runtime?: {
+    policy?: {
+      profile?: string;
+      validate?: string | null;
+      audit?: boolean;
+      structured?: string | null;
+      noValidate?: boolean;
+    };
+    module?: Partial<CognitiveModule>;
+    args?: string;
+    input?: Record<string, unknown>;
+    expect?: {
+      ok?: boolean;
+      invocations?: number;
+      error_code?: string;
+      parse_retries?: number;
+      parse_strategy?: string;
+      parse_retry_attempted?: boolean;
+    };
+    provider?: {
+      capabilities?: ProviderCapabilities;
+      responses?: Array<{ content?: string; error?: string }>;
+    };
+  };
+};
+
+class VectorProvider implements Provider {
+  name = 'vector';
+  calls = 0;
+  private readonly caps: ProviderCapabilities;
+  private readonly queue: Array<{ content?: string; error?: string }>;
+
+  constructor(caps: ProviderCapabilities, queue: Array<{ content?: string; error?: string }>) {
+    this.caps = caps;
+    this.queue = [...queue];
+  }
+
+  isConfigured(): boolean {
+    return true;
+  }
+
+  getCapabilities(): ProviderCapabilities {
+    return this.caps;
+  }
+
+  async invoke(): Promise<{ content: string }> {
+    this.calls++;
+    const next = this.queue.shift();
+    if (!next) return { content: '' };
+    if (next.error) throw new Error(next.error);
+    return { content: String(next.content ?? '') };
+  }
+}
+
+async function validateRuntimeVectors(specDir: string, level: ConformanceLevel): Promise<ConformanceVectorResult[]> {
+  const envelopeSchemaPath = path.join(specDir, 'response-envelope.schema.json');
+  const vectorsDir = path.join(specDir, 'runtime-vectors');
+  const validDir = path.join(vectorsDir, 'valid');
+  const invalidDir = path.join(vectorsDir, 'invalid');
+
+  const ajv = new Ajv({ allErrors: true, strict: false });
+  addFormats(ajv);
+  const envelopeSchema = readJson(envelopeSchemaPath) as any;
+  const validateEnvelope = ajv.compile(envelopeSchema);
+
+  // Only treat `valid/` and `invalid/` as vectors (ignore fixtures and other JSON files).
+  const files = [
+    ...(fs.existsSync(validDir) ? findJsonFiles(validDir) : []),
+    ...(fs.existsSync(invalidDir) ? findJsonFiles(invalidDir) : []),
+  ];
+  const results: ConformanceVectorResult[] = [];
+
+  for (const file of files) {
+    let vector: RuntimeVector;
+    try {
+      vector = readJson(file) as RuntimeVector;
+    } catch (e) {
+      results.push({
+        file: relFromSpec(specDir, file),
+        name: path.basename(file),
+        expects: 'reject',
+        level: 1,
+        passed: false,
+        isValid: false,
+        phase: 'parse',
+        error: e instanceof Error ? e.message : String(e),
+      });
+      continue;
+    }
+
+    const meta = vector?.$test ?? {};
+    const expects = (meta?.expects ?? 'accept') as 'accept' | 'reject';
+    const vecLevel = Number(meta?.conformance_level ?? 2);
+    if (vecLevel > level) continue;
+    const name = (meta?.name ?? path.basename(file, '.json')) as string;
+
+    let ok = true;
+    let err = '';
+    let phase: ConformanceFailurePhase | undefined;
+
+    try {
+      const rt = vector.runtime;
+      if (!rt) throw new Error('runtime must be present');
+
+      const policy: ExecutionPolicy = resolveExecutionPolicy({
+        profile: rt.policy?.profile ?? 'standard',
+        validate: rt.policy?.validate ?? null,
+        noValidate: rt.policy?.noValidate ?? false,
+        audit: rt.policy?.audit ?? false,
+        structured: rt.policy?.structured ?? null,
+      });
+
+      const moduleFromVec = rt.module ?? {};
+      // Allow vectors to reference repo-relative module locations so the suite is portable.
+      const repoRoot = path.dirname(specDir);
+      const locRaw = (moduleFromVec as any).location ?? file;
+      const loc =
+        typeof locRaw === 'string' && locRaw.trim() && !path.isAbsolute(locRaw)
+          ? path.resolve(repoRoot, locRaw)
+          : locRaw;
+      const mod: CognitiveModule = {
+        name: moduleFromVec.name ?? 'vector',
+        version: moduleFromVec.version ?? '0.0.0',
+        responsibility: moduleFromVec.responsibility ?? 'vector',
+        prompt: moduleFromVec.prompt ?? 'Return JSON only.',
+        excludes: moduleFromVec.excludes ?? [],
+        format: moduleFromVec.format ?? 'v2',
+        formatVersion: moduleFromVec.formatVersion ?? 'v2.2',
+        tier: moduleFromVec.tier ?? 'decision',
+        ...(moduleFromVec as any),
+        // Ensure the resolved location wins over the raw vector string.
+        location: loc,
+      };
+
+      const caps: ProviderCapabilities =
+        rt.provider?.capabilities ?? { structuredOutput: 'prompt', streaming: false };
+      const provider = new VectorProvider(caps, rt.provider?.responses ?? []);
+
+      const res = await runModule(mod, provider, {
+        args: rt.args,
+        input: rt.input as any,
+        useV22: true,
+        policy,
+      });
+
+      if (!validateEnvelope(res)) {
+        phase = 'schema';
+        throw new Error(`result invalid envelope: ${formatAjvErrors(validateEnvelope.errors)}`);
+      }
+
+      const exp = rt.expect ?? {};
+      if (typeof exp.invocations === 'number' && provider.calls !== exp.invocations) {
+        phase = 'runtime.expect';
+        throw new Error(`expected invocations=${exp.invocations}, got=${provider.calls}`);
+      }
+
+      if (typeof exp.ok === 'boolean' && (res as any).ok !== exp.ok) {
+        phase = 'runtime.expect';
+        throw new Error(`expected ok=${String(exp.ok)}, got=${String((res as any).ok)}`);
+      }
+
+      if (exp.error_code) {
+        const code = (res as any)?.error?.code;
+        if (code !== exp.error_code) {
+          phase = 'runtime.expect';
+          throw new Error(`expected error.code=${exp.error_code}, got=${String(code)}`);
+        }
+      }
+
+      if (typeof exp.parse_retries === 'number') {
+        const retries = (res as any)?.meta?.policy?.parse?.retries;
+        if (retries !== exp.parse_retries) {
+          phase = 'runtime.expect';
+          throw new Error(`expected meta.policy.parse.retries=${exp.parse_retries}, got=${String(retries)}`);
+        }
+      }
+
+      if (exp.parse_strategy) {
+        const strategy = (res as any)?.meta?.policy?.parse?.strategy;
+        if (strategy !== exp.parse_strategy) {
+          phase = 'runtime.expect';
+          throw new Error(`expected meta.policy.parse.strategy=${exp.parse_strategy}, got=${String(strategy)}`);
+        }
+      }
+
+      if (typeof exp.parse_retry_attempted === 'boolean') {
+        const attempted = (res as any)?.error?.details?.parse_retry?.attempted;
+        if (attempted !== exp.parse_retry_attempted) {
+          phase = 'runtime.expect';
+          throw new Error(`expected error.details.parse_retry.attempted=${String(exp.parse_retry_attempted)}, got=${String(attempted)}`);
+        }
+      }
+    } catch (e) {
+      ok = false;
+      err = e instanceof Error ? e.message : String(e);
+    }
+
+    const passed = expects === 'accept' ? ok : !ok;
+    results.push({
+      file: relFromSpec(specDir, file),
+      name,
+      expects,
+      level: vecLevel,
+      passed,
+      isValid: ok,
+      phase: ok ? undefined : (phase ?? 'runtime.expect'),
+      error: ok ? undefined : err,
+    });
+  }
+
+  return results;
+}
+
 export async function conformance(ctx: CommandContext, options: ConformanceOptions = {}): Promise<CommandResult> {
   const suite = clampSuite(options.suite);
   const level = clampLevel(options.level);
@@ -390,6 +614,9 @@ export async function conformance(ctx: CommandContext, options: ConformanceOptio
     }
     if (suite === 'registry' || suite === 'all') {
       results = results.concat(validateRegistryVectors(specDir, level));
+    }
+    if (suite === 'runtime' || suite === 'all') {
+      results = results.concat(await validateRuntimeVectors(specDir, level));
     }
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : String(e) };
