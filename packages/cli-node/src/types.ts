@@ -20,6 +20,14 @@ export type StructuredOutputMode = 'none' | 'prompt' | 'native';
 export type JsonSchemaMode = Exclude<StructuredOutputMode, 'none'>;
 
 /**
+ * Dialect for a provider-native structured output API.
+ *
+ * The runtime's schemas are JSON Schema (draft-2020-12-ish). Some providers expose a "native schema"
+ * API surface, but it may not accept JSON Schema directly.
+ */
+export type NativeSchemaDialect = 'json-schema' | 'gemini-responseSchema';
+
+/**
  * Runtime preference for how to apply structured output.
  *
  * - auto: choose based on provider capabilities (and allow safe downgrade from native -> prompt)
@@ -32,6 +40,10 @@ export type StructuredOutputPreference = 'auto' | 'off' | 'prompt' | 'native';
 export interface ProviderCapabilities {
   structuredOutput: StructuredOutputMode;
   streaming: boolean;
+  /** If structuredOutput === 'native', which dialect the provider expects. Defaults to 'json-schema'. */
+  nativeSchemaDialect?: NativeSchemaDialect;
+  /** Optional hint for safety limits (bytes) when passing native schemas. */
+  maxNativeSchemaBytes?: number;
 }
 
 export interface Provider {

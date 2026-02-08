@@ -1541,35 +1541,106 @@ function getProviderCapabilities(provider: Provider): ProviderCapabilities {
   };
 }
 
+function providerSupportsNativeJsonSchema(caps: ProviderCapabilities): boolean {
+  if (caps.structuredOutput !== 'native') return false;
+  const dialect = caps.nativeSchemaDialect ?? 'json-schema';
+  return dialect === 'json-schema';
+}
+
+function schemaByteLength(schema: object): number {
+  try {
+    return Buffer.byteLength(JSON.stringify(schema), 'utf8');
+  } catch {
+    // If something is non-serializable, treat as huge and disable native.
+    return Number.MAX_SAFE_INTEGER;
+  }
+}
+
 function resolveJsonSchemaParams(
   module: CognitiveModule,
   provider: Provider,
   validateOutput: boolean,
   structured: StructuredOutputPreference | undefined
-): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode; allowSchemaFallback?: boolean } {
+): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode; allowSchemaFallback?: boolean; policy?: { requested: StructuredOutputPreference; resolved: StructuredOutputPreference; reason: string } } {
   if (!validateOutput) return {};
   if (!module.outputSchema) return {};
 
   const pref: StructuredOutputPreference = structured ?? 'auto';
-  if (pref === 'off') return {};
+  if (pref === 'off') return { policy: { requested: pref, resolved: 'off', reason: 'structured=off' } };
 
   if (pref === 'prompt') {
-    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'prompt', allowSchemaFallback: false };
-  }
-  if (pref === 'native') {
-    // "native" means "prefer native", not "fail hard on provider schema dialect mismatches".
-    // Some providers (notably Gemini) accept only a restricted schema subset and can reject
-    // otherwise-valid JSON Schema. Retrying once in prompt mode yields a much better UX while
-    // still keeping the initial attempt "native".
-    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true };
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'prompt', allowSchemaFallback: false, policy: { requested: pref, resolved: 'prompt', reason: 'structured=prompt' } };
   }
 
-  // auto: choose based on provider capabilities.
   const caps = getProviderCapabilities(provider);
   if (caps.structuredOutput === 'none') return {};
 
-  const jsonSchemaMode: JsonSchemaMode = caps.structuredOutput === 'native' ? 'native' : 'prompt';
-  return { jsonSchema: module.outputSchema, jsonSchemaMode, allowSchemaFallback: true };
+  if (pref === 'native') {
+    // "native" means "prefer native", not "fail hard".
+    // If the provider doesn't support native structured output, safely downgrade to prompt guidance.
+    if (!providerSupportsNativeJsonSchema(caps)) {
+      const dialect = caps.nativeSchemaDialect ?? (caps.structuredOutput === 'native' ? 'unknown' : 'n/a');
+      return {
+        jsonSchema: module.outputSchema,
+        jsonSchemaMode: 'prompt',
+        allowSchemaFallback: false,
+        policy: {
+          requested: pref,
+          resolved: 'prompt',
+          reason:
+            caps.structuredOutput !== 'native'
+              ? `provider lacks native structured output (${caps.structuredOutput})`
+              : `provider native schema dialect is not JSON Schema (${dialect})`,
+        },
+      };
+    }
+    const maxBytes = caps.maxNativeSchemaBytes;
+    if (typeof maxBytes === 'number' && maxBytes > 0) {
+      const bytes = schemaByteLength(module.outputSchema);
+      if (bytes > maxBytes) {
+        return {
+          jsonSchema: module.outputSchema,
+          jsonSchemaMode: 'prompt',
+          allowSchemaFallback: false,
+          policy: { requested: pref, resolved: 'prompt', reason: `native schema too large (${bytes}B > ${maxBytes}B)` },
+        };
+      }
+    }
+
+    // Some providers accept only a restricted schema subset and can reject otherwise-valid JSON Schema.
+    // Retrying once in prompt mode yields a much better UX while still keeping the initial attempt "native".
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true, policy: { requested: pref, resolved: 'native', reason: 'structured=native' } };
+  }
+
+  // auto: choose based on provider capabilities.
+  let jsonSchemaMode: JsonSchemaMode = providerSupportsNativeJsonSchema(caps) ? 'native' : 'prompt';
+  let sizeReason: string | null = null;
+  if (jsonSchemaMode === 'native') {
+    const maxBytes = caps.maxNativeSchemaBytes;
+    if (typeof maxBytes === 'number' && maxBytes > 0) {
+      const bytes = schemaByteLength(module.outputSchema);
+      if (bytes > maxBytes) {
+        jsonSchemaMode = 'prompt';
+        sizeReason = `native schema too large (${bytes}B > ${maxBytes}B)`;
+      }
+    }
+  }
+  return {
+    jsonSchema: module.outputSchema,
+    jsonSchemaMode,
+    allowSchemaFallback: true,
+    policy: {
+      requested: pref,
+      resolved: jsonSchemaMode,
+      reason: sizeReason
+        ? `auto: ${sizeReason}`
+        : providerSupportsNativeJsonSchema(caps)
+          ? `auto: native JSON Schema supported`
+        : caps.structuredOutput === 'native'
+          ? `auto: native schema dialect is not JSON Schema (${caps.nativeSchemaDialect ?? 'unknown'})`
+          : `auto: provider structuredOutput=${caps.structuredOutput}`,
+    },
+  };
 }
 
 function isSchemaCompatibilityError(e: unknown): boolean {
@@ -1782,7 +1853,7 @@ export async function runModule(
       validateOutput,
       structuredOverride ?? policy?.structured
     );
-    const { allowSchemaFallback, ...invokeSchemaParams } = schemaParams;
+    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = schemaParams;
     let result: InvokeResult;
     try {
       result = await provider.invoke({
@@ -1851,6 +1922,14 @@ export async function runModule(
     response.version = ENVELOPE_VERSION;
     if (response.meta) {
       response.meta.latency_ms = latencyMs;
+      if (structuredPolicy) {
+        // Publish-grade parity: record how structured output was applied for this run.
+        // This is intentionally small and stable, so users can reason about provider differences.
+        (response.meta as any).policy = {
+          ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+          structured: structuredPolicy,
+        };
+      }
       if (traceId) {
         response.meta.trace_id = traceId;
       }
@@ -2090,6 +2169,12 @@ export async function* runModuleStream(
       }
     }
 
+    // Single-file core modules promise "missing fields are empty".
+    if (typeof module.location === 'string' && /\.(md|markdown)$/i.test(module.location)) {
+      if (inputData.query === undefined) inputData.query = '';
+      if (inputData.code === undefined) inputData.code = '';
+    }
+
     _invokeBeforeHooks(module.name, inputData, module);
 
     // Validate input if enabled
@@ -2144,7 +2229,7 @@ export async function* runModuleStream(
       validateOutput,
       structuredOverride ?? policy?.structured
     );
-    const { allowSchemaFallback, ...invokeSchemaParams } = schemaParams;
+    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = schemaParams;
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
@@ -2251,6 +2336,12 @@ export async function* runModuleStream(
     const latencyMs = Date.now() - startTime;
     if (response.meta) {
       response.meta.latency_ms = latencyMs;
+      if (structuredPolicy) {
+        (response.meta as any).policy = {
+          ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+          structured: structuredPolicy,
+        };
+      }
       if (traceId) {
         response.meta.trace_id = traceId;
       }

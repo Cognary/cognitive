@@ -79,12 +79,43 @@ function providerRow(
   configured: boolean,
   model: string,
   make: () => Provider
-): { name: string; configured: boolean; model: string; structuredOutput: StructuredOutputMode; streaming: boolean } {
+): {
+  name: string;
+  configured: boolean;
+  model: string;
+  structuredOutput: StructuredOutputMode;
+  structuredJsonSchema: Exclude<StructuredOutputMode, 'native'> | 'native';
+  nativeSchemaDialect?: string;
+  maxNativeSchemaBytes?: number;
+  streaming: boolean;
+} {
   const caps = safeCapabilities(make());
-  return { name, configured, model, structuredOutput: caps.structuredOutput, streaming: caps.streaming };
+  const structuredJsonSchema: Exclude<StructuredOutputMode, 'native'> | 'native' =
+    caps.structuredOutput === 'native' && (caps.nativeSchemaDialect ?? 'json-schema') !== 'json-schema'
+      ? 'prompt'
+      : caps.structuredOutput;
+  return {
+    name,
+    configured,
+    model,
+    structuredOutput: caps.structuredOutput,
+    structuredJsonSchema,
+    nativeSchemaDialect: caps.nativeSchemaDialect,
+    maxNativeSchemaBytes: caps.maxNativeSchemaBytes,
+    streaming: caps.streaming,
+  };
 }
 
-export function listProviders(): Array<{ name: string; configured: boolean; model: string; structuredOutput: StructuredOutputMode; streaming: boolean }> {
+export function listProviders(): Array<{
+  name: string;
+  configured: boolean;
+  model: string;
+  structuredOutput: StructuredOutputMode;
+  structuredJsonSchema: Exclude<StructuredOutputMode, 'native'> | 'native';
+  nativeSchemaDialect?: string;
+  maxNativeSchemaBytes?: number;
+  streaming: boolean;
+}> {
   return [
     providerRow('gemini', !!process.env.GEMINI_API_KEY, 'gemini-3-flash', () => new GeminiProvider('')),
     providerRow('openai', !!process.env.OPENAI_API_KEY, 'gpt-5.2', () => new OpenAIProvider('')),

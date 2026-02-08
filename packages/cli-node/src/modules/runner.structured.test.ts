@@ -80,7 +80,7 @@ describe('runner structured output preference', () => {
     expect(provider.calls[1].jsonSchemaMode).toBe('prompt');
   });
 
-  it('native: does not fall back (fails fast)', async () => {
+  it('native: still falls back native -> prompt on schema compatibility error (UX over fail-fast)', async () => {
     const provider = new SchemaSensitiveProvider();
     const module = makeModule();
     const policy = makePolicy({ structured: 'native' });
@@ -96,6 +96,75 @@ describe('runner structured output preference', () => {
     expect(provider.calls.length).toBe(2);
     expect(provider.calls[0].jsonSchemaMode).toBe('native');
     expect(provider.calls[1].jsonSchemaMode).toBe('prompt');
+  });
+
+  it('native: downgrades to prompt when provider native dialect is not JSON Schema', async () => {
+    class NonJsonDialectProvider extends SchemaSensitiveProvider {
+      getCapabilities() {
+        return { structuredOutput: 'native' as const, streaming: false, nativeSchemaDialect: 'gemini-responseSchema' as const };
+      }
+      async invoke(params: InvokeParams): Promise<InvokeResult> {
+        this.calls.push(params);
+        // Should never receive native mode when dialect is non-JSON-schema.
+        expect(params.jsonSchemaMode).toBe('prompt');
+        return {
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 1, risk: 'none', explain: 'ok' },
+            data: { rationale: 'r', result: 'x' },
+          }),
+        };
+      }
+    }
+
+    const provider = new NonJsonDialectProvider();
+    const module = makeModule();
+    const policy = makePolicy({ structured: 'native' });
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      validateOutput: true,
+      policy,
+    });
+
+    expect(res.ok).toBe(true);
+    expect(provider.calls.length).toBe(1);
+    expect(provider.calls[0].jsonSchemaMode).toBe('prompt');
+  });
+
+  it('auto: downgrades native -> prompt when schema exceeds maxNativeSchemaBytes', async () => {
+    class SmallCapProvider extends SchemaSensitiveProvider {
+      getCapabilities() {
+        return { structuredOutput: 'native' as const, streaming: false, nativeSchemaDialect: 'json-schema' as const, maxNativeSchemaBytes: 10 };
+      }
+      async invoke(params: InvokeParams): Promise<InvokeResult> {
+        this.calls.push(params);
+        expect(params.jsonSchemaMode).toBe('prompt');
+        return {
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 1, risk: 'none', explain: 'ok' },
+            data: { rationale: 'r', result: 'x' },
+          }),
+        };
+      }
+    }
+
+    const provider = new SmallCapProvider();
+    const module = makeModule();
+    const policy = makePolicy({ structured: 'auto' });
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      validateOutput: true,
+      policy,
+    });
+
+    expect(res.ok).toBe(true);
+    expect(provider.calls.length).toBe(1);
+    expect(provider.calls[0].jsonSchemaMode).toBe('prompt');
   });
 
   it('off: does not pass schema to provider', async () => {
