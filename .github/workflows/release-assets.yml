@@ -7,7 +7,7 @@ on:
 jobs:
   registry-assets:
     runs-on: ubuntu-latest
-    # Skip Python-only releases (py-v*) and other non-runtime tags.
+    # Only run for runtime tags like vX.Y.Z.
     if: startsWith(github.event.release.tag_name, 'v')
     permissions:
       contents: write

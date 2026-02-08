@@ -1,10 +1,24 @@
-#!/usr/bin/env python3
-"""Wrapper script to run cog CLI without installation."""
-import sys
-import os
+#!/usr/bin/env node
+'use strict';
 
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+// Repo-local dev wrapper for the Node runtime.
+//
+// This repository intentionally presents an npm-only surface area.
+// If you are looking for the legacy Python runtime, see `experimental/python/`.
 
-from cognitive.cli import app
-app()
+const cp = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const cliPath = path.join(__dirname, 'packages', 'cli-node', 'dist', 'cli.js');
+
+if (!fs.existsSync(cliPath)) {
+  console.error('[cog] Local CLI is not built.');
+  console.error('[cog] Run: npm -C packages/cli-node ci && npm -C packages/cli-node run build');
+  process.exit(1);
+}
+
+const args = process.argv.slice(2);
+const res = cp.spawnSync(process.execPath, [cliPath, ...args], { stdio: 'inherit' });
+process.exit(res.status ?? 1);
+

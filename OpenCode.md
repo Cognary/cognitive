@@ -5,20 +5,25 @@ This file contains useful information about the codebase, including build/test/l
 ## Commands
 
 ```bash
-npm run lint  # Lint the codebase
-npm run typecheck # Typecheck the codebase
-pytest tests/  # Run all tests
-pytest tests/test_cli.py  # Run a single test file
-pytest tests/test_cli.py::test_cli_help  # Run a single test
+# Node runtime (authoritative)
+cd packages/cli-node
+npm ci
+npm test
+npm run build
+npm run pack:check
+
+# Release guards (versions / assets)
+cd ../..
+node scripts/release/check-release.js --tag vX.Y.Z
 ```
 
 ## Code Style Guidelines
 
-- Use black for formatting
-- Follow PEP 8 guidelines for Python code
+- TypeScript: keep public types stable; prefer explicit, narrow types at boundaries.
+- Keep CLI behavior backwards compatible unless the release notes call it out.
 - Use descriptive variable names
-- Write docstrings for all functions and classes
-- Handle errors gracefully with try-except blocks
-- Prefer explicit imports over wildcard imports
-- Use type hints for function arguments and return values
-- Use `cognitive` tool for structured AI tasks
+- Handle errors with actionable messages (what failed + how to fix).
+
+## Legacy Python
+
+The legacy Python runtime has been moved under `experimental/python/` and is not part of the supported surface area.

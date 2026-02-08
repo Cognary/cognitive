@@ -225,7 +225,7 @@ All Gold requirements, plus:
 **Verification:**
 
 ```bash
-python scripts/validate-test-vectors.py --level 1
+npx tsx scripts/validate-test-vectors.ts --level 1
 # All tests must pass
 ```
 

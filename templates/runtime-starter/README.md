@@ -1,6 +1,6 @@
 # Cognitive Modules Runtime Starter
 
-A minimal template for building your own Cognitive Modules runtime implementation.
+A minimal TypeScript template for building your own Cognitive Modules runtime implementation.
 
 ## Quick Start
 
@@ -10,14 +10,10 @@ cp -r templates/runtime-starter my-cognitive-runtime
 cd my-cognitive-runtime
 
 # Install dependencies
-pip install -r requirements.txt  # Python
-# or
 npm install                       # TypeScript
 
 # Run test vectors to verify your implementation
-python validate.py
-# or
-npx ts-node validate.ts
+npm run validate
 ```
 
 ## What's Included
@@ -25,12 +21,10 @@ npx ts-node validate.ts
 ```
 runtime-starter/
 ├── README.md                 # This file
-├── requirements.txt          # Python dependencies
 ├── package.json              # Node.js dependencies
-├── runtime.py                # Python runtime skeleton
-├── runtime.ts                # TypeScript runtime skeleton
-├── validate.py               # Test vector runner (Python)
-└── validate.ts               # Test vector runner (TypeScript)
+├── tsconfig.json             # TypeScript config
+├── runtime.ts                # Runtime skeleton (wire your provider here)
+└── validate.ts               # Conformance smoke-check (schema + vectors)
 ```
 
 ## Implementation Checklist
@@ -114,14 +108,14 @@ Use this checklist to track your progress toward conformance:
 
 ## Testing Your Implementation
 
-1. Copy the official test vectors:
+1. Copy the official spec folder (schemas + vectors):
    ```bash
-   cp -r ../spec/test-vectors ./test-vectors
+   cp -r ../spec ./spec
    ```
 
 2. Run the validation script:
    ```bash
-   python validate.py --verbose
+   npm run validate
    ```
 
 3. Check the results:
