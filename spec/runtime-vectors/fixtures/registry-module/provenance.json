@@ -1,0 +1,29 @@
+{
+  "spec": "cognitive.module.provenance/v1",
+  "createdAt": "2026-02-08T00:00:00.000Z",
+  "source": {
+    "type": "registry",
+    "registryUrl": "https://example.invalid/registry.json",
+    "moduleName": "fixture-registry-module",
+    "requestedVersion": "0.0.0",
+    "resolvedVersion": "0.0.0",
+    "tarballUrl": "https://example.invalid/fixture-registry-module-0.0.0.tar.gz",
+    "checksum": "sha256:de65f78d693458dcd957aee7696ecaa0251c106686aa32a646c72438d4df478b",
+    "sha256": "de65f78d693458dcd957aee7696ecaa0251c106686aa32a646c72438d4df478b",
+    "quality": {
+      "verified": false,
+      "conformance_level": 0,
+      "spec_version": "2.2"
+    }
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "maxFiles": 5000,
+    "maxTotalBytes": 52428800,
+    "maxSingleFileBytes": 20971520,
+    "totalBytes": 234,
+    "files": {
+      "module.md": "de65f78d693458dcd957aee7696ecaa0251c106686aa32a646c72438d4df478b"
+    }
+  }
+}

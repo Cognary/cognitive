@@ -46,6 +46,16 @@ spec/registry-vectors/
 
 Those vectors validate the registry index schema and registry entry schema (tarball + checksum required).
 
+## Runtime Behavior Vectors
+
+Runtime behavior conformance (profiles + publish-grade JSON parsing) is validated under:
+
+```
+spec/runtime-vectors/
+```
+
+Those vectors are deterministic and offline: they execute the runtime against a scripted provider, so no API keys are required.
+
 ## Test Vector Format
 
 Each test vector is a JSON file with the following structure:
@@ -83,7 +93,10 @@ Run the official vectors with the reference CLI (no network required):
 # From a repo checkout (auto-detects ./spec)
 npx cogn@<version> test --conformance --suite envelope --level 1
 
-# Full contract (envelope + streaming + registry)
+# Level 2 contract (envelope + runtime behavior)
+npx cogn@<version> test --conformance --suite all --level 2
+
+# Full contract (envelope + runtime + streaming + registry)
 npx cogn@<version> test --conformance --suite all --level 3
 ```
 

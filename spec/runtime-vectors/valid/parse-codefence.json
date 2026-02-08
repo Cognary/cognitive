@@ -1,0 +1,45 @@
+{
+  "$test": {
+    "name": "parse-codefence",
+    "description": "runtime extracts JSON from a markdown code fence (common model behavior)",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "runtime": {
+    "policy": {
+      "profile": "standard"
+    },
+    "module": {
+      "name": "vector-parse-codefence",
+      "version": "0.0.0",
+      "responsibility": "vector",
+      "prompt": "Return JSON only.",
+      "excludes": [],
+      "format": "v2",
+      "formatVersion": "v2.2",
+      "tier": "decision",
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "args": "hello",
+    "provider": {
+      "capabilities": {
+        "structuredOutput": "prompt",
+        "streaming": false
+      },
+      "responses": [
+        {
+          "content": "ok\n```json\n{ \"ok\": true, \"meta\": { \"confidence\": 1, \"risk\": \"none\", \"explain\": \"ok\" }, \"data\": { \"rationale\": \"r\", \"result\": \"hello\" } }\n```\n"
+        }
+      ]
+    },
+    "expect": {
+      "ok": true,
+      "invocations": 1,
+      "parse_retries": 0,
+      "parse_strategy": "code_fence"
+    }
+  }
+}

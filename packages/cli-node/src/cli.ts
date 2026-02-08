@@ -823,7 +823,10 @@ async function main() {
         }
         
         if (!target || target.startsWith('-')) {
-          console.error('Usage: cog test <module> [--all] [--verbose] [--timeout <ms>]\n       cog test --conformance [--suite envelope|stream|registry|all] [--level 1|2|3] [--spec-dir <path>] [--json]');
+          console.error(
+            'Usage: cog test <module> [--all] [--verbose] [--timeout <ms>]\n' +
+              '       cog test --conformance [--suite envelope|runtime|stream|registry|all] [--level 1|2|3] [--spec-dir <path>] [--json]',
+          );
           process.exit(1);
         }
         
@@ -1170,7 +1173,7 @@ OPTIONS:
   --no-backup           Skip backup before migration (for migrate)
   --all                 Process all modules (for validate/migrate)
   --conformance         Run official spec vectors (for test)
-  --suite <name>        Conformance suite: envelope|stream|registry|all
+  --suite <name>        Conformance suite: envelope|runtime|stream|registry|all
   --level <n>           Conformance level: 1|2|3
   --spec-dir <path>     Repo root or spec dir (defaults: auto-detect)
   --json                Machine-readable JSON output (for conformance)
@@ -1217,7 +1220,8 @@ EXAMPLES:
   cog test code-simplifier --verbose    # With detailed output
   cog test --all                        # Test all modules
   cog test --conformance --suite envelope --level 1  # Minimal conformance (envelope only)
-  cog test --conformance --suite all --level 3       # Full conformance (envelope+stream+registry)
+  cog test --conformance --suite all --level 2       # Level 2 contract (envelope+runtime)
+  cog test --conformance --suite all --level 3       # Full conformance (envelope+runtime+stream+registry)
   cog migrate code-reviewer --dry-run
   cog migrate code-reviewer
   cog migrate --all --no-backup

@@ -1,0 +1,46 @@
+{
+  "$test": {
+    "name": "parse-failfast-certified",
+    "description": "certified profile fails fast on invalid JSON (no parse retry) and returns E1000 with diagnostics",
+    "expects": "accept",
+    "conformance_level": 2
+  },
+  "runtime": {
+    "policy": {
+      "profile": "certified"
+    },
+    "module": {
+      "name": "vector-parse-failfast",
+      "version": "0.0.0",
+      "responsibility": "vector",
+      "prompt": "Return JSON only.",
+      "excludes": [],
+      "location": "spec/runtime-vectors/fixtures/registry-module",
+      "format": "v2",
+      "formatVersion": "v2.2",
+      "tier": "decision",
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "args": "hello",
+    "provider": {
+      "capabilities": {
+        "structuredOutput": "prompt",
+        "streaming": false
+      },
+      "responses": [
+        {
+          "content": "this is not json"
+        }
+      ]
+    },
+    "expect": {
+      "ok": false,
+      "invocations": 1,
+      "error_code": "E1000",
+      "parse_retry_attempted": false
+    }
+  }
+}

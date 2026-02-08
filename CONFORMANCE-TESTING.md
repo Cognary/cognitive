@@ -17,7 +17,10 @@ cd cognitive
 # Minimal contract (Level 1, envelope only)
 npx cogn@<version> test --conformance --suite envelope --level 1
 
-# Full contract (Level 3, envelope + stream + registry)
+# Level 2 contract (envelope + runtime behavior)
+npx cogn@<version> test --conformance --suite all --level 2
+
+# Full contract (Level 3, envelope + runtime + stream + registry)
 npx cogn@<version> test --conformance --suite all --level 3 --verbose
 ```
 
@@ -78,6 +81,7 @@ If you're writing your own runtime in another language, the contract is defined 
 
 - `spec/response-envelope.schema.json`
 - `spec/test-vectors/` (accept/reject)
+- `spec/runtime-vectors/` (runtime behavior: profiles + JSON parsing)
 - `spec/stream-events.schema.json` + `spec/stream-vectors/`
 - `spec/registry.schema.json` + `spec/registry-entry.schema.json` + `spec/registry-vectors/`
 
