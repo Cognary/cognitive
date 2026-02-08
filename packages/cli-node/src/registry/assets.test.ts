@@ -318,6 +318,96 @@ describe('registry assets', () => {
     }
   });
 
+  it('failure diagnostics include phase + tarball_ref + tarball_resolved', async () => {
+    const root = tmpPath('cog-reg-assets-failure-diag');
+    const modulesDir = path.join(root, 'modules');
+    const outDir = path.join(root, 'dist');
+    const v1Path = path.join(root, 'v1.json');
+    const registryOut = path.join(root, 'registry.v2.json');
+
+    const originalFetch = globalThis.fetch;
+    try {
+      await writeModule(path.join(modulesDir, 'demo'), 'demo', '1.0.0');
+      await fs.writeFile(
+        v1Path,
+        JSON.stringify(
+          {
+            version: '1.0.0',
+            updated: '2024-01-01T00:00:00Z',
+            modules: {
+              demo: { description: 'demo module', author: 'me', tags: ['x'] },
+            },
+            categories: {},
+          },
+          null,
+          2
+        ) + '\n',
+        'utf-8'
+      );
+
+      const baseUrl = 'https://registry.example.test';
+      await buildRegistryAssets({
+        modulesDir,
+        v1RegistryPath: v1Path,
+        outDir,
+        registryOut,
+        namespace: 'official',
+        runtimeMin: '2.2.0',
+        repository: 'https://github.com/example/repo',
+        homepage: 'https://example.com',
+        license: 'MIT',
+        tag: null,
+        tarballBaseUrl: null,
+        timestamp: '2026-02-07T00:00:00Z',
+      });
+
+      const indexUrl = `${baseUrl}/registry.json`;
+
+      // Rewrite tarball to relative ref and corrupt checksum.
+      const raw = await fs.readFile(registryOut, 'utf-8');
+      const idx = JSON.parse(raw);
+      idx.modules.demo.distribution.tarball = 'demo-1.0.0.tar.gz';
+      idx.modules.demo.distribution.checksum = 'sha256:' + '0'.repeat(64);
+      const rewrittenIndex = JSON.stringify(idx, null, 2) + '\n';
+
+      globalThis.fetch = (async (input: any) => {
+        const url = typeof input === 'string' ? input : String(input?.url ?? input);
+        if (url === indexUrl) {
+          return new Response(rewrittenIndex, {
+            status: 200,
+            headers: {
+              'content-type': 'application/json; charset=utf-8',
+              'content-length': String(Buffer.byteLength(rewrittenIndex, 'utf-8')),
+            },
+          });
+        }
+        if (url === `${baseUrl}/demo-1.0.0.tar.gz`) {
+          const buf = await fs.readFile(path.join(outDir, 'demo-1.0.0.tar.gz'));
+          return new Response(buf, {
+            status: 200,
+            headers: { 'content-type': 'application/gzip', 'content-length': String(buf.length) },
+          });
+        }
+        return new Response('not found', { status: 404 });
+      }) as any;
+
+      const verified = await verifyRegistryAssets({
+        registryIndexPath: indexUrl,
+        remote: true,
+      });
+
+      expect(verified.ok).toBe(false);
+      expect(verified.failed).toBe(1);
+      expect(verified.failures[0].module).toBe('demo');
+      expect(verified.failures[0].phase).toBe('checksum');
+      expect(verified.failures[0].tarball_ref).toBe('demo-1.0.0.tar.gz');
+      expect(verified.failures[0].tarball_resolved).toBe(`${baseUrl}/demo-1.0.0.tar.gz`);
+    } finally {
+      globalThis.fetch = originalFetch;
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
   it('verifies remote registry with concurrency and avoids tarball basename collisions', async () => {
     const root = tmpPath('cog-reg-assets-remote-collide');
     const modulesDir = path.join(root, 'modules');

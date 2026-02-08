@@ -78,6 +78,15 @@ npx cogn@2.2.11 registry verify --remote \
   --concurrency 2
 ```
 
+## Failure Diagnostics
+
+When verification fails, the command returns a JSON result with a `failures[]` array.
+
+Notes:
+- `failures[]` is intentionally extensible. Treat unknown keys as optional.
+- For remote verification, you may see both `tarball_ref` (as written in the index) and `tarball_resolved` (the resolved absolute URL).
+- `phase` helps pinpoint where verification failed (for example: `download`, `checksum`, `extract`).
+
 ## "Latest" Strategy
 
 The default registry URL prefers GitHub Releases "latest" assets:

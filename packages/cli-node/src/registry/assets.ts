@@ -52,7 +52,18 @@ export interface RegistryVerifyResult {
   checked: number;
   passed: number;
   failed: number;
-  failures: Array<{ module: string; reason: string; tarball?: string; phase?: string }>;
+  /**
+   * Failure diagnostics (best-effort).
+   *
+   * This structure is intentionally extensible. Consumers should treat unknown keys as optional.
+   */
+  failures: Array<{
+    module: string;
+    reason: string;
+    phase?: 'entry' | 'download' | 'size' | 'checksum' | 'extract' | 'files' | 'identity';
+    tarball_ref?: string;
+    tarball_resolved?: string;
+  }>;
 }
 
 function isHttpUrl(maybeUrl: string): boolean {
@@ -686,6 +697,7 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
   const verifyOne = async (moduleName: string, entry: any): Promise<void> => {
     checked += 1;
     let tarPathForCleanup: string | null = null;
+    let phase: RegistryVerifyResult['failures'][number]['phase'] = 'entry';
     try {
       const dist = (entry as any).distribution ?? {};
       const tarballRef = String(dist.tarball ?? '');
@@ -703,10 +715,13 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
         if (!isHttpUrl(tarballUrl)) {
           throw new Error(`Remote verify requires http(s) tarball URL (or a relative URL), got: ${tarballRef}`);
         }
+        phase = 'download';
         const downloaded = await downloadToFileWithSha256(tarballUrl, tarPath, maxTarballBytes, fetchTimeoutMs);
+        phase = 'size';
         if (expectedSizeBytes !== null && downloaded.sizeBytes !== expectedSizeBytes) {
           throw new Error(`Size mismatch: expected ${expectedSizeBytes}, got ${downloaded.sizeBytes}`);
         }
+        phase = 'checksum';
         const m = checksum.match(/^sha256:([a-f0-9]{64})$/);
         if (!m) throw new Error(`Unsupported checksum format: ${checksum}`);
         const expectedSha = m[1];
@@ -715,11 +730,13 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
         }
       }
 
+      phase = 'size';
       const st = await fs.stat(tarPath);
       if (expectedSizeBytes !== null && st.size !== expectedSizeBytes) {
         throw new Error(`Size mismatch: expected ${expectedSizeBytes}, got ${st.size}`);
       }
 
+      phase = 'checksum';
       const m = checksum.match(/^sha256:([a-f0-9]{64})$/);
       if (!m) throw new Error(`Unsupported checksum format: ${checksum}`);
       const expectedSha = m[1];
@@ -729,6 +746,7 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
       // Extract and validate contents (layout + file list).
       const tmp = await fs.mkdtemp(path.join(tmpdir(), 'cog-reg-verify-'));
       try {
+        phase = 'extract';
         const extractedRoot = path.join(tmp, 'pkg');
         await fs.mkdir(extractedRoot, { recursive: true });
         await extractTarGzFile(tarPath, extractedRoot, {
@@ -753,6 +771,7 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
         }
 
         if (expectedFiles.length > 0) {
+          phase = 'files';
           const actualFiles = await listFiles(moduleDir);
           const exp = expectedFiles.slice().sort();
           const act = actualFiles.slice().sort();
@@ -766,6 +785,7 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
 
         // Basic identity check: module.yaml version matches registry identity.version
         try {
+          phase = 'identity';
           const y = await readModuleMeta(path.join(moduleDir, 'module.yaml'));
           const identityVersion = String((entry as any).identity?.version ?? '').trim();
           if (identityVersion && y.version !== identityVersion) {
@@ -785,8 +805,16 @@ export async function verifyRegistryAssets(opts: VerifyRegistryOptions): Promise
       passed += 1;
     } catch (e) {
       const dist = (entry as any)?.distribution ?? {};
-      const tarball = typeof dist.tarball === 'string' ? dist.tarball : undefined;
-      failures.push({ module: moduleName, reason: e instanceof Error ? e.message : String(e), tarball });
+      const tarball_ref = typeof dist.tarball === 'string' ? dist.tarball : undefined;
+      const tarball_resolved =
+        tarball_ref && wantRemote ? resolveRemoteUrl(opts.registryIndexPath, tarball_ref) : tarball_ref;
+      failures.push({
+        module: moduleName,
+        reason: e instanceof Error ? e.message : String(e),
+        phase: (typeof (phase as any) === 'string' ? phase : undefined) as any,
+        tarball_ref,
+        tarball_resolved,
+      });
     } finally {
       // If we downloaded tarballs into a temp dir, keep disk usage bounded.
       if (wantRemote && tmpAssetsRoot && tarPathForCleanup) {

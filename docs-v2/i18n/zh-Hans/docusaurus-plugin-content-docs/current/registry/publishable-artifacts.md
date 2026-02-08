@@ -78,6 +78,15 @@ npx cogn@2.2.11 registry verify --remote \
   --concurrency 2
 ```
 
+## 失败诊断
+
+当校验失败时，命令会返回一个包含 `failures[]` 数组的 JSON 结果。
+
+说明：
+- `failures[]` 是刻意做成可扩展结构，未知字段应当被当作可选字段处理。
+- 远端校验时可能同时包含 `tarball_ref`（index 中写的值）和 `tarball_resolved`（解析后的绝对 URL）。
+- `phase` 用于标记失败发生的阶段（例如：`download`、`checksum`、`extract`）。
+
 ## “Latest” 策略
 
 默认 registry URL 优先用 GitHub Releases 的 `latest` 资产：
