@@ -32,7 +32,7 @@ sidebar_position: 2
 ## 使用
 
 ```bash
-npx cogn@2.2.11 run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
+npx cogn@2.2.12 run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
 ```
 
 ## 输出示例

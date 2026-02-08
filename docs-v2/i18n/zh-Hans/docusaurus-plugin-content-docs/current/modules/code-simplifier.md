@@ -20,13 +20,13 @@ sidebar_position: 3
 
 ```bash
 # 简化代码
-npx cogn@2.2.11 run code-simplifier --args "x = 1 + 2 + 3"
+npx cogn@2.2.12 run code-simplifier --args "x = 1 + 2 + 3"
 
 # 指定语言
-echo '{"code": "const x = a && a.b && a.b.c", "language": "javascript"}' | npx cogn@2.2.11 run code-simplifier
+echo '{"code": "const x = a && a.b && a.b.c", "language": "javascript"}' | npx cogn@2.2.12 run code-simplifier
 
 # 美化输出
-npx cogn@2.2.11 run code-simplifier --args "for i in range(len(arr)): print(arr[i])" --pretty
+npx cogn@2.2.12 run code-simplifier --args "for i in range(len(arr)): print(arr[i])" --pretty
 ```
 
 ## 输出示例

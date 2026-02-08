@@ -256,7 +256,7 @@ function HomepageQuickStart() {
           <pre>
             <code>{`# Zero-install run
 export OPENAI_API_KEY=sk-xxx
-cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.12 core run --stdin --args "hello" --pretty
 Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
 EOF
 

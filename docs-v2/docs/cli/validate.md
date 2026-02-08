@@ -8,15 +8,15 @@ Validate the structure of a Cognitive Module.
 
 Recommended (unambiguous) usage:
 
-- `npx cogn@2.2.11 validate ...`
+- `npx cogn@2.2.12 validate ...`
 
 If you see `No such option: --all`, you are likely running a different binary on your machine. Use the `npx` form above.
 
 ## Syntax
 
 ```bash
-npx cogn@2.2.11 validate <module> [--v22] [--format text|json]
-npx cogn@2.2.11 validate --all [--v22] [--format text|json]
+npx cogn@2.2.12 validate <module> [--v22] [--format text|json]
+npx cogn@2.2.12 validate --all [--v22] [--format text|json]
 ```
 
 ## Options
@@ -39,13 +39,13 @@ npx cogn@2.2.11 validate --all [--v22] [--format text|json]
 
 ```bash
 # Standard validation
-npx cogn@2.2.11 validate code-reviewer
+npx cogn@2.2.12 validate code-reviewer
 
 # Strict v2.2 validation
-npx cogn@2.2.11 validate code-reviewer --v22
+npx cogn@2.2.12 validate code-reviewer --v22
 
 # Validate all modules
-npx cogn@2.2.11 validate --all --v22 --format json
+npx cogn@2.2.12 validate --all --v22 --format json
 ```
 
 ## Migration Recommendation
@@ -53,7 +53,7 @@ npx cogn@2.2.11 validate --all --v22 --format json
 If you see v1/v2.1 warnings, use:
 
 ```bash
-npx cogn@2.2.11 migrate code-reviewer --dry-run
-npx cogn@2.2.11 migrate code-reviewer
-npx cogn@2.2.11 validate code-reviewer --v22
+npx cogn@2.2.12 migrate code-reviewer --dry-run
+npx cogn@2.2.12 migrate code-reviewer
+npx cogn@2.2.12 validate code-reviewer --v22
 ```

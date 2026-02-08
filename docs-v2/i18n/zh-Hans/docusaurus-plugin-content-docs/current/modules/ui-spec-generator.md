@@ -36,7 +36,7 @@ sidebar_position: 6
 ## 使用
 
 ```bash
-npx cogn@2.2.11 run ui-spec-generator --args "健康产品官网，目标用户25-45岁精英" --pretty
+npx cogn@2.2.12 run ui-spec-generator --args "健康产品官网，目标用户25-45岁精英" --pretty
 ```
 
 ## 输出示例

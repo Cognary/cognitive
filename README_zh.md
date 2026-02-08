@@ -18,21 +18,21 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 
 ## 版本
 
-- **运行时（npm）**：`2.2.11`
+- **运行时（npm）**：`2.2.12`
 - **规范**：v2.2
 
 ## 安装（Node.js）
 
 ```bash
 # 零安装快速体验
-npx cogn@2.2.11 --help
+npx cogn@2.2.12 --help
 
 # 或使用完整包名
-npx cognitive-modules-cli@2.2.11 --help
+npx cognitive-modules-cli@2.2.12 --help
 
 # 全局安装
-npm install -g cogn@2.2.11
-# 或：npm install -g cognitive-modules-cli@2.2.11
+npm install -g cogn@2.2.12
+# 或：npm install -g cognitive-modules-cli@2.2.12
 ```
 
 > `cogn` 是 `cognitive-modules-cli` 的别名包。文档统一以 `npx cogn@<version> ...` 作为权威入口。
@@ -63,14 +63,14 @@ npm install -g cogn@2.2.11
 export OPENAI_API_KEY=sk-xxx
 
 # 5 分钟路径：从 stdin 运行单文件 Core 模块（输出 v2.2 envelope）
-cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.12 core run --stdin --args "hello" --pretty
 请返回一个合法的 v2.2 envelope（meta + data）。把答案放在 data.result。
 EOF
 ```
 
 说明：
 
-- 推荐入口是 `npx cogn@2.2.11 ...`（避免你机器上存在其他 `cog` 命令导致误用）。
+- 推荐入口是 `npx cogn@2.2.12 ...`（避免你机器上存在其他 `cog` 命令导致误用）。
 - 需要指定 `--provider/--model` 时，把它们放在命令后面，例如 `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`。
 
 ## v2.2 响应格式
@@ -114,48 +114,48 @@ EOF
 
 ```bash
 # 推荐（无需全局安装）：
-# npx cogn@2.2.11 <command> ...
+# npx cogn@2.2.12 <command> ...
 
 # 模块管理
-npx cogn@2.2.11 list
-npx cogn@2.2.11 add <url> --module <path>
-npx cogn@2.2.11 update <module>
-npx cogn@2.2.11 remove <module>
-npx cogn@2.2.11 versions <url>
+npx cogn@2.2.12 list
+npx cogn@2.2.12 add <url> --module <path>
+npx cogn@2.2.12 update <module>
+npx cogn@2.2.12 remove <module>
+npx cogn@2.2.12 versions <url>
 
 # 运行模块
-npx cogn@2.2.11 run <module> --args "..."
-npx cogn@2.2.11 run <module> --input '{"query":"..."}'
+npx cogn@2.2.12 run <module> --args "..."
+npx cogn@2.2.12 run <module> --input '{"query":"..."}'
 
 # 组合执行
-npx cogn@2.2.11 compose <module> --args "..."
-npx cogn@2.2.11 compose-info <module>
+npx cogn@2.2.12 compose <module> --args "..."
+npx cogn@2.2.12 compose-info <module>
 
 # 校验与迁移
-npx cogn@2.2.11 validate <module> --v22
-npx cogn@2.2.11 validate --all
-npx cogn@2.2.11 migrate <module> --dry-run
-npx cogn@2.2.11 migrate --all --no-backup
+npx cogn@2.2.12 validate <module> --v22
+npx cogn@2.2.12 validate --all
+npx cogn@2.2.12 migrate <module> --dry-run
+npx cogn@2.2.12 migrate --all --no-backup
 
 # 其他
-npx cogn@2.2.11 pipe --module <name>
-npx cogn@2.2.11 init [name]
-npx cogn@2.2.11 doctor
-npx cogn@2.2.11 serve --port 8000
-npx cogn@2.2.11 mcp
+npx cogn@2.2.12 pipe --module <name>
+npx cogn@2.2.12 init [name]
+npx cogn@2.2.12 doctor
+npx cogn@2.2.12 serve --port 8000
+npx cogn@2.2.12 mcp
 ```
 
 ## 内置模块（仓库内）
 
 | 模块 | 层级 | 功能 | 示例 |
 |------|------|------|------|
-| `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.11 run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.11 run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.11 run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API 设计 | `npx cogn@2.2.11 run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI 规范生成 | `npx cogn@2.2.11 run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI 组件规范 | `npx cogn@2.2.11 run ui-component-generator --args "button component"` |
-| `product-analyzer` | exploration | 产品分析 | `npx cogn@2.2.11 run product-analyzer --args "health product"` |
+| `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.12 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.12 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.12 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API 设计 | `npx cogn@2.2.12 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `npx cogn@2.2.12 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI 组件规范 | `npx cogn@2.2.12 run ui-component-generator --args "button component"` |
+| `product-analyzer` | exploration | 产品分析 | `npx cogn@2.2.12 run product-analyzer --args "health product"` |
 
 ## 模块格式（v2.2）
 
@@ -222,8 +222,16 @@ compat:
 检查配置：
 
 ```bash
-npx cogn@2.2.11 doctor
+npx cogn@2.2.12 doctor
 ```
+
+## Provider 差异（降级是预期行为）
+
+不同 Provider 对 “native structured output / JSON Schema” 的支持程度不同。
+
+当 Provider 拒绝 native schema（或仅支持子集）时，运行时会安全降级 `native -> prompt`，继续使用 prompt-only JSON + 后验校验来维持规范契约。降级原因与策略会记录在 `meta.policy.*` 中，便于排障与审计。
+
+见：`docs-v2/docs/integration/providers.md`。
 
 ## 开发（Node.js）
 

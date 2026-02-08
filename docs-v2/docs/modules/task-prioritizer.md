@@ -24,7 +24,7 @@ Prioritize and rank tasks based on multiple criteria.
 ## Usage
 
 ```bash
-npx cogn@2.2.11 run task-prioritizer --args "fix login bug, write documentation, optimize database queries, add dark mode" --pretty
+npx cogn@2.2.12 run task-prioritizer --args "fix login bug, write documentation, optimize database queries, add dark mode" --pretty
 ```
 
 ## Output Example

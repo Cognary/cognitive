@@ -122,9 +122,9 @@ AI IDE 应该：
 
 | 平台 | 状态 |
 |------|------|
-| npm | `npx cogn@2.2.11` ✅ |
-| MCP | `npx cogn@2.2.11 mcp` ✅ |
-| HTTP API | `npx cogn@2.2.11 serve` ✅ |
+| npm | `npx cogn@2.2.12` ✅ |
+| MCP | `npx cogn@2.2.12 mcp` ✅ |
+| HTTP API | `npx cogn@2.2.12 serve` ✅ |
 
 ---
 

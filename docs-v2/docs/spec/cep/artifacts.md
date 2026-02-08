@@ -94,7 +94,7 @@ Rule: **release tag, registry index version, and tarball filenames must agree** 
 - A stable CEP spec version (e.g. v2.2) referenced by the runtime and docs.
 - A reproducible build process for registry tarballs.
 - An index format with integrity fields.
-- Conformance tests (`npx cogn@2.2.11 test`) that can be run by third parties.
+- Conformance tests (`npx cogn@2.2.12 test`) that can be run by third parties.
 
 Optional but strong upgrades:
 
