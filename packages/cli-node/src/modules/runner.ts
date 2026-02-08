@@ -1543,8 +1543,12 @@ function getProviderCapabilities(provider: Provider): ProviderCapabilities {
   };
 }
 
+function providerSupportsNativeStructuredOutput(caps: ProviderCapabilities): boolean {
+  return caps.structuredOutput === 'native';
+}
+
 function providerSupportsNativeJsonSchema(caps: ProviderCapabilities): boolean {
-  if (caps.structuredOutput !== 'native') return false;
+  if (!providerSupportsNativeStructuredOutput(caps)) return false;
   const dialect = caps.nativeSchemaDialect ?? 'json-schema';
   return dialect === 'json-schema';
 }
@@ -1579,9 +1583,11 @@ function resolveJsonSchemaParams(
 
   if (pref === 'native') {
     // "native" means "prefer native", not "fail hard".
-    // If the provider doesn't support native structured output, safely downgrade to prompt guidance.
-    if (!providerSupportsNativeJsonSchema(caps)) {
-      const dialect = caps.nativeSchemaDialect ?? (caps.structuredOutput === 'native' ? 'unknown' : 'n/a');
+    // If the provider doesn't support native structured output at all, safely downgrade to prompt guidance.
+    // If the provider uses a non-JSON-schema dialect (e.g. Gemini responseSchema), still attempt native,
+    // but allow a retry in prompt mode on compatibility errors.
+    if (!providerSupportsNativeStructuredOutput(caps)) {
+      const dialect = caps.nativeSchemaDialect ?? 'unknown';
       return {
         jsonSchema: module.outputSchema,
         jsonSchemaMode: 'prompt',
@@ -1590,9 +1596,7 @@ function resolveJsonSchemaParams(
           requested: pref,
           resolved: 'prompt',
           reason:
-            caps.structuredOutput !== 'native'
-              ? `provider lacks native structured output (${caps.structuredOutput})`
-              : `provider native schema dialect is not JSON Schema (${dialect})`,
+            `provider lacks native structured output (${caps.structuredOutput}); dialect=${dialect}`,
         },
       };
     }
@@ -1611,7 +1615,17 @@ function resolveJsonSchemaParams(
 
     // Some providers accept only a restricted schema subset and can reject otherwise-valid JSON Schema.
     // Retrying once in prompt mode yields a much better UX while still keeping the initial attempt "native".
-    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true, policy: { requested: pref, resolved: 'native', reason: 'structured=native' } };
+    const dialect = caps.nativeSchemaDialect ?? 'json-schema';
+    return {
+      jsonSchema: module.outputSchema,
+      jsonSchemaMode: 'native',
+      allowSchemaFallback: true,
+      policy: {
+        requested: pref,
+        resolved: 'native',
+        reason: dialect === 'json-schema' ? 'structured=native' : `structured=native (dialect=${dialect}; may downgrade)`,
+      },
+    };
   }
 
   // auto: choose based on provider capabilities.
