@@ -16,6 +16,7 @@ const sidebars: SidebarsConfig = {
         'getting-started/first-module',
         'getting-started/progressive-complexity',
         'getting-started/use-cases',
+        'getting-started/pr-review-gate',
         'getting-started/llm-config',
       ],
     },
