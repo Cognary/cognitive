@@ -41,7 +41,7 @@ export async function pipe(
       const errorEnvelope = attachContext(makeErrorEnvelope({
         code: ErrorCodes.INVALID_INPUT,
         message: `Certified profile requires v2.2 modules; got: ${module.formatVersion ?? 'unknown'} (${module.format})`,
-        suggestion: "Migrate the module to v2.2, or run with `--profile strict` / `--profile default`",
+        suggestion: "Migrate the module to v2.2, or rerun with `--profile standard`",
       }), { module: options.module, provider: ctx.provider.name });
       console.log(JSON.stringify(errorEnvelope));
       return { success: false, error: errorEnvelope.error.message, data: errorEnvelope };
