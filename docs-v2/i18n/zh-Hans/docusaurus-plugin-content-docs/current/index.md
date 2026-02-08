@@ -25,25 +25,13 @@ Cognitive Modules 是一套用于 **结构化、可验证、可审计** AI 任�
 ## 快速开始
 
 ```bash
-# 零安装
-npx cogn@2.2.7 run code-reviewer --args "your code" --pretty
-
-# 全局安装
-npm install -g cogn@2.2.7
-```
-
-运行第一个模块：
-
-```bash
+# 配置 Provider（以 OpenAI 为例）
 export OPENAI_API_KEY=sk-xxx
 
-cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
-
-# 启动 HTTP 服务
-cog serve --port 8000
-
-# 启动 MCP Server（Claude Code / Cursor）
-cog mcp
+# 5 分钟路径：从 stdin 运行单文件 Core 模块（输出 v2.2 envelope）
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+请返回一个合法的 v2.2 envelope（meta + data）。把答案放在 data.result。
+EOF
 ```
 
 如果你希望“协议化”，但只在需要时才引入复杂度：
@@ -95,12 +83,12 @@ cog mcp
 
 | 模块 | 层级 | 功能 | 示例 |
 |------|------|------|------|
-| `code-reviewer` | decision | 代码审查 | `cog run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | 代码简化 | `cog run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | 任务优先级排序 | `cog run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API 设计 | `cog run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI 规范生成 | `cog run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI 组件规范 | `cog run ui-component-generator --args "button component"` |
+| `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.11 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.11 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.11 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API 设计 | `npx cogn@2.2.11 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `npx cogn@2.2.11 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI 组件规范 | `npx cogn@2.2.11 run ui-component-generator --args "button component"` |
 
 ---
 

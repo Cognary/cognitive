@@ -14,10 +14,10 @@ This page documents the parts that typically differ per provider and how Cogniti
 
 ## Quick Check
 
-Use `cog providers` to see what the runtime thinks your environment supports:
+Use `npx cogn@2.2.11 providers` to see what the runtime thinks your environment supports:
 
 ```bash
-cog providers
+npx cogn@2.2.11 providers
 ```
 
 Typical output fields:
@@ -32,7 +32,7 @@ Many providers expose a "structured output" mode, but their supported JSON Schem
 To keep the protocol-level envelope stable, Cognitive exposes a single switch:
 
 ```bash
-cog run <module> --args "..." --structured auto|off|prompt|native
+npx cogn@2.2.11 run <module> --args "..." --structured auto|off|prompt|native
 ```
 
 Meaning:
@@ -55,7 +55,7 @@ Gemini may reject common JSON Schema keywords used by other providers.
 If you see errors about schema fields (for example `const`, boolean enums, or empty object schemas), use:
 
 ```bash
-cog run <module> --args "..." --structured prompt
+npx cogn@2.2.11 run <module> --args "..." --structured prompt
 ```
 
 This keeps the envelope contract stable while avoiding provider-native schema restrictions.
@@ -72,4 +72,3 @@ Cognitive standardizes the event model, but transport differs by interface:
 - CLI: NDJSON is easy to pipe, log, and replay
 
 The protocol requirement is that streaming events allow reconstructing the final v2.2 envelope deterministically.
-

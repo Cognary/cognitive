@@ -25,7 +25,7 @@ index 是发现单元。
 生成 tarball 并重建 v2 index：
 
 ```bash
-cog registry build --tag vX.Y.Z
+npx cogn@2.2.11 registry build --tag vX.Y.Z
 ```
 
 常见输出：
@@ -38,7 +38,7 @@ cog registry build --tag vX.Y.Z
 校验本地 tarball 是否与 index 一致：
 
 ```bash
-cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+npx cogn@2.2.11 registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
 ```
 
 会检查：
@@ -52,13 +52,13 @@ cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registr
 拉取远端 index 与 tarball 并校验完整性：
 
 ```bash
-cog registry verify --remote --index https://github.com/<org>/<repo>/releases/latest/download/cognitive-registry.v2.json
+npx cogn@2.2.11 registry verify --remote --index https://github.com/<org>/<repo>/releases/latest/download/cognitive-registry.v2.json
 ```
 
 为了可复现，建议固定 tag：
 
 ```bash
-cog registry verify --remote --index https://github.com/<org>/<repo>/releases/download/vX.Y.Z/cognitive-registry.v2.json
+npx cogn@2.2.11 registry verify --remote --index https://github.com/<org>/<repo>/releases/download/vX.Y.Z/cognitive-registry.v2.json
 ```
 
 远端校验带门禁：
@@ -71,7 +71,7 @@ cog registry verify --remote --index https://github.com/<org>/<repo>/releases/do
 调参示例：
 
 ```bash
-cog registry verify --remote \
+npx cogn@2.2.11 registry verify --remote \
   --fetch-timeout-ms 20000 \
   --max-index-bytes 2097152 \
   --max-tarball-bytes 26214400 \
@@ -87,4 +87,3 @@ cog registry verify --remote \
 
 Cognitive 会在 `latest` 暂时不可用时允许安全回退到仓库内的 index，以保持 `search/add` 可用。
 如果你需要严格可复现，CI 和生产环境建议固定 release tag。
-

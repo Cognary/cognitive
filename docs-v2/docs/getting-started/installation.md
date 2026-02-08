@@ -4,7 +4,9 @@ sidebar_position: 1
 
 # Installation (Node.js)
 
-Cognitive Modules 2.2 is distributed via npm. The CLI command is `cog`.
+Cognitive Modules 2.2 is distributed via npm.
+
+This page uses the unambiguous entrypoint `npx cogn@2.2.11 ...` to avoid any PATH/binary conflicts on your machine.
 
 ## 5-Minute Quick Start
 
@@ -12,23 +14,23 @@ If you just want to try Cognitive, you do not need to think about registry, conf
 
 ```bash
 # Zero-install (recommended)
-npx cogn@2.2.7 --help
+npx cogn@2.2.11 --help
 
 # Install a module from this repo
-npx cogn@2.2.7 add Cognary/cognitive -m code-reviewer
+npx cogn@2.2.11 add Cognary/cognitive -m code-reviewer
 
 # Run it (returns a v2.2 envelope)
-npx cogn@2.2.7 run code-reviewer --args "def login(u,p): pass" --pretty
+npx cogn@2.2.11 run code-reviewer --args "def login(u,p): pass" --pretty
 ```
 
 ### One-File Module (Ad-hoc)
 
 You can also run a module defined in a single Markdown file (optional YAML frontmatter + prompt body).
 
-If you have `cog core` available, the most minimal path is:
+If you have `core` available, the most minimal path is:
 
 ```bash
-cat <<'EOF' | cog core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
 Return a valid v2.2 envelope with meta and data. Put your answer in data.result.
 EOF
 ```
@@ -36,17 +38,17 @@ EOF
 Or create a file template:
 
 ```bash
-cog core new demo.md
-cog core run demo.md --args "hello" --pretty
+npx cogn@2.2.11 core new demo.md
+npx cogn@2.2.11 core run demo.md --args "hello" --pretty
 ```
 
 Then promote it into a portable v2 module directory:
 
 ```bash
-cog core promote demo.md
+npx cogn@2.2.11 core promote demo.md
 ```
 
-If you do not have `cog core` yet, the file-based method below works everywhere:
+If you do not have `core` yet, the file-based method below works everywhere:
 
 ```bash
 cat > demo-single-file.md <<'EOF'
@@ -60,42 +62,42 @@ tier: decision
 Return a valid v2.2 envelope JSON with meta and data.
 EOF
 
-npx cogn@2.2.7 run ./demo-single-file.md --args "hello" --pretty
+npx cogn@2.2.11 run ./demo-single-file.md --args "hello" --pretty
 ```
 
 ## Install
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.7 --help
+npx cogn@2.2.11 --help
 
 # Global installation
-npm install -g cogn@2.2.7
-# or: npm install -g cognitive-modules-cli@2.2.7
+npm install -g cogn@2.2.11
+# or: npm install -g cognitive-modules-cli@2.2.11
 ```
 
 ## Verify Installation
 
 ```bash
-cog --version
-# Output: Cognitive Runtime v2.2.7
+npx cogn@2.2.11 --version
+# Output: Cognitive Runtime v2.2.11
 
-cog doctor
+npx cogn@2.2.11 doctor
 ```
 
-`cog doctor` shows provider configuration status.
+`npx cogn@2.2.11 doctor` shows provider configuration status.
 
 ## Installing Modules
 
 ```bash
 # Install module from GitHub (recommended)
-cog add Cognary/cognitive -m code-simplifier
+npx cogn@2.2.11 add Cognary/cognitive -m code-simplifier
 
 # Install specific version
-cog add Cognary/cognitive -m code-reviewer --tag v1.0.0
+npx cogn@2.2.11 add Cognary/cognitive -m code-reviewer --tag v1.0.0
 
 # List installed modules
-cog list
+npx cogn@2.2.11 list
 ```
 
 ## Progressive Complexity (Optional)
@@ -109,16 +111,16 @@ Read next: [Progressive Complexity](./progressive-complexity)
 
 ```bash
 # Update module to latest version
-cog update code-simplifier
+npx cogn@2.2.11 update code-simplifier
 
 # Update to specific version
-cog update code-simplifier --tag v2.0.0
+npx cogn@2.2.11 update code-simplifier --tag v2.0.0
 
 # List available versions
-cog versions Cognary/cognitive
+npx cogn@2.2.11 versions Cognary/cognitive
 
 # Remove module
-cog remove code-simplifier
+npx cogn@2.2.11 remove code-simplifier
 ```
 
 ## Module Locations
@@ -126,4 +128,4 @@ cog remove code-simplifier
 Modules are loaded from these locations in priority order:
 
 1. `./cognitive/modules/` (project local)
-2. `~/.cognitive/modules/` (user global, installed by `cog add`)
+2. `~/.cognitive/modules/` (user global, installed by `npx cogn@2.2.11 add`)

@@ -255,11 +255,13 @@ function HomepageQuickStart() {
         <div className={styles.codeBlock}>
           <pre>
             <code>{`# Zero-install run
-npx cogn@2.2.7 run code-reviewer --args "your code" --pretty
+export OPENAI_API_KEY=sk-xxx
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
+EOF
 
-# Or install globally
-npm install -g cogn@2.2.7
-cog run code-reviewer --args "your code" --pretty`}</code>
+# Provider/model flags must come after the command:
+# ... core run --stdin --provider minimax --model MiniMax-M2.1 ...`}</code>
           </pre>
         </div>
         <Link className={styles.quickStartLink} to="/docs/getting-started/installation">

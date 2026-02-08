@@ -121,4 +121,4 @@ my-module/
 └── schema.json
 ```
 
-Use `cog migrate` to upgrade to v2.2.
+Use `npx cogn@2.2.11 migrate` to upgrade to v2.2.

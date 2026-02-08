@@ -4,16 +4,16 @@ sidebar_position: 2
 
 # 第一个模块
 
-本教程创建一个 v2.2 模块并使用 `cog` 运行。
+本教程创建一个 v2.2 模块并使用 `npx cogn@2.2.11 ...` 运行。
 
 ## 快速路径（Core）
 
 如果你希望先用单文件跑通，再升级为 v2 目录结构：
 
 ```bash
-cog core new demo.md
-cog core run demo.md --args "hello" --pretty
-cog core promote demo.md
+npx cogn@2.2.11 core new demo.md
+npx cogn@2.2.11 core run demo.md --args "hello" --pretty
+npx cogn@2.2.11 core promote demo.md
 ```
 
 之后你可以直接编辑生成的 `./cognitive/modules/<name>/`，它就是标准 v2 模块目录。
@@ -118,7 +118,7 @@ Return v2.2 envelope JSON with:
 ## 5. 运行模块
 
 ```bash
-cog run hello-world --input '{"name":"John","time_of_day":"morning"}' --pretty
+npx cogn@2.2.11 run hello-world --input '{"name":"John","time_of_day":"morning"}' --pretty
 ```
 
 输出示例：

@@ -2,15 +2,19 @@
 sidebar_position: 4
 ---
 
-# cog migrate
+# migrate
 
 迁移旧模块到 v2.2。
+
+推荐（明确入口）：
+
+- `npx cogn@2.2.11 migrate ...`
 
 ## 语法
 
 ```bash
-cog migrate <module> [--dry-run] [--no-backup]
-cog migrate --all [--dry-run] [--no-backup]
+npx cogn@2.2.11 migrate <module> [--dry-run] [--no-backup]
+npx cogn@2.2.11 migrate --all [--dry-run] [--no-backup]
 ```
 
 ## 选项
@@ -24,14 +28,14 @@ cog migrate --all [--dry-run] [--no-backup]
 ## 示例
 
 ```bash
-cog migrate code-reviewer --dry-run
-cog migrate code-reviewer
-cog migrate --all --dry-run
+npx cogn@2.2.11 migrate code-reviewer --dry-run
+npx cogn@2.2.11 migrate code-reviewer
+npx cogn@2.2.11 migrate --all --dry-run
 ```
 
 ## 迁移后检查
 
 ```bash
-cog validate code-reviewer --v22
-cog run code-reviewer --args "test code" --pretty
+npx cogn@2.2.11 validate code-reviewer --v22
+npx cogn@2.2.11 run code-reviewer --args "test code" --pretty
 ```

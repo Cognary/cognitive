@@ -2,14 +2,14 @@
 sidebar_position: 2
 ---
 
-# cog run
+# run
 
 Run a Cognitive Module.
 
 ## Syntax
 
 ```bash
-cog run <module> [options]
+npx cogn@2.2.11 run <module> [options]
 ```
 
 ## Options
@@ -33,34 +33,34 @@ cog run <module> [options]
 ### Using --args
 
 ```bash
-cog run code-reviewer --args "def foo(): pass" --pretty
+npx cogn@2.2.11 run code-reviewer --args "def foo(): pass" --pretty
 ```
 
 ### Running a One-File Module
 
 ```bash
-cog run ./demo-single-file.md --args "hello" --pretty
+npx cogn@2.2.11 run ./demo-single-file.md --args "hello" --pretty
 ```
 
-If you want an even smaller path (no file), see [`cog core`](./core) and `cog core run --stdin`.
+If you want an even smaller path (no file), see [`core`](./core) and `npx cogn@2.2.11 core run --stdin`.
 
 ### Using JSON input
 
 ```bash
-cog run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
+npx cogn@2.2.11 run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
 ```
 
 ### Specify Provider/Model
 
 ```bash
-cog run code-reviewer --args "code" --provider openai --model gpt-4o
+npx cogn@2.2.11 run code-reviewer --args "code" --provider openai --model gpt-4o
 ```
 
 ## Output
 
-`cog run` prints a v2.2 envelope to stdout. The envelope includes `module`/`provider` when available. Errors use the same envelope structure (`ok:false`, `meta`, `error`). In `--pretty` mode it is formatted with indentation.
+`run` prints a v2.2 envelope to stdout. The envelope includes `module`/`provider` when available. Errors use the same envelope structure (`ok:false`, `meta`, `error`). In `--pretty` mode it is formatted with indentation.
 
-In `--stream` mode, `cog run` prints streaming events as NDJSON:
+In `--stream` mode, `run` prints streaming events as NDJSON:
 
 - One CEP event object per line
 - Terminal event is `{"type":"end", ... "result": { ...envelope... }}`

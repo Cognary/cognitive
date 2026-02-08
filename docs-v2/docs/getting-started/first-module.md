@@ -4,16 +4,16 @@ sidebar_position: 2
 
 # First Module
 
-This tutorial creates a simple v2.2 module and runs it with `cog`.
+This tutorial creates a simple v2.2 module and runs it with `npx cogn@2.2.11 ...`.
 
 ## Fast Path (Core)
 
 If you want to start from a single file and then migrate to v2:
 
 ```bash
-cog core new demo.md
-cog core run demo.md --args "hello" --pretty
-cog core promote demo.md
+npx cogn@2.2.11 core new demo.md
+npx cogn@2.2.11 core run demo.md --args "hello" --pretty
+npx cogn@2.2.11 core promote demo.md
 ```
 
 Then you can edit the generated `./cognitive/modules/<name>/` directory as a standard v2 module.
@@ -118,7 +118,7 @@ Return v2.2 envelope JSON with:
 ## 5. Run the Module
 
 ```bash
-cog run hello-world --input '{"name":"John","time_of_day":"morning"}' --pretty
+npx cogn@2.2.11 run hello-world --input '{"name":"John","time_of_day":"morning"}' --pretty
 ```
 
 Example output:

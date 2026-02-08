@@ -2,15 +2,19 @@
 sidebar_position: 4
 ---
 
-# cog migrate
+# migrate
 
 Migrate legacy modules to v2.2 format.
+
+Recommended (unambiguous) usage:
+
+- `npx cogn@2.2.11 migrate ...`
 
 ## Syntax
 
 ```bash
-cog migrate <module> [--dry-run] [--no-backup]
-cog migrate --all [--dry-run] [--no-backup]
+npx cogn@2.2.11 migrate <module> [--dry-run] [--no-backup]
+npx cogn@2.2.11 migrate --all [--dry-run] [--no-backup]
 ```
 
 ## Options
@@ -30,18 +34,18 @@ cog migrate --all [--dry-run] [--no-backup]
 
 ```bash
 # Preview
-cog migrate code-reviewer --dry-run
+npx cogn@2.2.11 migrate code-reviewer --dry-run
 
 # Execute
-cog migrate code-reviewer
+npx cogn@2.2.11 migrate code-reviewer
 
 # Migrate all
-cog migrate --all --dry-run
+npx cogn@2.2.11 migrate --all --dry-run
 ```
 
 ## Post-Migration
 
 ```bash
-cog validate code-reviewer --v22
-cog run code-reviewer --args "test code" --pretty
+npx cogn@2.2.11 validate code-reviewer --v22
+npx cogn@2.2.11 run code-reviewer --args "test code" --pretty
 ```

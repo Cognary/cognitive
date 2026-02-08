@@ -14,28 +14,28 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 
 ## 现状
 
-- **主运行时**：Node.js CLI（`cognitive-modules-cli`，命令 `cog`）
+- **主运行时**：Node.js CLI（`cognitive-modules-cli`，推荐入口 `npx cogn@<version> ...`）
 
 ## 版本
 
-- **运行时（npm）**：`2.2.8`
+- **运行时（npm）**：`2.2.11`
 - **规范**：v2.2
 
 ## 安装（Node.js）
 
 ```bash
 # 零安装快速体验
-npx cogn@2.2.8 --help
+npx cogn@2.2.11 --help
 
 # 或使用完整包名
-npx cognitive-modules-cli@2.2.8 --help
+npx cognitive-modules-cli@2.2.11 --help
 
 # 全局安装
-npm install -g cogn@2.2.8
-# 或：npm install -g cognitive-modules-cli@2.2.8
+npm install -g cogn@2.2.11
+# 或：npm install -g cognitive-modules-cli@2.2.11
 ```
 
-> `cogn` 是 `cognitive-modules-cli` 的别名包，两者提供相同的 `cog` 命令。
+> `cogn` 是 `cognitive-modules-cli` 的别名包。文档统一以 `npx cogn@<version> ...` 作为权威入口。
 
 ## Registry Index（latest 策略）
 
@@ -45,7 +45,7 @@ npm install -g cogn@2.2.8
 
 如需可复现（可固定版本），建议固定到具体 tag：
 
-- `https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json`
+- `https://github.com/Cognary/cognitive/releases/download/v2.2.11/cognitive-registry.v2.json`
 
 覆盖方式：
 
@@ -62,21 +62,16 @@ npm install -g cogn@2.2.8
 # 配置 Provider（以 OpenAI 为例）
 export OPENAI_API_KEY=sk-xxx
 
-# 运行代码审查
-cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
-
-# 运行任务优先级排序
-cog run task-prioritizer --args "fix bug(urgent), write docs, optimize performance" --pretty
-
-# 运行 API 设计
-cog run api-designer --args "order system CRUD API" --pretty
-
-# 启动 HTTP API 服务
-cog serve --port 8000
-
-# 启动 MCP Server（Claude Code / Cursor 集成）
-cog mcp
+# 5 分钟路径：从 stdin 运行单文件 Core 模块（输出 v2.2 envelope）
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+请返回一个合法的 v2.2 envelope（meta + data）。把答案放在 data.result。
+EOF
 ```
+
+说明：
+
+- 推荐入口是 `npx cogn@2.2.11 ...`（避免你机器上存在其他 `cog` 命令导致误用）。
+- 需要指定 `--provider/--model` 时，把它们放在命令后面，例如 `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`。
 
 ## v2.2 响应格式
 
@@ -118,46 +113,49 @@ cog mcp
 ## CLI 命令
 
 ```bash
+# 推荐（无需全局安装）：
+# npx cogn@2.2.11 <command> ...
+
 # 模块管理
-cog list
-cog add <url> --module <path>
-cog update <module>
-cog remove <module>
-cog versions <url>
+npx cogn@2.2.11 list
+npx cogn@2.2.11 add <url> --module <path>
+npx cogn@2.2.11 update <module>
+npx cogn@2.2.11 remove <module>
+npx cogn@2.2.11 versions <url>
 
 # 运行模块
-cog run <module> --args "..."
-cog run <module> --input '{"query":"..."}'
+npx cogn@2.2.11 run <module> --args "..."
+npx cogn@2.2.11 run <module> --input '{"query":"..."}'
 
 # 组合执行
-cog compose <module> --args "..."
-cog compose-info <module>
+npx cogn@2.2.11 compose <module> --args "..."
+npx cogn@2.2.11 compose-info <module>
 
 # 校验与迁移
-cog validate <module> --v22
-cog validate --all
-cog migrate <module> --dry-run
-cog migrate --all --no-backup
+npx cogn@2.2.11 validate <module> --v22
+npx cogn@2.2.11 validate --all
+npx cogn@2.2.11 migrate <module> --dry-run
+npx cogn@2.2.11 migrate --all --no-backup
 
 # 其他
-cog pipe --module <name>
-cog init [name]
-cog doctor
-cog serve --port 8000
-cog mcp
+npx cogn@2.2.11 pipe --module <name>
+npx cogn@2.2.11 init [name]
+npx cogn@2.2.11 doctor
+npx cogn@2.2.11 serve --port 8000
+npx cogn@2.2.11 mcp
 ```
 
 ## 内置模块（仓库内）
 
 | 模块 | 层级 | 功能 | 示例 |
 |------|------|------|------|
-| `code-reviewer` | decision | 代码审查 | `cog run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | 代码简化 | `cog run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | 任务优先级排序 | `cog run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API 设计 | `cog run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI 规范生成 | `cog run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI 组件规范 | `cog run ui-component-generator --args "button component"` |
-| `product-analyzer` | exploration | 产品分析 | `cog run product-analyzer --args "health product"` |
+| `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.11 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.11 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.11 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API 设计 | `npx cogn@2.2.11 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `npx cogn@2.2.11 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI 组件规范 | `npx cogn@2.2.11 run ui-component-generator --args "button component"` |
+| `product-analyzer` | exploration | 产品分析 | `npx cogn@2.2.11 run product-analyzer --args "health product"` |
 
 ## 模块格式（v2.2）
 
@@ -224,7 +222,7 @@ compat:
 检查配置：
 
 ```bash
-cog doctor
+npx cogn@2.2.11 doctor
 ```
 
 ## 开发（Node.js）
@@ -232,7 +230,7 @@ cog doctor
 ```bash
 # 克隆
 git clone https://github.com/Cognary/cognitive.git
-cd cognitive-modules
+cd cognitive
 
 # 安装
 cd packages/cli-node

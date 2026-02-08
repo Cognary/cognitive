@@ -12,7 +12,7 @@ Cognitive Modules supports two ways to pass input:
 ## Structured Input (`--input`)
 
 ```bash
-cog run code-reviewer --input '{"query":"review this code"}'
+npx cogn@2.2.11 run code-reviewer --input '{"query":"review this code"}'
 ```
 
 Fields in `input` are available to prompts via `${variable}` placeholders, for example `${query}`.
@@ -20,7 +20,7 @@ Fields in `input` are available to prompts via `${variable}` placeholders, for e
 ## Text Input (`--args`)
 
 ```bash
-cog run code-reviewer --args "def foo(): pass"
+npx cogn@2.2.11 run code-reviewer --args "def foo(): pass"
 ```
 
 `--args` is mapped to:

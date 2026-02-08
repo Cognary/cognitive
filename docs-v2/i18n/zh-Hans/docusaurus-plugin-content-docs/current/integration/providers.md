@@ -14,10 +14,10 @@ Cognitive 把下列概念分开：
 
 ## 快速检查
 
-用 `cog providers` 查看当前环境能力：
+用 `npx cogn@2.2.11 providers` 查看当前环境能力：
 
 ```bash
-cog providers
+npx cogn@2.2.11 providers
 ```
 
 典型字段：
@@ -32,7 +32,7 @@ cog providers
 为了让 v2.2 envelope 在协议层稳定，Cognitive 提供统一开关：
 
 ```bash
-cog run <module> --args "..." --structured auto|off|prompt|native
+npx cogn@2.2.11 run <module> --args "..." --structured auto|off|prompt|native
 ```
 
 含义：
@@ -54,7 +54,7 @@ Gemini 可能拒绝其他 provider 常见的 JSON Schema 关键词。
 如果你看到类似 `const`、布尔枚举、空对象 schema 等错误，建议：
 
 ```bash
-cog run <module> --args "..." --structured prompt
+npx cogn@2.2.11 run <module> --args "..." --structured prompt
 ```
 
 这样能保持 envelope 合同稳定，同时绕开 provider 原生 schema 的限制。
@@ -71,4 +71,3 @@ Cognitive 标准化的是事件模型，传输层会因接口而不同：
 - CLI：NDJSON 更适合管道与日志回放
 
 协议层要求是：事件可重建最终 v2.2 envelope，且行为在 CLI/HTTP/MCP 间一致。
-

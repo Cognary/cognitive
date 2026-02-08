@@ -49,7 +49,7 @@ const result = await runWithSubagents('product-analyzer', provider, {
 });
 ```
 
-> The CLI `cog run` does **not** automatically resolve `@call` directives.
+> The CLI `run` does **not** automatically resolve `@call` directives.
 
 ## Execution Flow
 

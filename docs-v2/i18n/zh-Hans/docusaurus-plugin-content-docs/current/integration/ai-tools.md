@@ -9,9 +9,9 @@ sidebar_position: 3
 ## Cursor / Claude Code
 
 ```bash
-npm install -g cogn@2.2.7
+npm install -g cogn@2.2.11
 npm install @modelcontextprotocol/sdk
-cog mcp
+npx cogn@2.2.11 mcp
 ```
 
 工具可调用：
@@ -22,7 +22,7 @@ cog mcp
 ## 工作流平台（n8n / Dify / Coze）
 
 ```bash
-cog serve --port 8000
+npx cogn@2.2.11 serve --port 8000
 ```
 
 ```bash

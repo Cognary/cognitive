@@ -14,28 +14,28 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ## Status
 
-- **Primary runtime**: Node.js CLI (`cognitive-modules-cli`, command `cog`)
+- **Primary runtime**: Node.js CLI (`cognitive-modules-cli`, via `npx cogn@<version> ...`)
 
 ## Version
 
-- **Runtime (npm)**: `2.2.8`
+- **Runtime (npm)**: `2.2.11`
 - **Spec**: v2.2
 
 ## Installation (Node.js)
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.8 --help
+npx cogn@2.2.11 --help
 
 # Or use the full package name
-npx cognitive-modules-cli@2.2.8 --help
+npx cognitive-modules-cli@2.2.11 --help
 
 # Global installation
-npm install -g cogn@2.2.8
-# or: npm install -g cognitive-modules-cli@2.2.8
+npm install -g cogn@2.2.11
+# or: npm install -g cognitive-modules-cli@2.2.11
 ```
 
-> `cogn` is an alias package for `cognitive-modules-cli`. Both provide the same `cog` command.
+> `cogn` is an alias package for `cognitive-modules-cli`. Docs use `npx cogn@<version> ...` as the canonical entrypoint.
 
 ## Registry Index ("Latest" Strategy)
 
@@ -45,7 +45,7 @@ By default, the CLI fetches the registry index from the **latest GitHub Release*
 
 For reproducible builds, pin to a specific tag:
 
-- `https://github.com/Cognary/cognitive/releases/download/v2.2.8/cognitive-registry.v2.json`
+- `https://github.com/Cognary/cognitive/releases/download/v2.2.11/cognitive-registry.v2.json`
 
 Override via:
 
@@ -59,24 +59,19 @@ Override via:
 ## Quick Start
 
 ```bash
-# Configure provider (example: OpenAI)
+# Configure a provider (example: OpenAI)
 export OPENAI_API_KEY=sk-xxx
 
-# Run code review
-cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
-
-# Run task prioritization
-cog run task-prioritizer --args "fix bug(urgent), write docs, optimize performance" --pretty
-
-# Run API design
-cog run api-designer --args "order system CRUD API" --pretty
-
-# Start HTTP service (API integration)
-cog serve --port 8000
-
-# Start MCP server (Claude Code / Cursor integration)
-cog mcp
+# 5-minute path: run a one-file "Core" module from stdin (prints a v2.2 envelope)
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
+EOF
 ```
+
+Notes:
+
+- The recommended, unambiguous entrypoint is `npx cogn@2.2.11 ...` (avoids any `cog` binary conflicts on your machine).
+- When passing `--provider/--model`, put them after the command, e.g. `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`.
 
 ## v2.2 Response Format
 
@@ -118,46 +113,49 @@ All modules return the unified v2.2 envelope format:
 ## CLI Commands
 
 ```bash
+# Recommended (no global install needed):
+# npx cogn@2.2.11 <command> ...
+
 # Module management
-cog list
-cog add <url> --module <path>
-cog update <module>
-cog remove <module>
-cog versions <url>
+npx cogn@2.2.11 list
+npx cogn@2.2.11 add <url> --module <path>
+npx cogn@2.2.11 update <module>
+npx cogn@2.2.11 remove <module>
+npx cogn@2.2.11 versions <url>
 
 # Run modules
-cog run <module> --args "..."
-cog run <module> --input '{"query":"..."}'
+npx cogn@2.2.11 run <module> --args "..."
+npx cogn@2.2.11 run <module> --input '{"query":"..."}'
 
 # Composition
-cog compose <module> --args "..."
-cog compose-info <module>
+npx cogn@2.2.11 compose <module> --args "..."
+npx cogn@2.2.11 compose-info <module>
 
 # Validation & migration
-cog validate <module> --v22
-cog validate --all
-cog migrate <module> --dry-run
-cog migrate --all --no-backup
+npx cogn@2.2.11 validate <module> --v22
+npx cogn@2.2.11 validate --all
+npx cogn@2.2.11 migrate <module> --dry-run
+npx cogn@2.2.11 migrate --all --no-backup
 
 # Other
-cog pipe --module <name>
-cog init [name]
-cog doctor
-cog serve --port 8000
-cog mcp
+npx cogn@2.2.11 pipe --module <name>
+npx cogn@2.2.11 init [name]
+npx cogn@2.2.11 doctor
+npx cogn@2.2.11 serve --port 8000
+npx cogn@2.2.11 mcp
 ```
 
 ## Built-in Modules (Repository)
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
-| `code-reviewer` | decision | Code review | `cog run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | Code simplification | `cog run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | Task priority sorting | `cog run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API design | `cog run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI spec generation | `cog run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI component spec | `cog run ui-component-generator --args "button component"` |
-| `product-analyzer` | exploration | Product analysis | `cog run product-analyzer --args "health product"` |
+| `code-reviewer` | decision | Code review | `npx cogn@2.2.11 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.11 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | Task priority sorting | `npx cogn@2.2.11 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API design | `npx cogn@2.2.11 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.11 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.11 run ui-component-generator --args "button component"` |
+| `product-analyzer` | exploration | Product analysis | `npx cogn@2.2.11 run product-analyzer --args "health product"` |
 
 ## Module Format (v2.2)
 
@@ -224,7 +222,7 @@ Environment variables:
 Check config:
 
 ```bash
-cog doctor
+npx cogn@2.2.11 doctor
 ```
 
 ## Development (Node.js)
@@ -232,7 +230,7 @@ cog doctor
 ```bash
 # Clone
 git clone https://github.com/Cognary/cognitive.git
-cd cognitive-modules
+cd cognitive
 
 # Install
 cd packages/cli-node

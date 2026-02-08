@@ -2,39 +2,34 @@
 sidebar_position: 2
 ---
 
-# cog core
+# core
 
-`cog core` is the minimal "one-file" workflow for Cognitive Modules.
+`core` is the minimal "one-file" workflow for Cognitive Modules.
 
 It is designed for:
 
 - A 5-minute path (no registry, no conformance required).
 - A path to migrate into a standard v2 module directory when you are ready.
 
-## Availability Note
-
-If you installed via npm `cogn@2.2.7`, you may not have `cog core` yet.
-This page documents the current `main` branch behavior.
-
 ## Commands
 
 ### 1) Create a One-File Module
 
 ```bash
-cog core new            # creates ./demo.md
-cog core new my.md
+npx cogn@2.2.11 core new            # creates ./demo.md
+npx cogn@2.2.11 core new my.md
 ```
 
 ### 2) Run It (File)
 
 ```bash
-cog core run demo.md --args "hello" --pretty
+npx cogn@2.2.11 core run demo.md --args "hello" --pretty
 ```
 
 ### 3) Run It (STDIN, Zero Files)
 
 ```bash
-cat <<'EOF' | cog core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
 Return a valid v2.2 envelope. Put the output in data.result.
 EOF
 ```
@@ -43,10 +38,10 @@ EOF
 
 ```bash
 # Default output: ./cognitive/modules/<module-name>/
-cog core promote demo.md
+npx cogn@2.2.11 core promote demo.md
 
 # Custom output directory
-cog core promote demo.md ./cognitive/modules/demo
+npx cogn@2.2.11 core promote demo.md ./cognitive/modules/demo
 ```
 
 Promote also creates minimal golden tests:
@@ -57,7 +52,7 @@ Promote also creates minimal golden tests:
 ### 5) Overwrite an Existing Target
 
 ```bash
-cog core promote demo.md ./cognitive/modules/demo --force
+npx cogn@2.2.11 core promote demo.md ./cognitive/modules/demo --force
 ```
 
 ## Why This Matters
@@ -66,4 +61,3 @@ cog core promote demo.md ./cognitive/modules/demo --force
 
 - Start with a single `.md` file.
 - When you need portability, promote into `module.yaml/prompt.md/schema.json/tests/`.
-

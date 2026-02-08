@@ -9,7 +9,7 @@ Run Cognitive Modules via a simple REST API.
 ## Start Server
 
 ```bash
-cog serve --host 0.0.0.0 --port 8000
+npx cogn@2.2.11 serve --host 0.0.0.0 --port 8000
 ```
 
 ## Authentication (Optional)
@@ -117,4 +117,4 @@ curl -N -X POST http://localhost:8000/run/stream \
 - Payload limit: 1MB
 - Provider selection follows the same rules as CLI (`--provider`/API keys)
 - `/run` responses always include `module` and `provider` (may be `"unknown"` if not resolved)
-- CLI streaming uses NDJSON (`cog run --stream`) with the same event objects, one JSON per line
+- CLI streaming uses NDJSON (`npx cogn@2.2.11 run --stream`) with the same event objects, one JSON per line

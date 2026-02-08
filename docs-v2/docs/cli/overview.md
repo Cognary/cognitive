@@ -4,17 +4,17 @@ sidebar_position: 1
 
 # CLI Overview (Node.js)
 
-Cognitive Modules CLI is distributed via npm and provides the `cog` command.
+Cognitive Modules CLI is distributed via npm. The recommended entrypoint is `npx cogn@2.2.11 ...` (avoids PATH/binary conflicts on your machine).
 
 ## Installation
 
 ```bash
 # Zero-install
-npx cogn@latest --help
+npx cogn@2.2.11 --help
 
 # Global
-npm install -g cogn@latest
-# or: npm install -g cognitive-modules-cli@latest
+npm install -g cogn@2.2.11
+# or: npm install -g cognitive-modules-cli@2.2.11
 ```
 
 ## Command List
@@ -43,8 +43,8 @@ npm install -g cogn@latest
 ## Global Options
 
 ```bash
-cog --version
-cog --help
+npx cogn@2.2.11 --version
+npx cogn@2.2.11 --help
 ```
 
 ## Progressive Complexity (Profiles)
@@ -69,33 +69,33 @@ Examples:
 
 ```bash
 # Minimal run (skip validation)
-cog run ./demo.md --args "hello" --profile core
+npx cogn@2.2.11 run ./demo.md --args "hello" --profile core
 
 # Force prompt-based structured output (useful when a provider rejects native schemas)
-cog run ./demo.md --args "hello" --structured prompt
+npx cogn@2.2.11 run ./demo.md --args "hello" --structured prompt
 
 # Higher assurance
-cog run code-reviewer --args "..." --profile strict
+npx cogn@2.2.11 run code-reviewer --args "..." --profile strict
 
 # Certified gate (refuses legacy modules + requires registry provenance/integrity)
-cog run code-reviewer --args "..." --profile certified
+npx cogn@2.2.11 run code-reviewer --args "..." --profile certified
 
 # Force validation + write audit record
-cog run code-reviewer --args "..." --profile default --audit --validate on
+npx cogn@2.2.11 run code-reviewer --args "..." --profile default --audit --validate on
 ```
 
 ## Common Workflows
 
 ### 0. Minimal One-File Path
 
-See [`cog core`](./core).
+See [Core](./core).
 
 ### Provider Compatibility (Structured Output)
 
 If a provider rejects native JSON schema payloads, use:
 
 ```bash
-cog run <module> --args "..." --structured prompt
+npx cogn@2.2.11 run <module> --args "..." --structured prompt
 ```
 
 See [Providers and Capabilities](../integration/providers).
@@ -103,49 +103,49 @@ See [Providers and Capabilities](../integration/providers).
 ### 1. Run a Module
 
 ```bash
-cog run code-reviewer --args "your code" --pretty
+npx cogn@2.2.11 run code-reviewer --args "your code" --pretty
 ```
 
 ### 2. Create a Module
 
 ```bash
-cog init my-module
-cog validate my-module --v22
+npx cogn@2.2.11 init my-module
+npx cogn@2.2.11 validate my-module --v22
 ```
 
 ### 3. Install Modules from GitHub
 
 ```bash
-cog add Cognary/cognitive -m code-simplifier
-cog versions Cognary/cognitive
-cog update code-simplifier
+npx cogn@2.2.11 add Cognary/cognitive -m code-simplifier
+npx cogn@2.2.11 versions Cognary/cognitive
+npx cogn@2.2.11 update code-simplifier
 ```
 
 ### 3.1 Build and Verify Registry Tarballs (Publishable Assets)
 
 ```bash
 # Build tarballs + regenerate cognitive-registry.v2.json
-cog registry build --tag vX.Y.Z
+npx cogn@2.2.11 registry build --tag vX.Y.Z
 
 # Verify local tarballs match the v2 registry index
-cog registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+npx cogn@2.2.11 registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
 
 # Verify remote "latest" registry (fetch index + tarballs and validate integrity)
 # Default registry index strategy:
 #   https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
-cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
+npx cogn@2.2.11 registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 
 # Pin to a specific release tag (recommended for reproducible builds)
-cog registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
+npx cogn@2.2.11 registry verify --remote --index https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
 
 # Tune remote verification limits (defaults: 15s, 2MB index, 25MB tarball)
-cog registry verify --remote \
+npx cogn@2.2.11 registry verify --remote \
   --fetch-timeout-ms 20000 \
   --max-index-bytes 2097152 \
   --max-tarball-bytes 26214400
 
 # Control remote verification concurrency (default: 4; max: 8)
-cog registry verify --remote --concurrency 2
+npx cogn@2.2.11 registry verify --remote --concurrency 2
 ```
 
 See [Publishable Artifacts](../registry/publishable-artifacts).
@@ -160,7 +160,7 @@ Commands that read the registry index (for example: `search`, `add`, `update`) u
 Override via CLI:
 
 ```bash
-cog search "code" --registry-timeout-ms 15000 --registry-max-bytes 2097152
+npx cogn@2.2.11 search "code" --registry-timeout-ms 15000 --registry-max-bytes 2097152
 ```
 
 Or env:
@@ -173,6 +173,6 @@ export COGNITIVE_REGISTRY_MAX_BYTES=2097152
 ### 4. Compose Workflows
 
 ```bash
-cog compose code-review-pipeline --args "code" --timeout 60000 --trace
-cog compose-info code-review-pipeline
+npx cogn@2.2.11 compose code-review-pipeline --args "code" --timeout 60000 --trace
+npx cogn@2.2.11 compose-info code-review-pipeline
 ```

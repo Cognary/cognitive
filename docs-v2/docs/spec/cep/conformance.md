@@ -15,9 +15,8 @@ This document specifies the conformance model for `cep.conformance.v2.2`.
 
 Conformance MUST be backed by test vectors with a clear level system.
 
-Implementations SHOULD provide a command like `cog test` to run vectors and report:
+Implementations SHOULD provide a command like `npx cogn@2.2.11 test` to run vectors and report:
 
 - Pass/fail per vector
 - Failure reason with canonical error codes
 - Optional trace output (non-normative)
-

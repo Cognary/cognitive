@@ -23,21 +23,21 @@ Node CLI 支持多种 Provider。默认会根据已配置的 API Key 自动选�
 
 ```bash
 export OPENAI_API_KEY=sk-xxx
-cog run code-reviewer --args "your code" --provider openai --model gpt-4o
+npx cogn@2.2.11 run code-reviewer --args "your code" --provider openai --model gpt-4o
 ```
 
 ## 示例：Anthropic
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-xxx
-cog run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
+npx cogn@2.2.11 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
 ```
 
 ## 示例：Ollama
 
 ```bash
 export OLLAMA_HOST=http://localhost:11434
-cog run code-reviewer --args "your code" --provider ollama --model llama3.1
+npx cogn@2.2.11 run code-reviewer --args "your code" --provider ollama --model llama3.1
 ```
 
 ## 模型覆盖
@@ -48,5 +48,5 @@ cog run code-reviewer --args "your code" --provider ollama --model llama3.1
 ## 检查配置
 
 ```bash
-cog doctor
+npx cogn@2.2.11 doctor
 ```

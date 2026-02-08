@@ -181,13 +181,13 @@ meta:
 
 ```bash
 # 迁移单个模块
-cog migrate code-reviewer
+npx cogn@2.2.11 migrate code-reviewer
 
 # 迁移所有模块
-cog migrate --all
+npx cogn@2.2.11 migrate --all
 
 # 验证 v2.2 格式
-cog validate code-reviewer --v22
+npx cogn@2.2.11 validate code-reviewer --v22
 ```
 
 ---

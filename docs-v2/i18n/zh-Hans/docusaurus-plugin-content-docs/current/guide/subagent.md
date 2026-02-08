@@ -33,7 +33,7 @@ const result = await runWithSubagents('product-analyzer', provider, {
 });
 ```
 
-> CLI `cog run` **不会**自动解析 `@call`。
+> CLI `run` **不会**自动解析 `@call`。
 
 ## 限制
 

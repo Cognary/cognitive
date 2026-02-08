@@ -7,7 +7,7 @@ This repo publishes:
 
 ## Versioning
 
-- npm: `2.2.7`
+- npm: use the same version as the GitHub Release tag (recommended)
 - registry module versions: aligned to the repo release tag (recommended)
 
 ## Registry v2 (tarballs + checksums)
@@ -35,10 +35,12 @@ Tarball layout is strict:
 2. Regenerate registry v2 + tarballs locally
 
 ```bash
-cog registry build \
-  --tag v2.2.7 \
+VERSION=2.2.11
+
+npx cogn@${VERSION} registry build \
+  --tag v${VERSION} \
   --timestamp 2026-02-06T00:00:00Z \
-  --tarball-base-url https://github.com/Cognary/cognitive/releases/download/v2.2.7 \
+  --tarball-base-url https://github.com/Cognary/cognitive/releases/download/v${VERSION} \
   --out-dir dist/registry-assets \
   --registry-out cognitive-registry.v2.json
 ```
@@ -75,5 +77,5 @@ Upload the files from `dist/registry-assets/` as release assets:
 The registry tarball URLs follow:
 
 ```
-https://github.com/Cognary/cognitive/releases/download/v2.2.7/<module>-<version>.tar.gz
+https://github.com/Cognary/cognitive/releases/download/v2.2.11/<module>-<version>.tar.gz
 ```

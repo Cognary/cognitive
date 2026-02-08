@@ -2,14 +2,14 @@
 sidebar_position: 2
 ---
 
-# cog run
+# run
 
 运行模块。
 
 ## 语法
 
 ```bash
-cog run <module> [options]
+npx cogn@2.2.11 run <module> [options]
 ```
 
 ## 选项
@@ -31,11 +31,11 @@ cog run <module> [options]
 ## 示例
 
 ```bash
-cog run code-reviewer --args "def foo(): pass" --pretty
-cog run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
-cog run code-reviewer --provider openai --model gpt-4o --args "code"
+npx cogn@2.2.11 run code-reviewer --args "def foo(): pass" --pretty
+npx cogn@2.2.11 run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
+npx cogn@2.2.11 run code-reviewer --provider openai --model gpt-4o --args "code"
 ```
 
 ## 输出
 
-`cog run` 会输出 v2.2 envelope，并在可用时包含 `module`/`provider`。错误同样使用 envelope 结构（`ok:false`, `meta`, `error`）。`--pretty` 会格式化输出。
+`run` 会输出 v2.2 envelope，并在可用时包含 `module`/`provider`。错误同样使用 envelope 结构（`ok:false`, `meta`, `error`）。`--pretty` 会格式化输出。

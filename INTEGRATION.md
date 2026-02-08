@@ -1,4 +1,4 @@
-# Cognitive Modules 集成指南（Node 2.2.7）
+# Cognitive Modules 集成指南（Node.js CLI）
 
 本文档面向 AI Agent 工具（如 Cursor、Claude Code、工作流平台）集成 Cognitive Modules。
 
@@ -6,11 +6,11 @@
 
 | 方式 | 适用场景 | 说明 |
 |------|----------|------|
-| **MCP Server** | Claude Desktop、Cursor 等 AI 工具 | `cog mcp` |
-| **HTTP API** | n8n、Coze、Dify 等工作流平台 | `cog serve` |
-| **CLI** | 命令行/脚本 | `cog run` |
+| **MCP Server** | Claude Desktop、Cursor 等 AI 工具 | `npx cogn@2.2.11 mcp` |
+| **HTTP API** | n8n、Coze、Dify 等工作流平台 | `npx cogn@2.2.11 serve` |
+| **CLI** | 命令行/脚本 | `npx cogn@2.2.11 run` |
 
-> 当前主运行时为 **Node.js CLI**。Python 运行时为遗留版本，不再作为主要维护目标。
+> 本仓库的文档统一以 `npx cogn@2.2.11 ...` 作为权威入口，以避免本机 PATH 上存在其他同名命令导致的错觉。
 
 ---
 
@@ -18,20 +18,10 @@
 
 MCP 是 Anthropic 推出的标准协议，Claude Desktop 和 Cursor 原生支持。
 
-### 安装
-
-```bash
-# 安装 CLI
-npm install -g cogn@2.2.7
-
-# MCP 依赖为可选依赖，如果提示缺失则单独安装
-npm install @modelcontextprotocol/sdk
-```
-
 ### 启动
 
 ```bash
-cog mcp
+npx cogn@2.2.11 mcp
 ```
 
 ### 配置 Claude Desktop
@@ -42,8 +32,8 @@ cog mcp
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cog",
-      "args": ["mcp"],
+      "command": "npx",
+      "args": ["cogn@2.2.11", "mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"
       }
@@ -67,7 +57,7 @@ cog mcp
 ### 启动
 
 ```bash
-cog serve --port 8000
+npx cogn@2.2.11 serve --port 8000
 ```
 
 ### 请求示例

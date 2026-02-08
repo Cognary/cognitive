@@ -23,14 +23,14 @@ Cognitive Modules (Node CLI) supports multiple LLM providers. The CLI auto-selec
 
 ```bash
 export OPENAI_API_KEY=sk-xxx
-cog run code-reviewer --args "your code" --provider openai --model gpt-4o
+npx cogn@2.2.11 run code-reviewer --args "your code" --provider openai --model gpt-4o
 ```
 
 ## Example: Anthropic
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-xxx
-cog run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
+npx cogn@2.2.11 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
 ```
 
 ## Example: Ollama (Local)
@@ -38,7 +38,7 @@ cog run code-reviewer --args "your code" --provider anthropic --model claude-son
 ```bash
 # Install and start Ollama separately
 export OLLAMA_HOST=http://localhost:11434
-cog run code-reviewer --args "your code" --provider ollama --model llama3.1
+npx cogn@2.2.11 run code-reviewer --args "your code" --provider ollama --model llama3.1
 ```
 
 ## Model Override
@@ -49,5 +49,5 @@ cog run code-reviewer --args "your code" --provider ollama --model llama3.1
 ## Check Configuration
 
 ```bash
-cog doctor
+npx cogn@2.2.11 doctor
 ```

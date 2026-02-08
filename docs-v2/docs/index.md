@@ -25,25 +25,13 @@ Cognitive Modules is a specification and runtime for **structured, verifiable AI
 ## Quick Start
 
 ```bash
-# Zero-install quick start
-npx cogn@2.2.7 run code-reviewer --args "your code" --pretty
-
-# Global installation
-npm install -g cogn@2.2.7
-```
-
-Run your first module:
-
-```bash
+# Configure a provider (example: OpenAI)
 export OPENAI_API_KEY=sk-xxx
 
-cog run code-reviewer --args "def login(u,p): return db.query(f'SELECT * FROM users WHERE name={u}')" --pretty
-
-# Start HTTP server
-cog serve --port 8000
-
-# Start MCP server (Claude Code / Cursor)
-cog mcp
+# 5-minute path: run a one-file "Core" module from stdin (prints a v2.2 envelope)
+cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
+EOF
 ```
 
 If you want a "protocol-grade" path, but only when needed:
@@ -95,12 +83,12 @@ If you want a "protocol-grade" path, but only when needed:
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
-| `code-reviewer` | decision | Code review | `cog run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | Code simplification | `cog run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | Task prioritization | `cog run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API design | `cog run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI spec generation | `cog run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI component spec | `cog run ui-component-generator --args "button component"` |
+| `code-reviewer` | decision | Code review | `npx cogn@2.2.11 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.11 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | Task prioritization | `npx cogn@2.2.11 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API design | `npx cogn@2.2.11 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.11 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.11 run ui-component-generator --args "button component"` |
 
 ---
 

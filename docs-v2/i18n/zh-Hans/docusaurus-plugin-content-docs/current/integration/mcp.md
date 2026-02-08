@@ -9,14 +9,14 @@ sidebar_position: 2
 ## 安装
 
 ```bash
-npm install -g cogn@2.2.7
+npm install -g cogn@2.2.11
 npm install @modelcontextprotocol/sdk
 ```
 
 ## 启动
 
 ```bash
-cog mcp
+npx cogn@2.2.11 mcp
 ```
 
 ## Claude Desktop 配置
@@ -25,8 +25,8 @@ cog mcp
 {
   "mcpServers": {
     "cognitive": {
-      "command": "cog",
-      "args": ["mcp"],
+      "command": "npx",
+      "args": ["cogn@2.2.11", "mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"
       }
