@@ -206,19 +206,22 @@ compat:
 
 ## LLM 配置
 
-运行时会根据已配置的 API Key 自动选择 Provider，也可以用 `--provider`/`--model` 显式指定。
+运行时会根据已配置的 API Key 自动选择 Provider（仅限稳定支持面），也可以用 `--provider`/`--model` 显式指定。
 
 环境变量：
 
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `GEMINI_API_KEY`
-- `DEEPSEEK_API_KEY`
 - `MINIMAX_API_KEY`
-- `MOONSHOT_API_KEY`
+- `DEEPSEEK_API_KEY`
 - `DASHSCOPE_API_KEY` 或 `QWEN_API_KEY`
-- `OLLAMA_HOST`（本地 Ollama）
 - `COG_MODEL`（强制模型覆盖）
+
+实验/社区（不纳入稳定支持承诺；需要显式指定 `--provider`）：
+
+- `MOONSHOT_API_KEY`
+- `OLLAMA_HOST`（本地 Ollama）
 
 检查配置：
 

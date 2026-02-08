@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # 配置 LLM
 
-Node CLI 支持多种 Provider。默认会根据已配置的 API Key 自动选择，也可用 `--provider` 指定。
+Node CLI 支持多种 Provider。默认会根据已配置的 API Key 自动选择（仅限稳定支持面），也可用 `--provider` 指定。
 
 说明：
 
@@ -13,15 +13,22 @@ Node CLI 支持多种 Provider。默认会根据已配置的 API Key 自动选�
 
 ## 支持的 Provider
 
-| Provider | 环境变量 |
+稳定支持面（文档/CI/发布门禁保证）：
+
+| Provider（Stable） | 环境变量 |
 |----------|---------|
-| OpenAI | `OPENAI_API_KEY` |
-| Anthropic | `ANTHROPIC_API_KEY` |
+| OpenAI (ChatGPT) | `OPENAI_API_KEY` |
+| Anthropic (Claude) | `ANTHROPIC_API_KEY` |
 | Gemini | `GEMINI_API_KEY` |
-| DeepSeek | `DEEPSEEK_API_KEY` |
 | MiniMax | `MINIMAX_API_KEY` |
-| Moonshot (Kimi) | `MOONSHOT_API_KEY` |
+| DeepSeek | `DEEPSEEK_API_KEY` |
 | Qwen (DashScope) | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` |
+
+实验/社区 provider（可用但不承诺稳定；需要显式指定 `--provider`）：
+
+| Provider（Experimental/Community） | 环境变量 |
+|----------|---------|
+| Moonshot (Kimi) | `MOONSHOT_API_KEY` |
 | Ollama (本地) | `OLLAMA_HOST` |
 
 ## 示例：OpenAI
@@ -38,7 +45,7 @@ export ANTHROPIC_API_KEY=sk-ant-xxx
 npx cogn@2.2.13 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
 ```
 
-## 示例：Ollama
+## 示例：Ollama（社区）
 
 ```bash
 export OLLAMA_HOST=http://localhost:11434

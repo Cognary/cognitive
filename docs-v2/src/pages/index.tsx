@@ -86,7 +86,7 @@ function getFeatures(): Feature[] {
       }),
       description: translate({
         id: 'homepage.features.multiLlm.description',
-        message: 'OpenAI / Anthropic / MiniMax / Ollama - one module, run anywhere.',
+        message: 'OpenAI / Anthropic / Gemini / MiniMax / DeepSeek / Qwen - one module, run anywhere.',
       }),
       Icon: Cpu,
     },

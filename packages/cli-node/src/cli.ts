@@ -70,13 +70,37 @@ async function main() {
     }
   }
 
-  // Get provider
+  const commandRequiresProvider = (() => {
+    if (command === 'core') return positionals[0] === 'run';
+    switch (command) {
+      case 'run':
+      case 'pipe':
+      case 'compose':
+      case 'test':
+      case 'conformance':
+      case 'serve':
+      case 'mcp':
+        return true;
+      default:
+        return false;
+    }
+  })();
+
+  // Get provider (only required for commands that actually invoke an LLM).
+  // For non-provider commands (list/validate/registry/docs helpers), we keep the CLI usable even
+  // when no API keys are configured by using a placeholder provider that should not be invoked.
   let provider;
-  try {
-    provider = getProvider(values.provider, values.model);
-  } catch (e) {
-    console.error(`Error: ${e instanceof Error ? e.message : e}`);
-    process.exit(1);
+  if (commandRequiresProvider) {
+    try {
+      provider = getProvider(values.provider, values.model);
+    } catch (e) {
+      console.error(`Error: ${e instanceof Error ? e.message : e}`);
+      process.exit(1);
+    }
+  } else {
+    // If the user explicitly asked for a provider, respect it even if unconfigured.
+    // Otherwise, pick a stable placeholder.
+    provider = getProvider(values.provider ?? 'openai', values.model);
   }
 
   let policy;
@@ -271,7 +295,7 @@ async function main() {
         
         // 2. Provider configuration
         console.log('LLM Providers:');
-        const providers = listProviders();
+        const providers = listProviders({ all: Boolean(values.all) });
         let hasConfiguredProvider = false;
         for (const p of providers) {
           const status = p.configured ? '✓' : '–';
@@ -280,6 +304,7 @@ async function main() {
           console.log(`      Model: ${p.model}`);
           console.log(`      Structured output: ${p.structuredOutput}`);
           console.log(`      Streaming: ${p.streaming ? 'yes' : 'no'}`);
+          console.log(`      Support: ${p.support}`);
           console.log(`      Status: ${apiKeyStatus}`);
           if (p.configured) hasConfiguredProvider = true;
         }
@@ -292,7 +317,8 @@ async function main() {
           console.log(`  ✓ ${provider.name} (ready to use)`);
         } catch {
           console.log('  ✗ None configured');
-          console.log('    → Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, etc.');
+          console.log('    → Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, MINIMAX_API_KEY, DEEPSEEK_API_KEY, DASHSCOPE_API_KEY/QWEN_API_KEY');
+          console.log('    → Experimental providers require explicit --provider (see: cog providers --all)');
         }
         console.log('');
         
@@ -384,7 +410,7 @@ async function main() {
       }
 
       case 'providers': {
-        const providers = listProviders();
+        const providers = listProviders({ all: Boolean(values.all) });
         console.log(JSON.stringify({ providers }, null, values.pretty ? 2 : 0));
         break;
       }
@@ -1157,7 +1183,7 @@ OPTIONS:
   -t, --tag <version>   Git tag/version (for add/update)
   -b, --branch <name>   Git branch (for add)
   -M, --model <name>    LLM model (e.g., gpt-4o, gemini-2.0-flash)
-  -p, --provider <name> LLM provider (gemini, openai, anthropic, deepseek, minimax, moonshot, qwen, ollama)
+  -p, --provider <name> LLM provider (stable: openai, anthropic, gemini, minimax, deepseek, qwen)
   --pretty              Pretty-print JSON output
   -V, --verbose         Verbose output
   --no-validate         Skip schema validation
@@ -1171,7 +1197,7 @@ OPTIONS:
   --v22                 Use strict v2.2 validation (for validate)
   --dry-run             Show what would be done without changes (for migrate)
   --no-backup           Skip backup before migration (for migrate)
-  --all                 Process all modules (for validate/migrate)
+  --all                 Process all modules (validate/migrate/test) OR include experimental providers (providers/doctor)
   --conformance         Run official spec vectors (for test)
   --suite <name>        Conformance suite: envelope|runtime|stream|registry|all
   --level <n>           Conformance level: 1|2|3
@@ -1249,15 +1275,17 @@ ENVIRONMENT:
   GEMINI_API_KEY      Google Gemini
   OPENAI_API_KEY      OpenAI
   ANTHROPIC_API_KEY   Anthropic Claude
-  DEEPSEEK_API_KEY    DeepSeek
   MINIMAX_API_KEY     MiniMax
-  MOONSHOT_API_KEY    Moonshot (Kimi)
+  DEEPSEEK_API_KEY    DeepSeek
   DASHSCOPE_API_KEY   Alibaba Qwen (通义千问)
-  OLLAMA_HOST         Ollama local (default: localhost:11434)
   COG_MODEL           Override default model for any provider
   COGNITIVE_REGISTRY_URL  Override registry index URL
   COGNITIVE_REGISTRY_TIMEOUT_MS  Registry index fetch timeout (ms)
   COGNITIVE_REGISTRY_MAX_BYTES   Registry index max bytes
+
+EXPERIMENTAL/COMMUNITY (not in the stable support promise; use --provider explicitly):
+  MOONSHOT_API_KEY    Moonshot (Kimi)
+  OLLAMA_HOST         Ollama local (default: localhost:11434)
 `);
 }
 
