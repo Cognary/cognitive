@@ -572,11 +572,10 @@ export interface CommandResultV2 {
 /**
  * Execution profile:
  * - core: minimal constraints (5-minute path)
- * - default: safe defaults for day-to-day usage
- * - strict: higher assurance (more enforcement)
+ * - standard: safe defaults for day-to-day usage
  * - certified: strongest gates (intended for publishable / regulated flows)
  */
-export type ExecutionProfile = 'core' | 'default' | 'strict' | 'certified';
+export type ExecutionProfile = 'core' | 'standard' | 'certified';
 
 /** Validation mode for input/output schemas and runtime enforcement. */
 export type ValidateMode = 'auto' | 'on' | 'off';
