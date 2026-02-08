@@ -747,13 +747,6 @@ class SubagentExecutor:
 
 ## 8. Reference Implementations
 
-### Python Reference (Legacy)
-
-```text
-Python runtime is legacy and not actively maintained.
-Source code: https://github.com/Cognary/cognitive/tree/main/src/cognitive
-```
-
 ### TypeScript Reference
 
 ```typescript
