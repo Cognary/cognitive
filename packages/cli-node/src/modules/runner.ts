@@ -1548,7 +1548,7 @@ function resolveValidationFlags(
   const tier: ModuleTier = (module.tier as ModuleTier | undefined) ?? 'decision';
   const strictness: SchemaStrictness = (module.schemaStrictness as SchemaStrictness | undefined) ?? 'medium';
 
-  // Certified/strict flows already set policy.validate=on in resolveExecutionPolicy().
+  // Certified flows already set policy.validate=on in resolveExecutionPolicy().
   // Keep auto conservative for exec/decision.
   // For exploration: do not validate inputs by default, but still validate outputs post-hoc.
   // This preserves "5-minute path" ergonomics while keeping envelopes structurally reliable.
@@ -1989,11 +1989,32 @@ export async function runModule(
       parseExtracted = r.extracted;
       parseAttempts = r.attempts;
     } catch (e) {
-      // Retry once with stronger formatting instructions (prompt-only enforcement).
+      const allowParseRetry = policy?.profile !== 'certified';
       const firstDetails = (e as any)?.details;
       if (firstDetails && typeof firstDetails === 'object' && Array.isArray((firstDetails as any).parse_attempts)) {
         parseAttempts = (firstDetails as any).parse_attempts as JsonParseAttempt[];
       }
+
+      if (!allowParseRetry) {
+        const details =
+          typeof firstDetails === 'object' && firstDetails
+            ? firstDetails
+            : { raw_response_snippet: safeSnippet(result.content, 500) };
+        const errorResult = makeErrorResponse({
+          code: 'E1000', // PARSE_ERROR
+          message: `Failed to parse JSON response: ${(e as Error).message}`,
+          explain: 'Failed to parse LLM response as JSON.',
+          details: {
+            ...(details as any),
+            parse_retry: { attempted: false, reason: 'profile=certified (fail-fast)' },
+          },
+          suggestion: 'The LLM response was not valid JSON. Fix the module/provider output or switch provider.',
+        });
+        _invokeErrorHooks(module.name, e as Error, null);
+        return errorResult as ModuleResult;
+      }
+
+      // Retry once with stronger formatting instructions (prompt-only enforcement).
       parseRetries = 1;
       const retryMessages: Message[] = [
         ...messages,
@@ -2081,12 +2102,13 @@ export async function runModule(
         };
       }
       // Record parse strategy and retry count for publish-grade diagnostics.
+      const includeParseAttempts = verbose || policy?.profile !== 'core';
       (response.meta as any).policy = {
         ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
         parse: {
           strategy: parseExtracted?.strategy ?? null,
           retries: parseRetries,
-          attempts: parseAttempts.length ? parseAttempts : undefined,
+          attempts: includeParseAttempts && parseAttempts.length ? parseAttempts : undefined,
         },
       };
       if (traceId) {
@@ -2484,6 +2506,28 @@ export async function* runModuleStream(
         parseAttempts = (firstDetails as any).parse_attempts as JsonParseAttempt[];
       }
 
+      const allowParseRetry = policy?.profile !== 'certified';
+      if (!allowParseRetry) {
+        const details =
+          typeof firstDetails === 'object' && firstDetails
+            ? firstDetails
+            : { raw_response_snippet: safeSnippet(fullContent, 500) };
+        const errorResult = makeErrorResponse({
+          code: 'E1000', // PARSE_ERROR
+          message: `Failed to parse JSON: ${(e as Error).message}`,
+          details: {
+            ...(details as any),
+            parse_retry: { attempted: false, reason: 'profile=certified (fail-fast)' },
+          },
+          suggestion: 'The LLM response was not valid JSON. Fix the module/provider output or switch provider.',
+        });
+        _invokeErrorHooks(module.name, e as Error, null);
+        const errorObj = (errorResult as { error: { code: string; message: string } }).error;
+        yield makeEvent('error', { error: errorObj });
+        yield makeEvent('end', { result: errorResult });
+        return;
+      }
+
       // Retry once (non-streaming) with stronger JSON-only instructions.
       parseRetries = 1;
       const retryMessages: Message[] = [
@@ -2571,12 +2615,13 @@ export async function* runModuleStream(
           repair: { enabled: enableRepair === true },
         };
       }
+      const includeParseAttempts = policy?.profile !== 'core';
       (response.meta as any).policy = {
         ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
         parse: {
           strategy: parseExtracted?.strategy ?? null,
           retries: parseRetries,
-          attempts: parseAttempts.length ? parseAttempts : undefined,
+          attempts: includeParseAttempts && parseAttempts.length ? parseAttempts : undefined,
         },
       };
       if (traceId) {

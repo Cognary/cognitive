@@ -4,7 +4,7 @@ import { runModule } from './runner.js';
 
 function makePolicy(overrides: Partial<ExecutionPolicy> = {}): ExecutionPolicy {
   return {
-    profile: 'default',
+    profile: 'standard',
     validate: 'on',
     audit: false,
     enableRepair: true,

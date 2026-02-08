@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { resolveExecutionPolicy } from './profile.js';
 
 describe('resolveExecutionPolicy', () => {
-  it('defaults to profile=default', () => {
+  it('defaults to profile=standard', () => {
     const p = resolveExecutionPolicy({});
-    expect(p.profile).toBe('default');
+    expect(p.profile).toBe('standard');
     expect(p.validate).toBe('auto');
     expect(p.audit).toBe(false);
     expect(p.enableRepair).toBe(true);
@@ -27,12 +27,21 @@ describe('resolveExecutionPolicy', () => {
     expect(p.requireV22).toBe(true);
   });
 
+  it('legacy strict profile is accepted but maps to standard with validate=on', () => {
+    const p = resolveExecutionPolicy({ profile: 'strict' });
+    expect(p.profile).toBe('standard');
+    expect(p.audit).toBe(false);
+    expect(p.validate).toBe('on');
+    expect(p.enableRepair).toBe(true);
+    expect(p.requireV22).toBe(false);
+  });
+
   it('audit forces validation on unless explicitly disabled', () => {
     const p1 = resolveExecutionPolicy({ profile: 'core', audit: true });
     expect(p1.audit).toBe(true);
     expect(p1.validate).toBe('on');
 
-    const p2 = resolveExecutionPolicy({ profile: 'default', audit: true, validate: 'off' });
+    const p2 = resolveExecutionPolicy({ profile: 'standard', audit: true, validate: 'off' });
     expect(p2.audit).toBe(true);
     expect(p2.validate).toBe('off');
   });
