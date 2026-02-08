@@ -38,4 +38,3 @@ describe('conformance (spec vectors)', () => {
     expect(result.success).toBe(true);
   });
 });
-
