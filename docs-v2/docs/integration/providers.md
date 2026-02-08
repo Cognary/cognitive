@@ -31,7 +31,7 @@ npx cogn@<version> providers --pretty
 Use `--structured` to control how the runtime applies schemas at the provider layer:
 
 - `--structured auto` (default)
-- `--structured native` (force provider-native structured output; may fail if unsupported)
+- `--structured native` (prefer native **JSON Schema** enforcement when supported; otherwise downgrades safely)
 - `--structured prompt` (always prompt-only JSON; still post-validates)
 - `--structured off` (do not use provider-layer schemas; still enforces envelope parsing and post-validation)
 

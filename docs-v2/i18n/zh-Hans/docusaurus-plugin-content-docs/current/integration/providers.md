@@ -38,7 +38,7 @@ npx cogn@2.2.12 run <module> --args "..." --structured auto|off|prompt|native
 含义：
 
 - `auto`：优先 native，若不支持则用 prompt；且在 schema 不兼容时允许一次 `native -> prompt` 降级（更稳定）
-- `native`：尽可能使用原生 structured（更接近 provider 原生能力）；当 provider 完全不支持 native 时会安全降级到 prompt；当 provider 因 schema 子集不兼容而拒绝时，会尝试一次 `native -> prompt`（更好的 UX）
+- `native`：优先使用原生 **JSON Schema** enforcement（更接近 provider 原生能力）；当 provider 不支持 JSON Schema 原生或方言不是 JSON Schema 时会安全降级到 `prompt`，避免 400；当 provider 因 schema 子集不兼容而拒绝时，会尝试一次 `native -> prompt`（更好的 UX）
 - `prompt`：不发送原生 schema，只用提示词让模型返回 JSON
 - `off`：不在 provider 层做 structured 强约束（调试用）
 

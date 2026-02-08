@@ -145,9 +145,9 @@ describe('runner structured output preference', () => {
       }
       async invoke(params: InvokeParams): Promise<InvokeResult> {
         this.calls.push(params);
-        // When the user explicitly requests structured=native, the runner should still attempt the
-        // provider-native dialect and rely on the compatibility retry (native -> prompt) for UX.
-        expect(params.jsonSchemaMode).toBe('native');
+        // The runner does not attempt to translate arbitrary JSON Schema into non-JSON-schema dialects.
+        // It downgrades to prompt-only guidance to avoid provider 400s.
+        expect(params.jsonSchemaMode).toBe('prompt');
         return {
           content: JSON.stringify({
             ok: true,
@@ -171,7 +171,12 @@ describe('runner structured output preference', () => {
 
     expect(res.ok).toBe(true);
     expect(provider.calls.length).toBe(1);
-    expect(provider.calls[0].jsonSchemaMode).toBe('native');
+    expect(provider.calls[0].jsonSchemaMode).toBe('prompt');
+
+    const metaPolicy = (res as any).meta?.policy;
+    expect(metaPolicy?.structured?.resolved).toBe('prompt');
+    expect(metaPolicy?.structured?.applied).toBe('prompt');
+    expect(metaPolicy?.structured?.downgraded).toBe(false);
   });
 
   it('auto: downgrades native -> prompt when schema exceeds maxNativeSchemaBytes', async () => {
