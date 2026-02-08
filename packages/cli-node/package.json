@@ -48,7 +48,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Cognary/cognitive.git"
+    "url": "git+https://github.com/Cognary/cognitive.git"
   },
   "homepage": "https://cognary.github.io/cognitive/",
   "bugs": {

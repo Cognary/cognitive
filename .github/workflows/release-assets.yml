@@ -29,6 +29,9 @@ jobs:
         working-directory: packages/cli-node
         run: npm run build
 
+      - name: Release Sanity Check (Versions Must Match Tag)
+        run: node scripts/release/check-release.js --tag "${{ github.event.release.tag_name }}"
+
       - name: Build Registry Tarballs + Index
         run: |
           node packages/cli-node/dist/cli.js registry build \

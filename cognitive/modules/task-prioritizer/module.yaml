@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: task-prioritizer
-version: 2.2.7
+version: 2.2.11
 responsibility: 根据紧急度、重要性和依赖关系对任务进行优先级排序
 
 # 模块分级

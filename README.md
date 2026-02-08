@@ -45,7 +45,7 @@ By default, the CLI fetches the registry index from the **latest GitHub Release*
 
 For reproducible builds, pin to a specific tag:
 
-- `https://github.com/Cognary/cognitive/releases/download/v2.2.11/cognitive-registry.v2.json`
+- `https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json`
 
 Override via:
 
@@ -283,7 +283,7 @@ npm test
 | Resource | Description |
 |----------|-------------|
 | [REGISTRY-PROTOCOL.md](REGISTRY-PROTOCOL.md) | Registry protocol specification |
-| [cognitive-registry.v2.json](cognitive-registry.v2.json) | Default registry index (v2) used by the Node CLI |
+| [cognitive-registry.v2.json](cognitive-registry.v2.json) | Default registry index (v2) tracked in `main` (tarballs use `releases/latest` strategy) |
 | [spec/registry.schema.json](spec/registry.schema.json) | Registry index schema (v2) |
 | [spec/registry-entry.schema.json](spec/registry-entry.schema.json) | Registry entry schema |
 

@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: ui-component-generator
-version: 2.2.7
+version: 2.2.11
 responsibility: 根据需求描述生成可用的 React/Vue 组件代码
 
 # 模块分级 - exec 因为要生成可执行代码
