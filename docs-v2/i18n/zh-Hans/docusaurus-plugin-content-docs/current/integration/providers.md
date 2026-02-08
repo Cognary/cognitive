@@ -38,13 +38,25 @@ npx cogn@2.2.12 run <module> --args "..." --structured auto|off|prompt|native
 含义：
 
 - `auto`：优先 native，若不支持则用 prompt；且在 schema 不兼容时允许一次 `native -> prompt` 降级（更稳定）
-- `native`：强制原生 structured；不支持或被拒绝就直接失败
+- `native`：尽可能使用原生 structured（更接近 provider 原生能力）；当 provider 完全不支持 native 时会安全降级到 prompt；当 provider 因 schema 子集不兼容而拒绝时，会尝试一次 `native -> prompt`（更好的 UX）
 - `prompt`：不发送原生 schema，只用提示词让模型返回 JSON
 - `off`：不在 provider 层做 structured 强约束（调试用）
 
 推荐默认值：
 
 - 除非你在排查 provider 的 schema 兼容性，否则用 `auto`
+
+## 运行时如何解释“降级”
+
+每次运行的最终决定会写入 v2.2 envelope 的 `meta.policy.structured`，用于诊断 provider 差异：
+
+- `requested`：用户请求值（`auto|native|prompt|off`）
+- `resolved`：运行时计划采用的策略
+- `applied`：实际采用的策略（包含重试/降级后的最终值）
+- `downgraded`：`applied != resolved` 时为 `true`
+- `fallback.attempted`：是否发生过一次 `native -> prompt` 的重试
+- `fallback.reason`：发生重试时的简短原因
+- `provider.*`：provider 能力快照（用于解释为什么会计划/降级）
 
 ## Provider 备注
 

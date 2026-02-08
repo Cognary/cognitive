@@ -49,6 +49,16 @@ The runtime records this decision in the envelope:
 - `meta.policy.structured`
 - `meta.policy.parse` (parse strategy + retry count)
 
+`meta.policy.structured` is intentionally small but **diagnostic**. Fields:
+
+- `requested`: what the user asked for (`auto|native|prompt|off`)
+- `resolved`: what the runtime planned to do (same enum)
+- `applied`: what actually happened (after any retry / downgrade)
+- `downgraded`: `true` if `applied != resolved`
+- `fallback.attempted`: whether a native->prompt retry happened
+- `fallback.reason`: compact reason string when a retry happened
+- `provider.*`: capability snapshot (for debugging provider differences)
+
 ## Profiles and Safety Gates
 
 Profiles control "progressive complexity" and what the runtime enforces by default:
@@ -106,4 +116,3 @@ The core value of Cognitive Modules remains:
 - auditability and publishable provenance
 
 Prompt-only JSON plus post-validation is how the runtime stays robust across providers while preserving the spec contract.
-
