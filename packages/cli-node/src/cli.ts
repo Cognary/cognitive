@@ -1146,7 +1146,7 @@ COMMANDS:
   doctor              Check environment and configuration
 
 OPTIONS:
-  --profile <name>     Progressive complexity profile: core|default|strict|certified
+  --profile <name>     Progressive complexity profile: core|standard|certified (aliases: default, strict)
   --validate <mode>    Validation mode: auto|on|off (overrides --no-validate)
   --structured <mode>  Structured output strategy: auto|off|prompt|native
   --audit              Write an audit record to ~/.cognitive/audit/ (stderr prints path)

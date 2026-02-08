@@ -468,7 +468,7 @@ export async function addFromRegistry(
           error:
             `Certified profile requires registry tarball provenance.\n` +
             `Registry entry for '${moduleName}' resolves to a GitHub source, which is not allowed in --profile certified.\n` +
-            `Use a tarball-based registry entry (distribution.tarball + checksum), or run with --profile strict/default.`,
+            `Use a tarball-based registry entry (distribution.tarball + checksum), or rerun with --profile standard.`,
         };
       }
       const { org, repo, path, ref } = downloadInfo.githubInfo;
@@ -671,7 +671,7 @@ export async function addFromGitHub(
       success: false,
       error:
         `Certified profile requires registry tarball provenance; GitHub installs are not allowed.\n` +
-        `Use 'cog add <module>' against a tarball-based registry entry, or run with --profile strict/default.`,
+        `Use 'cog add <module>' against a tarball-based registry entry, or rerun with --profile standard.`,
     };
   }
   

@@ -33,6 +33,7 @@ import type {
 import { aggregateRisk, isV22Envelope } from '../types.js';
 import { readModuleProvenance, verifyModuleIntegrity } from '../provenance.js';
 import { extractJsonCandidates, type JsonExtractResult } from './json-extract.js';
+import { formatPolicySummaryLine } from '../policy-summary.js';
 
 // =============================================================================
 // Schema Validation
@@ -1432,7 +1433,7 @@ async function enforcePolicyGates(
         explain: 'Refused by execution policy.',
         confidence: 1.0,
         risk: 'none',
-        suggestion: 'Migrate the module to v2.2, or run with --profile strict/default.',
+        suggestion: 'Migrate the module to v2.2, or rerun with --profile standard.',
       });
     }
   }
@@ -1461,7 +1462,7 @@ async function enforcePolicyGates(
         explain: 'Refused by execution policy.',
         confidence: 1.0,
         risk: 'none',
-        suggestion: 'Install the module via `cog add <name>` (registry tarball) or use --profile strict/default.',
+        suggestion: 'Install the module via `cog add <name>` (registry tarball) or rerun with --profile standard.',
       });
     }
   } catch {
@@ -1494,7 +1495,7 @@ async function enforcePolicyGates(
       explain: 'Refused by execution policy.',
       confidence: 1.0,
       risk: 'none',
-      suggestion: 'Reinstall the module from a registry tarball and retry, or use --profile strict/default.',
+      suggestion: 'Reinstall the module from a registry tarball and retry, or rerun with --profile standard.',
     });
   }
 
@@ -1847,8 +1848,21 @@ export async function runModule(
     console.error(`Name: ${module.name} (${module.format})`);
     console.error(`Responsibility: ${module.responsibility}`);
     console.error(`Envelope: ${shouldUseEnvelope}`);
-  if (policy) {
+    if (policy) {
       console.error('--- Policy ---');
+      const requested = effectiveStructuredPref ?? 'auto';
+      const applied = structuredPlan.jsonSchemaMode ?? 'off';
+      const sReason =
+        structuredPlan.policy?.reason ??
+        (structuredPlan.jsonSchemaMode ? 'auto: schema hints enabled' : 'auto: schema hints disabled');
+      console.error(
+        formatPolicySummaryLine(
+          policy,
+          { validateInput, validateOutput, reason: validateReason },
+          { requested, applied, reason: sReason },
+          { enableRepair, requireV22: policy.requireV22 }
+        )
+      );
       console.error(
         JSON.stringify(
           {
@@ -1859,8 +1873,8 @@ export async function runModule(
             validate_reason: validateReason,
             audit: policy.audit,
             enableRepair,
-            structured: effectiveStructuredPref,
-            structured_effective: structuredPlan.jsonSchemaMode ?? 'off',
+            structured: requested,
+            structured_effective: applied,
             structured_reason: structuredPlan.policy?.reason ?? null,
             requireV22: policy.requireV22,
           },
