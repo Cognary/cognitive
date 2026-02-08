@@ -7,8 +7,12 @@ This repo publishes:
 
 ## Versioning
 
-- npm: use the same version as the GitHub Release tag (recommended)
-- registry module versions: aligned to the repo release tag (recommended)
+- **Single version per release**: use the same semver across:
+  - npm packages (`packages/cli-node/package.json`, `packages/cogn/package.json`)
+  - module versions (`cognitive/modules/*/module.yaml`)
+  - GitHub Release tag (`vX.Y.Z`)
+
+This avoids confusing mismatches like “Release v2.2.6 ships `*-2.2.5.tar.gz`”.
 
 ## Registry v2 (tarballs + checksums)
 
@@ -25,57 +29,61 @@ Tarball layout is strict:
 
 ## Release Checklist (GitHub Release Assets)
 
-1. Bump versions
-- npm package versions already live in:
-  - `packages/cli-node/package.json`
-  - `packages/cogn/package.json`
-- module versions live in:
-  - `cognitive/modules/*/module.yaml`
-
-2. Regenerate registry v2 + tarballs locally
+1. Bump versions (npm + modules)
 
 ```bash
-VERSION=2.2.11
-
-npx cogn@${VERSION} registry build \
-  --tag v${VERSION} \
-  --timestamp 2026-02-06T00:00:00Z \
-  --tarball-base-url https://github.com/Cognary/cognitive/releases/download/v${VERSION} \
-  --out-dir dist/registry-assets \
-  --registry-out cognitive-registry.v2.json
+node scripts/release/set-version.js --version X.Y.Z
 ```
 
-Outputs:
+2. Regenerate the default registry index tracked in `main`
 
-- `cognitive-registry.v2.json`
-- `dist/registry-assets/*.tar.gz` (ignored by git)
+This repo keeps a “default” `cognitive-registry.v2.json` for development and test vectors.
+It intentionally uses the **latest** download strategy:
 
-3. Validate conformance vectors (local)
+- `https://github.com/Cognary/cognitive/releases/latest/download/<module>-<version>.tar.gz`
+
+Regenerate it after version bumps:
 
 ```bash
-npm install ajv ajv-formats tsx
-npx tsx scripts/validate-test-vectors.ts --level 3 --verbose
+node scripts/release/regen-registry.js
 ```
 
-In CI, the TypeScript validators also run:
+3. Run local release checks (npm)
 
-- `scripts/validate-test-vectors.ts`
-- `scripts/validate-stream-vectors.ts`
-- `scripts/validate-registry-vectors.ts`
+```bash
+cd packages/cli-node
+npm ci
+npm run release:check
+
+cd ../cogn
+npm run release:check
+```
 
 4. Commit and tag
 
-- Commit the updated `cognitive-registry.v2.json` and any module/version changes.
-- Create a tag like `v2.2.7` and publish a GitHub Release.
-
-5. Upload registry tarballs to the GitHub Release
-
-Upload the files from `dist/registry-assets/` as release assets:
-
-- `<module>-<version>.tar.gz`
-
-The registry tarball URLs follow:
-
+```bash
+git add -A
+git commit -m "release: vX.Y.Z"
+git tag vX.Y.Z
+git push origin main --tags
 ```
-https://github.com/Cognary/cognitive/releases/download/v2.2.11/<module>-<version>.tar.gz
+
+5. Create a GitHub Release
+
+Publishing a GitHub Release triggers `.github/workflows/release-assets.yml` which will:
+
+- rebuild the CLI
+- build registry tarballs + a release-pinned `cognitive-registry.v2.json`
+- upload tarballs + index as Release assets
+
+Important: the workflow runs `node scripts/release/check-release.js --tag vX.Y.Z` and will fail fast if any versions drift.
+
+6. Publish to npm
+
+```bash
+cd packages/cli-node
+npm publish --access public
+
+cd ../cogn
+npm publish --access public
 ```

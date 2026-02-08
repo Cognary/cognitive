@@ -1,14 +1,14 @@
 {
   "$schema": "https://cognitive-modules.dev/schema/registry-v2.json",
   "version": "2.0.0",
-  "updated": "2026-02-06T00:00:00Z",
+  "updated": "2026-02-08T05:23:03Z",
   "modules": {
     "api-designer": {
       "$schema": "https://cognitive-modules.dev/schema/registry-entry-v1.json",
       "identity": {
         "name": "api-designer",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -31,13 +31,13 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/api-designer-2.2.7.tar.gz",
-        "checksum": "sha256:235f4d5e3d133eccaf837950aab1576ca28a7edb9ecdf89438ddcbbf5a1d4d86",
-        "size_bytes": 5225,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/api-designer-2.2.11.tar.gz",
+        "checksum": "sha256:c04bd9a47a6d84af216993126fdd5f33d84e53f92f797b41c7383c1396e19940",
+        "size_bytes": 5286,
         "files": [
-          "MODULE.md",
           "examples/input.json",
           "examples/output.json",
+          "MODULE.md",
           "module.yaml",
           "prompt.md",
           "schema.json",
@@ -46,8 +46,8 @@
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     },
@@ -56,7 +56,7 @@
       "identity": {
         "name": "code-reviewer",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -79,13 +79,13 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/code-reviewer-2.2.7.tar.gz",
-        "checksum": "sha256:7e93336438cd97d174035d24bf4f281b1757103ebfe9bd6294f359b1a08c7645",
-        "size_bytes": 5912,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/code-reviewer-2.2.11.tar.gz",
+        "checksum": "sha256:bc61cf22bf5641965f0ac5dcd97e67c59b4ee252d5fa2aa4a0021a23c8f1cc85",
+        "size_bytes": 5952,
         "files": [
-          "MODULE.md",
           "examples/input.json",
           "examples/output.json",
+          "MODULE.md",
           "module.yaml",
           "prompt.md",
           "schema.json",
@@ -96,8 +96,8 @@
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     },
@@ -106,7 +106,7 @@
       "identity": {
         "name": "code-simplifier",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -129,29 +129,29 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/code-simplifier-2.2.7.tar.gz",
-        "checksum": "sha256:04712b5c486cf9905a68129b812db389da03b846d515a587349e56c2d35d74df",
-        "size_bytes": 6483,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/code-simplifier-2.2.11.tar.gz",
+        "checksum": "sha256:eb8ad2c8115eb72ee1f80ac4d72fdb293d3fbe8430817e73f8b7ceaac6f2034f",
+        "size_bytes": 6533,
         "files": [
           "MODULE.md",
           "module.yaml",
           "prompt.md",
           "schema.json",
-          "tests/case1.expected.json",
-          "tests/case1.input.json",
-          "tests/case2.expected.json",
-          "tests/case2.input.json",
           "tests/case_behavior_uncertain.expected.json",
           "tests/case_behavior_uncertain.input.json",
           "tests/case_parse_error.expected.json",
           "tests/case_parse_error.input.json",
           "tests/case_unsupported_lang.expected.json",
-          "tests/case_unsupported_lang.input.json"
+          "tests/case_unsupported_lang.input.json",
+          "tests/case1.expected.json",
+          "tests/case1.input.json",
+          "tests/case2.expected.json",
+          "tests/case2.input.json"
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     },
@@ -160,7 +160,7 @@
       "identity": {
         "name": "product-analyzer",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -182,9 +182,9 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/product-analyzer-2.2.7.tar.gz",
-        "checksum": "sha256:6c13b7d7104629df1618e07e2cbe155f1752e91c8849c2ef9c7c617e9014b028",
-        "size_bytes": 4136,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/product-analyzer-2.2.11.tar.gz",
+        "checksum": "sha256:6b5d65c70afa0127081e90bbf6fbb5258c05b3efb6e069f5de96546d743e2f3b",
+        "size_bytes": 4177,
         "files": [
           "MODULE.md",
           "module.yaml",
@@ -195,8 +195,8 @@
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     },
@@ -205,7 +205,7 @@
       "identity": {
         "name": "task-prioritizer",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -228,13 +228,13 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/task-prioritizer-2.2.7.tar.gz",
-        "checksum": "sha256:3f15cd81afe405f1aeee95a8054c4a81a472e475d41f51cd227cdece4a9dd360",
-        "size_bytes": 5169,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/task-prioritizer-2.2.11.tar.gz",
+        "checksum": "sha256:c30b2a9f2a6c11b62033bd2ca1f3b46ec0c3618660bca36f0f21bc1d5b4878fa",
+        "size_bytes": 5213,
         "files": [
-          "MODULE.md",
           "examples/input.json",
           "examples/output.json",
+          "MODULE.md",
           "module.yaml",
           "prompt.md",
           "schema.json",
@@ -243,8 +243,8 @@
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     },
@@ -253,7 +253,7 @@
       "identity": {
         "name": "ui-component-generator",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -271,14 +271,14 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/ui-component-generator-2.2.7.tar.gz",
-        "checksum": "sha256:a76acdfea34cb1cab72b80c84f73280932ee971727bba6844c037b72b765b297",
-        "size_bytes": 9588,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/ui-component-generator-2.2.11.tar.gz",
+        "checksum": "sha256:94b7886ea6264def0e27b3ef43908d456656406eb7aed4a4d57b907c61dd7a55",
+        "size_bytes": 9763,
         "files": [
-          "MODULE.md",
           "examples/input.json",
           "examples/natural-language-input.json",
           "examples/output.json",
+          "MODULE.md",
           "module.yaml",
           "prompt.md",
           "schema.json",
@@ -287,8 +287,8 @@
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     },
@@ -297,7 +297,7 @@
       "identity": {
         "name": "ui-spec-generator",
         "namespace": "official",
-        "version": "2.2.7",
+        "version": "2.2.11",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -320,15 +320,15 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/download/v2.2.7/ui-spec-generator-2.2.7.tar.gz",
-        "checksum": "sha256:150f84d9be1bc469e257060d13769c2b5523d0eb94e7b4bf875330a551032b08",
-        "size_bytes": 23928,
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/ui-spec-generator-2.2.11.tar.gz",
+        "checksum": "sha256:04351abc987fdf8909b892c353de280a5921bc8cdc8e6c96f17013cb5afad3b9",
+        "size_bytes": 23458,
         "files": [
-          "MODULE.md",
           "examples/health-product-input.json",
           "examples/health-product-output.json",
           "examples/input.json",
           "examples/output.json",
+          "MODULE.md",
           "module.yaml",
           "prompt.md",
           "schema.json",
@@ -337,8 +337,8 @@
         ]
       },
       "timestamps": {
-        "created_at": "2026-02-06T00:00:00Z",
-        "updated_at": "2026-02-06T00:00:00Z",
+        "created_at": "2026-02-08T05:23:03Z",
+        "updated_at": "2026-02-08T05:23:03Z",
         "deprecated_at": null
       }
     }
@@ -387,6 +387,6 @@
   "stats": {
     "total_modules": 7,
     "total_downloads": 0,
-    "last_updated": "2026-02-06T00:00:00Z"
+    "last_updated": "2026-02-08T05:23:03Z"
   }
 }

@@ -7,7 +7,9 @@
     "cog": "bin.js"
   },
   "scripts": {
-    "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache"
+    "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache",
+    "release:check": "node ../../scripts/release/check-npm-package.js --package packages/cogn && npm run pack:check",
+    "prepublishOnly": "npm run release:check"
   },
   "keywords": [
     "cognitive",

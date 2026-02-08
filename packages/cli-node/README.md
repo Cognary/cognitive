@@ -100,7 +100,7 @@ npx cogn@2.2.11 doctor
 # 可通过环境变量或全局参数覆盖：
 COGNITIVE_REGISTRY_URL=... npx cogn@2.2.11 search
 COGNITIVE_REGISTRY_TIMEOUT_MS=15000 COGNITIVE_REGISTRY_MAX_BYTES=2097152 npx cogn@2.2.11 search
-npx cogn@2.2.11 search --registry https://github.com/Cognary/cognitive/releases/download/v2.2.11/cognitive-registry.v2.json
+npx cogn@2.2.11 search --registry https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json
 npx cogn@2.2.11 registry verify --remote --index https://github.com/Cognary/cognitive/releases/latest/download/cognitive-registry.v2.json
 npx cogn@2.2.11 registry verify --remote --concurrency 2
 ```

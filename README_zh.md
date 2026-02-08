@@ -45,7 +45,7 @@ npm install -g cogn@2.2.11
 
 如需可复现（可固定版本），建议固定到具体 tag：
 
-- `https://github.com/Cognary/cognitive/releases/download/v2.2.11/cognitive-registry.v2.json`
+- `https://github.com/Cognary/cognitive/releases/download/vX.Y.Z/cognitive-registry.v2.json`
 
 覆盖方式：
 
