@@ -108,51 +108,51 @@ function getEntryLinks(): EntryLink[] {
   return [
     {
       title: translate({
+        id: 'homepage.entries.gettingStarted.title',
+        message: 'Getting Started',
+      }),
+      description: translate({
+        id: 'homepage.entries.gettingStarted.description',
+        message: 'Install, run the 5-minute path, and learn the core workflow.',
+      }),
+      to: '/docs/getting-started/installation',
+      Icon: ArrowRight,
+    },
+    {
+      title: translate({
+        id: 'homepage.entries.useCases.title',
+        message: 'Killer Use Cases',
+      }),
+      description: translate({
+        id: 'homepage.entries.useCases.description',
+        message: 'Where contracts + risk routing make AI workflows shippable.',
+      }),
+      to: '/docs/getting-started/use-cases',
+      Icon: ShieldCheck,
+    },
+    {
+      title: translate({
+        id: 'homepage.entries.providers.title',
+        message: 'Providers',
+      }),
+      description: translate({
+        id: 'homepage.entries.providers.description',
+        message: 'Capability differences, structured-output downgrade, and stability rules.',
+      }),
+      to: '/docs/integration/providers',
+      Icon: LinkIcon,
+    },
+    {
+      title: translate({
         id: 'homepage.entries.conformance.title',
         message: 'Conformance',
       }),
       description: translate({
         id: 'homepage.entries.conformance.description',
-        message: 'Conformance levels, requirements, and testing vectors.',
+        message: 'Test vectors and publish-grade contract checks.',
       }),
       to: '/docs/conformance',
-      Icon: ShieldCheck,
-    },
-    {
-      title: translate({
-        id: 'homepage.entries.registry.title',
-        message: 'Registry',
-      }),
-      description: translate({
-        id: 'homepage.entries.registry.description',
-        message: 'Discovery, distribution protocol, and schema validation.',
-      }),
-      to: '/docs/registry',
       Icon: DatabaseScript,
-    },
-    {
-      title: translate({
-        id: 'homepage.entries.releaseNotes.title',
-        message: 'Release Notes',
-      }),
-      description: translate({
-        id: 'homepage.entries.releaseNotes.description',
-        message: 'Version updates and compatibility clarifications for 2.2.x.',
-      }),
-      to: '/docs/release-notes',
-      Icon: Notes,
-    },
-    {
-      title: translate({
-        id: 'homepage.entries.community.title',
-        message: 'Community',
-      }),
-      description: translate({
-        id: 'homepage.entries.community.description',
-        message: 'Governance, process, and contribution entry points.',
-      }),
-      to: '/docs/community/contributing',
-      Icon: Community,
     },
   ];
 }
@@ -167,7 +167,7 @@ function HomepageHeader() {
           <Translate
             id="homepage.hero.subtitle"
             description="Homepage hero subtitle">
-            Verifiable Structured AI Task Specifications
+            A publish-grade contract for AI tasks: envelope, schemas, policy, and auditability.
           </Translate>
         </p>
         <div className={styles.heroButtons}>
@@ -249,7 +249,7 @@ function HomepageQuickStart() {
           <Translate
             id="homepage.quickStart.title"
             description="Homepage quick start section title">
-            Quick Start
+            5-Minute Path
           </Translate>
         </h2>
         <div className={styles.codeBlock}>
@@ -305,6 +305,52 @@ function HomepageEntryLinks() {
   );
 }
 
+function HomepageKillerUseCase() {
+  return (
+    <section className={styles.killerUseCase}>
+      <div className={styles.killerUseCaseContainer}>
+        <h2 className={styles.killerUseCaseTitle}>
+          <Translate
+            id="homepage.killer.title"
+            description="Homepage killer use case section title">
+            Killer Use Case: PR Review Gate (CI)
+          </Translate>
+        </h2>
+        <p className={styles.killerUseCaseSubtitle}>
+          <Translate
+            id="homepage.killer.subtitle"
+            description="Homepage killer use case section subtitle">
+            Run a module on the PR diff, route by meta.risk, and block merges on high risk.
+          </Translate>
+        </p>
+        <div className={styles.killerUseCaseBullets}>
+          <div className={styles.killerUseCaseBullet}>
+            <strong>Contract</strong>: always v2.2 envelope (ok/meta/data|error)
+          </div>
+          <div className={styles.killerUseCaseBullet}>
+            <strong>Routing</strong>: low/medium/high risk as a first-class field
+          </div>
+          <div className={styles.killerUseCaseBullet}>
+            <strong>Stability</strong>: provider differences downgrade safely, with reasons in meta.policy
+          </div>
+        </div>
+        <div className={styles.killerUseCaseCtas}>
+          <Link className={styles.killerUseCasePrimary} to="/docs/getting-started/use-cases">
+            <Translate id="homepage.killer.cta" description="Homepage killer use case CTA">
+              View use cases →
+            </Translate>
+          </Link>
+          <Link className={styles.killerUseCaseSecondary} to="/docs/integration/providers">
+            <Translate id="homepage.killer.providersCta" description="Homepage killer use case providers CTA">
+              Provider stability rules →
+            </Translate>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home(): JSX.Element {
   return (
     <Layout
@@ -318,9 +364,10 @@ export default function Home(): JSX.Element {
       })}>
       <HomepageHeader />
       <main>
+        <HomepageQuickStart />
+        <HomepageKillerUseCase />
         <HomepageFeatures />
         <HomepageEntryLinks />
-        <HomepageQuickStart />
       </main>
     </Layout>
   );
