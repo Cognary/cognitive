@@ -75,31 +75,26 @@ Test vectors are tagged with the minimum conformance level required:
 
 ## Running Tests
 
-### For Runtime Implementers
+### Recommended (CLI)
 
-```python
-import json
-from your_runtime import validate_envelope
+Run the official vectors with the reference CLI (no network required):
 
-def run_test_vectors(directory):
-    for file in directory.glob("**/*.json"):
-        with open(file) as f:
-            test = json.load(f)
-        
-        test_meta = test["$test"]
-        envelope = test["envelope"]
-        
-        try:
-            result = validate_envelope(envelope)
-            if test_meta["expects"] == "reject":
-                print(f"FAIL: {file} should have been rejected")
-            else:
-                print(f"PASS: {file}")
-        except ValidationError as e:
-            if test_meta["expects"] == "accept":
-                print(f"FAIL: {file} should have been accepted")
-            else:
-                print(f"PASS: {file}")
+```bash
+# From a repo checkout (auto-detects ./spec)
+npx cogn@<version> test --conformance --suite envelope --level 1
+
+# Full contract (envelope + streaming + registry)
+npx cogn@<version> test --conformance --suite all --level 3
+```
+
+### Alternative (Scripts)
+
+If you prefer running the standalone validators:
+
+```bash
+tsx scripts/validate-test-vectors.ts --level 3 --verbose
+tsx scripts/validate-stream-vectors.ts --level 3 --verbose
+tsx scripts/validate-registry-vectors.ts --level 3 --verbose
 ```
 
 ## Contributing

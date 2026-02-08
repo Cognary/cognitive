@@ -6,6 +6,24 @@ sidebar_position: 3
 
 Use official test vectors to validate runtime behavior against Cognitive 2.2.7.
 
+## Recommended (CLI)
+
+Run the vectors with the reference CLI (offline, deterministic):
+
+```bash
+# Minimal contract (Level 1, envelope only)
+npx cogn@<version> test --conformance --suite envelope --level 1
+
+# Full contract (Level 3, envelope + stream + registry)
+npx cogn@<version> test --conformance --suite all --level 3 --verbose
+```
+
+If you're not running from a repo checkout, pass `--spec-dir`:
+
+```bash
+npx cogn@<version> test --conformance --spec-dir /path/to/cognitive --suite all --level 3
+```
+
 ## What to Validate
 
 - Valid success envelopes

@@ -49,6 +49,12 @@ export function parseCliArgs(argv: string[]): CliParseResult {
       'max-depth': { type: 'string', short: 'd' },
       timeout: { type: 'string', short: 'T' },
       trace: { type: 'boolean', default: false },
+      // Conformance (spec vectors)
+      conformance: { type: 'boolean', default: false }, // test: run official spec vectors
+      suite: { type: 'string' }, // envelope|stream|registry|all
+      level: { type: 'string' }, // 1|2|3
+      'spec-dir': { type: 'string' }, // repo root or <root>/spec
+      json: { type: 'boolean', default: false }, // conformance: machine-readable output
       // Validate/migrate options
       v22: { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },

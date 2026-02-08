@@ -14,5 +14,6 @@ export * from './compose.js';
 export * from './validate.js';
 export * from './migrate.js';
 export * from './test.js';
+export * from './conformance.js';
 export * from './search.js';
 export * from './core.js';
