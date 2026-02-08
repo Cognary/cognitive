@@ -5,7 +5,7 @@ sidebar_label: Overview
 
 # Module Library
 
-This repository includes several example modules. You can install them via GitHub and run them with `npx cogn@2.2.11 ...`.
+This repository includes several example modules. You can install them via GitHub and run them with `npx cogn@2.2.12 ...`.
 
 ## Modules in This Repo
 
@@ -20,13 +20,13 @@ This repository includes several example modules. You can install them via GitHu
 ## Install From GitHub
 
 ```bash
-npx cogn@2.2.11 add Cognary/cognitive -m code-reviewer
-npx cogn@2.2.11 add Cognary/cognitive -m code-simplifier
+npx cogn@2.2.12 add Cognary/cognitive -m code-reviewer
+npx cogn@2.2.12 add Cognary/cognitive -m code-simplifier
 ```
 
 ## Quick Usage
 
 ```bash
-npx cogn@2.2.11 run code-reviewer --args "your code" --pretty
-npx cogn@2.2.11 run task-prioritizer --args "fix bug, write docs" --pretty
+npx cogn@2.2.12 run code-reviewer --args "your code" --pretty
+npx cogn@2.2.12 run task-prioritizer --args "fix bug, write docs" --pretty
 ```

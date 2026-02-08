@@ -12,7 +12,7 @@ sidebar_position: 3
 ## 结构化输入（--input）
 
 ```bash
-npx cogn@2.2.11 run code-reviewer --input '{"query":"review this code"}'
+npx cogn@2.2.12 run code-reviewer --input '{"query":"review this code"}'
 ```
 
 可在 `prompt.md` 中用 `${query}` 直接引用。
@@ -20,7 +20,7 @@ npx cogn@2.2.11 run code-reviewer --input '{"query":"review this code"}'
 ## 文本输入（--args）
 
 ```bash
-npx cogn@2.2.11 run code-reviewer --args "def foo(): pass"
+npx cogn@2.2.12 run code-reviewer --args "def foo(): pass"
 ```
 
 `--args` 会根据内容自动映射到：

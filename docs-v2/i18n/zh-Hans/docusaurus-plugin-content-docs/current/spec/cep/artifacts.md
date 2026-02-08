@@ -94,7 +94,7 @@ GitHub Release assets 可以承载不可变的模块 tarball。
 - 有稳定的 CEP spec 版本（例如 v2.2），并被 runtime/文档引用。
 - registry tarballs 的可复现构建流程。
 - index 格式包含完整性字段（sha256/size/created_at）。
-- 第三方可运行的 conformance 测试（`npx cogn@2.2.11 test`）。
+- 第三方可运行的 conformance 测试（`npx cogn@2.2.12 test`）。
 
 可选但价值很高的增强：
 

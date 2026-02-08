@@ -2,6 +2,11 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.12 - 2026-02-08
+
+- Conformance: add `runtime` suite (offline, deterministic vectors) to validate publish-grade JSON parsing and profile gates.
+- UX: conformance help/usage now documents `--suite runtime` explicitly.
+
 ## 2.2.11 - 2026-02-07
 
 - Fix: Gemini `responseSchema` compatibility by dropping non-string `enum`/`const` constraints (Gemini rejects boolean enums).

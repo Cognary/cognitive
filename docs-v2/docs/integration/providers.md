@@ -1,74 +1,109 @@
 ---
-sidebar_position: 1
+sidebar_position: 5
 ---
 
 # Providers and Capabilities
 
-Cognitive separates:
+Cognitive Modules is **provider-agnostic**. Different LLM providers have different feature support (especially for structured output / JSON Schema).
 
-- Provider: OpenAI, Anthropic, Gemini, MiniMax, etc
-- Model: a specific model name under that provider
-- Policy: runtime gates (validation, audit, structured output strategy)
+The runtime is designed to keep the **user-visible contract stable**:
 
-This page documents the parts that typically differ per provider and how Cognitive keeps behavior consistent.
+- It always emits the unified v2.2 envelope (`ok/meta/data|error`).
+- It validates the envelope shape.
+- When provider-native structured output is unavailable or rejected, it **downgrades safely** and continues with prompt-only JSON plus post-validation.
 
-## Quick Check
+## Selecting a Provider
 
-Use `npx cogn@2.2.11 providers` to see what the runtime thinks your environment supports:
-
-```bash
-npx cogn@2.2.11 providers
-```
-
-Typical output fields:
-
-- `structured`: whether the provider supports native JSON-schema style structured output
-- `streaming`: whether the provider supports token streaming
-- `default_model`: what model will be used if you do not set `--model`
-
-## Structured Output Strategy
-
-Many providers expose a "structured output" mode, but their supported JSON Schema subset differs.
-To keep the protocol-level envelope stable, Cognitive exposes a single switch:
+Provider selection is automatic based on which API key is present. You can override explicitly:
 
 ```bash
-npx cogn@2.2.11 run <module> --args "..." --structured auto|off|prompt|native
+npx cogn@<version> run <module> --provider minimax --model MiniMax-M2.1 --args "hello"
 ```
 
-Meaning:
+To see what the runtime thinks is available:
 
-- `auto`: prefer native structured output when supported, otherwise use prompt-based JSON.
-  - The runtime may downgrade `native -> prompt` once if the provider rejects the schema payload.
-- `native`: require provider-native structured output; fail fast if unsupported or rejected.
-- `prompt`: do not send native schemas; instruct the model to return JSON via prompting.
-- `off`: do not enforce structured output at provider layer (useful for debugging).
+```bash
+npx cogn@<version> providers --pretty
+```
 
-Recommended default:
+## Structured Output (Schema) Policy
 
-- Use `auto` unless you are debugging provider schema behavior.
+Use `--structured` to control how the runtime applies schemas at the provider layer:
 
-## Provider Notes
+- `--structured auto` (default)
+- `--structured native` (force provider-native structured output; may fail if unsupported)
+- `--structured prompt` (always prompt-only JSON; still post-validates)
+- `--structured off` (do not use provider-layer schemas; still enforces envelope parsing and post-validation)
+
+### Downgrade Rules (Native -> Prompt)
+
+When `--structured auto` is used, the runtime may attempt provider-native structured output first.
+
+If the provider rejects the schema payload (compatibility / schema-subset errors), the runtime retries once using prompt-only JSON. This is intentional:
+
+- Keeps the contract stable across providers.
+- Avoids breaking runs due to provider-specific schema limitations.
+
+The runtime records this decision in the envelope:
+
+- `meta.policy.structured`
+- `meta.policy.parse` (parse strategy + retry count)
+
+## Profiles and Safety Gates
+
+Profiles control "progressive complexity" and what the runtime enforces by default:
+
+- `core`: minimal gates (fast path, lowest friction)
+- `standard`: day-to-day defaults (recommended)
+- `certified`: strongest gates (auditable + publishable flows)
+
+Key behavior differences:
+
+- JSON parsing retry:
+  - `standard`: retries once if the model returns invalid JSON.
+  - `certified`: fail-fast (no parse retry), returns `E1000` with diagnostics.
+- Provenance/integrity gates:
+  - `certified` requires registry provenance + integrity checks for installed modules.
+
+## Provider Notes (Known Differences)
 
 ### Gemini
 
-Gemini may reject common JSON Schema keywords used by other providers.
-If you see errors about schema fields (for example `const`, boolean enums, or empty object schemas), use:
+Gemini's native `responseSchema` support is **not full JSON Schema**. Some schema constructs may be rejected with a 400 error.
+
+Recommended:
 
 ```bash
-npx cogn@2.2.11 run <module> --args "..." --structured prompt
+npx cogn@<version> run <module> --structured auto
 ```
 
-This keeps the envelope contract stable while avoiding provider-native schema restrictions.
+If you hit schema-compatibility errors, force prompt mode:
 
-### MiniMax
+```bash
+npx cogn@<version> run <module> --structured prompt
+```
 
-MiniMax tends to work well with prompt-based JSON. `--structured auto` should be fine.
+### Moonshot (Kimi)
 
-## Streaming Transport
+Some Kimi models may enforce fixed generation parameters (for example, specific `temperature` rules).
 
-Cognitive standardizes the event model, but transport differs by interface:
+If you see an error like "invalid temperature ...", use the recommended defaults and avoid forcing generation params.
 
-- HTTP: SSE is browser and proxy friendly
-- CLI: NDJSON is easy to pipe, log, and replay
+### MiniMax / DeepSeek / OpenAI / Anthropic / Qwen
 
-The protocol requirement is that streaming events allow reconstructing the final v2.2 envelope deterministically.
+These providers typically work well with prompt-only JSON and the runtime's post-validation.
+Native structured output support varies and may be introduced/changed over time.
+
+## Why Prompt-Only + Post-Validation Still Matters
+
+Provider-native structured output is an **optimization**, not the core contract.
+
+The core value of Cognitive Modules remains:
+
+- a stable envelope contract
+- explicit schemas
+- deterministic validation + error taxonomy
+- auditability and publishable provenance
+
+Prompt-only JSON plus post-validation is how the runtime stays robust across providers while preserving the spec contract.
+

@@ -12,25 +12,25 @@ The strategy is simple: only introduce complexity when a real requirement forces
 If you only want to run a module, you can ignore registry, conformance, and certification:
 
 ```bash
-npx cogn@2.2.11 run code-reviewer --args "def login(u,p): pass" --pretty
+npx cogn@2.2.12 run code-reviewer --args "def login(u,p): pass" --pretty
 ```
 
 ## Upgrade Triggers (When To Add What)
 
 | When you need | Add / Enable | Commands | What you get |
 |---|---|---|---|
-| **Repeatable outputs** (not just text) | `schema.json` (input/data/meta) | `npx cogn@2.2.11 validate --all` | Machine-checkable contracts; fewer prompt regressions |
-| **Policy guardrails** (risk, enums, overflow) | `tier`, `schema_strictness`, `overflow`, `enums` | `npx cogn@2.2.11 run ...` (default validates) | Prevents silent drift; consistent behavior across CLI/HTTP/MCP |
-| **Auditability** (post-incident analysis) | Require `meta.explain` + store envelopes/events | `npx cogn@2.2.11 run --stream` | NDJSON event stream; you can reconstruct end state + debug failures |
+| **Repeatable outputs** (not just text) | `schema.json` (input/data/meta) | `npx cogn@2.2.12 validate --all` | Machine-checkable contracts; fewer prompt regressions |
+| **Policy guardrails** (risk, enums, overflow) | `tier`, `schema_strictness`, `overflow`, `enums` | `npx cogn@2.2.12 run ...` (default validates) | Prevents silent drift; consistent behavior across CLI/HTTP/MCP |
+| **Auditability** (post-incident analysis) | Require `meta.explain` + store envelopes/events | `npx cogn@2.2.12 run --stream` | NDJSON event stream; you can reconstruct end state + debug failures |
 | **Team portability** (move between repos) | Project-local modules | Put modules under `./cognitive/modules/` | "Works on my machine" becomes "works in this repo" |
-| **Distribution** (discover + install) | Registry index + Release tarballs | `npx cogn@2.2.11 search`, `npx cogn@2.2.11 add <registry>` | Deterministic installs and version pinning; safer sourcing model |
-| **Interoperability claims** | Conformance tests + vectors | `npx cogn@2.2.11 test` | Evidence the runtime matches CEP behavior (not marketing) |
+| **Distribution** (discover + install) | Registry index + Release tarballs | `npx cogn@2.2.12 search`, `npx cogn@2.2.12 add <registry>` | Deterministic installs and version pinning; safer sourcing model |
+| **Interoperability claims** | Conformance tests + vectors | `npx cogn@2.2.12 test` | Evidence the runtime matches CEP behavior (not marketing) |
 | **Ecosystem trust** (signals, badges) | Certification policy + verification | CI + signed results | Shared trust layer for enterprises and tool vendors |
 
 ## Recommended Milestones
 
 1. Prototype: use existing modules from a registry or GitHub repo.
-2. Team usage: commit modules + add `schema.json` + run `npx cogn@2.2.11 validate --all` in CI.
+2. Team usage: commit modules + add `schema.json` + run `npx cogn@2.2.12 validate --all` in CI.
 3. Production: require `meta.explain`, log envelopes/events, and use strict(er) policies for risky tiers.
 4. Distribution: publish a registry index and GitHub Release tarballs; install from the index.
 5. Ecosystem: publish conformance results and certification signals.

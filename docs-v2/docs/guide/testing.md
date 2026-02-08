@@ -55,5 +55,5 @@ Two supported styles:
 ## Recommendation
 
 - Keep tests in `tests/` for future automated runners
-- Use `npx cogn@2.2.11 validate` for structural checks
-- For CI, build a simple runner that executes `npx cogn@2.2.11 run` and asserts the expected file
+- Use `npx cogn@2.2.12 validate` for structural checks
+- For CI, build a simple runner that executes `npx cogn@2.2.12 run` and asserts the expected file

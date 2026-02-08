@@ -29,7 +29,7 @@ Cognitive Modules 是一套用于 **结构化、可验证、可审计** AI 任�
 export OPENAI_API_KEY=sk-xxx
 
 # 5 分钟路径：从 stdin 运行单文件 Core 模块（输出 v2.2 envelope）
-cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.12 core run --stdin --args "hello" --pretty
 请返回一个合法的 v2.2 envelope（meta + data）。把答案放在 data.result。
 EOF
 ```
@@ -83,12 +83,12 @@ EOF
 
 | 模块 | 层级 | 功能 | 示例 |
 |------|------|------|------|
-| `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.11 run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.11 run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.11 run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API 设计 | `npx cogn@2.2.11 run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI 规范生成 | `npx cogn@2.2.11 run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI 组件规范 | `npx cogn@2.2.11 run ui-component-generator --args "button component"` |
+| `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.12 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.12 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.12 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API 设计 | `npx cogn@2.2.12 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI 规范生成 | `npx cogn@2.2.12 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI 组件规范 | `npx cogn@2.2.12 run ui-component-generator --args "button component"` |
 
 ---
 

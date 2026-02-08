@@ -8,7 +8,7 @@
       "identity": {
         "name": "api-designer",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -31,7 +31,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/api-designer-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/api-designer-2.2.12.tar.gz",
         "checksum": "sha256:c04bd9a47a6d84af216993126fdd5f33d84e53f92f797b41c7383c1396e19940",
         "size_bytes": 5286,
         "files": [
@@ -56,7 +56,7 @@
       "identity": {
         "name": "code-reviewer",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -79,7 +79,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/code-reviewer-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/code-reviewer-2.2.12.tar.gz",
         "checksum": "sha256:bc61cf22bf5641965f0ac5dcd97e67c59b4ee252d5fa2aa4a0021a23c8f1cc85",
         "size_bytes": 5952,
         "files": [
@@ -106,7 +106,7 @@
       "identity": {
         "name": "code-simplifier",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -129,7 +129,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/code-simplifier-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/code-simplifier-2.2.12.tar.gz",
         "checksum": "sha256:eb8ad2c8115eb72ee1f80ac4d72fdb293d3fbe8430817e73f8b7ceaac6f2034f",
         "size_bytes": 6533,
         "files": [
@@ -160,7 +160,7 @@
       "identity": {
         "name": "product-analyzer",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -182,7 +182,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/product-analyzer-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/product-analyzer-2.2.12.tar.gz",
         "checksum": "sha256:6b5d65c70afa0127081e90bbf6fbb5258c05b3efb6e069f5de96546d743e2f3b",
         "size_bytes": 4177,
         "files": [
@@ -205,7 +205,7 @@
       "identity": {
         "name": "task-prioritizer",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -228,7 +228,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/task-prioritizer-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/task-prioritizer-2.2.12.tar.gz",
         "checksum": "sha256:c30b2a9f2a6c11b62033bd2ca1f3b46ec0c3618660bca36f0f21bc1d5b4878fa",
         "size_bytes": 5213,
         "files": [
@@ -253,7 +253,7 @@
       "identity": {
         "name": "ui-component-generator",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -271,7 +271,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/ui-component-generator-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/ui-component-generator-2.2.12.tar.gz",
         "checksum": "sha256:94b7886ea6264def0e27b3ef43908d456656406eb7aed4a4d57b907c61dd7a55",
         "size_bytes": 9763,
         "files": [
@@ -297,7 +297,7 @@
       "identity": {
         "name": "ui-spec-generator",
         "namespace": "official",
-        "version": "2.2.11",
+        "version": "2.2.12",
         "spec_version": "2.2"
       },
       "metadata": {
@@ -320,7 +320,7 @@
         "modules": []
       },
       "distribution": {
-        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/ui-spec-generator-2.2.11.tar.gz",
+        "tarball": "https://github.com/Cognary/cognitive/releases/latest/download/ui-spec-generator-2.2.12.tar.gz",
         "checksum": "sha256:04351abc987fdf8909b892c353de280a5921bc8cdc8e6c96f17013cb5afad3b9",
         "size_bytes": 23458,
         "files": [

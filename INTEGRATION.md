@@ -6,11 +6,11 @@
 
 | 方式 | 适用场景 | 说明 |
 |------|----------|------|
-| **MCP Server** | Claude Desktop、Cursor 等 AI 工具 | `npx cogn@2.2.11 mcp` |
-| **HTTP API** | n8n、Coze、Dify 等工作流平台 | `npx cogn@2.2.11 serve` |
-| **CLI** | 命令行/脚本 | `npx cogn@2.2.11 run` |
+| **MCP Server** | Claude Desktop、Cursor 等 AI 工具 | `npx cogn@2.2.12 mcp` |
+| **HTTP API** | n8n、Coze、Dify 等工作流平台 | `npx cogn@2.2.12 serve` |
+| **CLI** | 命令行/脚本 | `npx cogn@2.2.12 run` |
 
-> 本仓库的文档统一以 `npx cogn@2.2.11 ...` 作为权威入口，以避免本机 PATH 上存在其他同名命令导致的错觉。
+> 本仓库的文档统一以 `npx cogn@2.2.12 ...` 作为权威入口，以避免本机 PATH 上存在其他同名命令导致的错觉。
 
 ---
 
@@ -21,7 +21,7 @@ MCP 是 Anthropic 推出的标准协议，Claude Desktop 和 Cursor 原生支持
 ### 启动
 
 ```bash
-npx cogn@2.2.11 mcp
+npx cogn@2.2.12 mcp
 ```
 
 ### 配置 Claude Desktop
@@ -33,7 +33,7 @@ npx cogn@2.2.11 mcp
   "mcpServers": {
     "cognitive": {
       "command": "npx",
-      "args": ["cogn@2.2.11", "mcp"],
+      "args": ["cogn@2.2.12", "mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"
       }
@@ -57,7 +57,7 @@ npx cogn@2.2.11 mcp
 ### 启动
 
 ```bash
-npx cogn@2.2.11 serve --port 8000
+npx cogn@2.2.12 serve --port 8000
 ```
 
 ### 请求示例

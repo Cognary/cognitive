@@ -47,7 +47,7 @@ npm install -g cogn@2.2.7
 export COGNITIVE_API_KEY="your-secret-key"
 export OPENAI_API_KEY="sk-..."
 
-npx cogn@2.2.11 serve --port 8000
+npx cogn@2.2.12 serve --port 8000
 ```
 
 ### 步骤 2：获取公网访问地址
@@ -125,9 +125,9 @@ npx cogn@2.2.11 serve --port 8000
 ### 自定义模块
 
 ```bash
-npx cogn@2.2.11 init my-module
+npx cogn@2.2.12 init my-module
 # 编辑 module.yaml / prompt.md / schema.json
-npx cogn@2.2.11 validate my-module --v22
+npx cogn@2.2.12 validate my-module --v22
 ```
 
 ### 多 LLM 支持
@@ -148,8 +148,8 @@ npx cogn@2.2.11 validate my-module --v22
 - 请求头需包含 `Authorization: Bearer <key>`
 
 **Q: 模块不存在**
-- 运行 `npx cogn@2.2.11 list` 检查已安装模块
-- 使用 `npx cogn@2.2.11 add` 安装需要的模块
+- 运行 `npx cogn@2.2.12 list` 检查已安装模块
+- 使用 `npx cogn@2.2.12 add` 安装需要的模块
 
 ### 查看日志
 
@@ -158,7 +158,7 @@ npx cogn@2.2.11 validate my-module --v22
 docker-compose logs -f cognitive-api
 
 # 直接运行
-npx cogn@2.2.11 serve --port 8000 2>&1 | tee cognitive.log
+npx cogn@2.2.12 serve --port 8000 2>&1 | tee cognitive.log
 ```
 
 ## 安全建议

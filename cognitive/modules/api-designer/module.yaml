@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: api-designer
-version: 2.2.11
+version: 2.2.12
 responsibility: 根据业务需求设计 RESTful API 端点规范
 
 # 模块分级

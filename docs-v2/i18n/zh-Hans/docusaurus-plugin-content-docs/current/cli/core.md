@@ -16,20 +16,20 @@ sidebar_position: 2
 ### 1) 创建单文件模块
 
 ```bash
-npx cogn@2.2.11 core new            # 生成 ./demo.md
-npx cogn@2.2.11 core new my.md
+npx cogn@2.2.12 core new            # 生成 ./demo.md
+npx cogn@2.2.12 core new my.md
 ```
 
 ### 2) 运行（文件）
 
 ```bash
-npx cogn@2.2.11 core run demo.md --args "hello" --pretty
+npx cogn@2.2.12 core run demo.md --args "hello" --pretty
 ```
 
 ### 3) 运行（STDIN，零文件）
 
 ```bash
-cat <<'EOF' | npx cogn@2.2.11 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.12 core run --stdin --args "hello" --pretty
 请返回一个合法的 v2.2 envelope。把结果放在 data.result。
 EOF
 ```
@@ -38,10 +38,10 @@ EOF
 
 ```bash
 # 默认输出：./cognitive/modules/<module-name>/
-npx cogn@2.2.11 core promote demo.md
+npx cogn@2.2.12 core promote demo.md
 
 # 自定义输出目录
-npx cogn@2.2.11 core promote demo.md ./cognitive/modules/demo
+npx cogn@2.2.12 core promote demo.md ./cognitive/modules/demo
 ```
 
 `promote` 会额外生成最小 golden tests：
@@ -52,7 +52,7 @@ npx cogn@2.2.11 core promote demo.md ./cognitive/modules/demo
 ### 5) 覆盖已有目标目录
 
 ```bash
-npx cogn@2.2.11 core promote demo.md ./cognitive/modules/demo --force
+npx cogn@2.2.12 core promote demo.md ./cognitive/modules/demo --force
 ```
 
 ## 为什么重要

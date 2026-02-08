@@ -25,7 +25,7 @@ Generate UI specifications and component designs.
 ## Usage
 
 ```bash
-npx cogn@2.2.11 run ui-spec-generator --args "e-commerce product listing page with filters and sorting" --pretty
+npx cogn@2.2.12 run ui-spec-generator --args "e-commerce product listing page with filters and sorting" --pretty
 ```
 
 ## Output Example

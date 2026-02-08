@@ -35,7 +35,7 @@ sidebar_position: 4
 ## 使用
 
 ```bash
-npx cogn@2.2.11 run task-prioritizer --args "修复登录bug(紧急), 写文档, 优化性能, 添加新功能" --pretty
+npx cogn@2.2.12 run task-prioritizer --args "修复登录bug(紧急), 写文档, 优化性能, 添加新功能" --pretty
 ```
 
 ## 输出示例

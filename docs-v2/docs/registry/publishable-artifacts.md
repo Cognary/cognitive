@@ -25,7 +25,7 @@ The index is the discovery unit.
 Build tarballs and regenerate the v2 index:
 
 ```bash
-npx cogn@2.2.11 registry build --tag vX.Y.Z
+npx cogn@2.2.12 registry build --tag vX.Y.Z
 ```
 
 Typical output:
@@ -38,7 +38,7 @@ Typical output:
 Verify that local tarballs match the index:
 
 ```bash
-npx cogn@2.2.11 registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
+npx cogn@2.2.12 registry verify --index cognitive-registry.v2.json --assets-dir dist/registry-assets
 ```
 
 What is checked:
@@ -52,13 +52,13 @@ What is checked:
 Verify a remote registry index and all referenced tarballs:
 
 ```bash
-npx cogn@2.2.11 registry verify --remote --index https://github.com/<org>/<repo>/releases/latest/download/cognitive-registry.v2.json
+npx cogn@2.2.12 registry verify --remote --index https://github.com/<org>/<repo>/releases/latest/download/cognitive-registry.v2.json
 ```
 
 For reproducible verification, pin a tag:
 
 ```bash
-npx cogn@2.2.11 registry verify --remote --index https://github.com/<org>/<repo>/releases/download/vX.Y.Z/cognitive-registry.v2.json
+npx cogn@2.2.12 registry verify --remote --index https://github.com/<org>/<repo>/releases/download/vX.Y.Z/cognitive-registry.v2.json
 ```
 
 Remote verification is guarded by:
@@ -71,7 +71,7 @@ Remote verification is guarded by:
 Tune limits:
 
 ```bash
-npx cogn@2.2.11 registry verify --remote \
+npx cogn@2.2.12 registry verify --remote \
   --fetch-timeout-ms 20000 \
   --max-index-bytes 2097152 \
   --max-tarball-bytes 26214400 \
