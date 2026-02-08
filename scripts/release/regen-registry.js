@@ -16,6 +16,19 @@ function main() {
   if (!isSemver(version)) die(`Invalid packages/cli-node version: '${version}'`);
 
   const cliEntrypoint = path.join(repoRoot, 'packages', 'cli-node', 'dist', 'cli.js');
+  if (!require('node:fs').existsSync(cliEntrypoint)) {
+    die(
+      [
+        `Missing CLI build output: ${path.relative(repoRoot, cliEntrypoint)}`,
+        'Run:',
+        '  cd packages/cli-node',
+        '  npm ci',
+        '  npm run build',
+        'Then re-run:',
+        '  node scripts/release/regen-registry.js',
+      ].join('\n')
+    );
+  }
 
   const tarballBaseUrl = 'https://github.com/Cognary/cognitive/releases/latest/download';
 
@@ -42,4 +55,3 @@ function main() {
 }
 
 main();
-
