@@ -30,6 +30,17 @@ export class GeminiProvider extends BaseProvider {
     return true;
   }
 
+  getCapabilities() {
+    // Gemini has a native response schema surface (generationConfig.responseSchema),
+    // but it is NOT JSON Schema. The runner will treat this as "native but non-JSON-schema"
+    // and will safely downgrade to prompt-guided JSON unless/ until a real dialect mapping exists.
+    return {
+      structuredOutput: 'native' as const,
+      streaming: true,
+      nativeSchemaDialect: 'gemini-responseSchema' as const,
+    };
+  }
+
   /**
    * Clean JSON Schema for Gemini API compatibility
    * Removes unsupported fields like additionalProperties

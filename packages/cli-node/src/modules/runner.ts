@@ -1541,35 +1541,71 @@ function getProviderCapabilities(provider: Provider): ProviderCapabilities {
   };
 }
 
+function providerSupportsNativeJsonSchema(caps: ProviderCapabilities): boolean {
+  if (caps.structuredOutput !== 'native') return false;
+  const dialect = caps.nativeSchemaDialect ?? 'json-schema';
+  return dialect === 'json-schema';
+}
+
 function resolveJsonSchemaParams(
   module: CognitiveModule,
   provider: Provider,
   validateOutput: boolean,
   structured: StructuredOutputPreference | undefined
-): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode; allowSchemaFallback?: boolean } {
+): { jsonSchema?: object; jsonSchemaMode?: JsonSchemaMode; allowSchemaFallback?: boolean; policy?: { requested: StructuredOutputPreference; resolved: StructuredOutputPreference; reason: string } } {
   if (!validateOutput) return {};
   if (!module.outputSchema) return {};
 
   const pref: StructuredOutputPreference = structured ?? 'auto';
-  if (pref === 'off') return {};
+  if (pref === 'off') return { policy: { requested: pref, resolved: 'off', reason: 'structured=off' } };
 
   if (pref === 'prompt') {
-    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'prompt', allowSchemaFallback: false };
-  }
-  if (pref === 'native') {
-    // "native" means "prefer native", not "fail hard on provider schema dialect mismatches".
-    // Some providers (notably Gemini) accept only a restricted schema subset and can reject
-    // otherwise-valid JSON Schema. Retrying once in prompt mode yields a much better UX while
-    // still keeping the initial attempt "native".
-    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true };
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'prompt', allowSchemaFallback: false, policy: { requested: pref, resolved: 'prompt', reason: 'structured=prompt' } };
   }
 
-  // auto: choose based on provider capabilities.
   const caps = getProviderCapabilities(provider);
   if (caps.structuredOutput === 'none') return {};
 
-  const jsonSchemaMode: JsonSchemaMode = caps.structuredOutput === 'native' ? 'native' : 'prompt';
-  return { jsonSchema: module.outputSchema, jsonSchemaMode, allowSchemaFallback: true };
+  if (pref === 'native') {
+    // "native" means "prefer native", not "fail hard".
+    // If the provider doesn't support native structured output, safely downgrade to prompt guidance.
+    if (!providerSupportsNativeJsonSchema(caps)) {
+      const dialect = caps.nativeSchemaDialect ?? (caps.structuredOutput === 'native' ? 'unknown' : 'n/a');
+      return {
+        jsonSchema: module.outputSchema,
+        jsonSchemaMode: 'prompt',
+        allowSchemaFallback: false,
+        policy: {
+          requested: pref,
+          resolved: 'prompt',
+          reason:
+            caps.structuredOutput !== 'native'
+              ? `provider lacks native structured output (${caps.structuredOutput})`
+              : `provider native schema dialect is not JSON Schema (${dialect})`,
+        },
+      };
+    }
+    // Some providers accept only a restricted schema subset and can reject otherwise-valid JSON Schema.
+    // Retrying once in prompt mode yields a much better UX while still keeping the initial attempt "native".
+    return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true, policy: { requested: pref, resolved: 'native', reason: 'structured=native' } };
+  }
+
+  // auto: choose based on provider capabilities.
+  const jsonSchemaMode: JsonSchemaMode = providerSupportsNativeJsonSchema(caps) ? 'native' : 'prompt';
+  return {
+    jsonSchema: module.outputSchema,
+    jsonSchemaMode,
+    allowSchemaFallback: true,
+    policy: {
+      requested: pref,
+      resolved: jsonSchemaMode,
+      reason: providerSupportsNativeJsonSchema(caps)
+        ? `auto: native JSON Schema supported`
+        : caps.structuredOutput === 'native'
+          ? `auto: native schema dialect is not JSON Schema (${caps.nativeSchemaDialect ?? 'unknown'})`
+          : `auto: provider structuredOutput=${caps.structuredOutput}`,
+    },
+  };
 }
 
 function isSchemaCompatibilityError(e: unknown): boolean {
@@ -1782,7 +1818,7 @@ export async function runModule(
       validateOutput,
       structuredOverride ?? policy?.structured
     );
-    const { allowSchemaFallback, ...invokeSchemaParams } = schemaParams;
+    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = schemaParams;
     let result: InvokeResult;
     try {
       result = await provider.invoke({
@@ -1851,6 +1887,14 @@ export async function runModule(
     response.version = ENVELOPE_VERSION;
     if (response.meta) {
       response.meta.latency_ms = latencyMs;
+      if (structuredPolicy) {
+        // Publish-grade parity: record how structured output was applied for this run.
+        // This is intentionally small and stable, so users can reason about provider differences.
+        (response.meta as any).policy = {
+          ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+          structured: structuredPolicy,
+        };
+      }
       if (traceId) {
         response.meta.trace_id = traceId;
       }
