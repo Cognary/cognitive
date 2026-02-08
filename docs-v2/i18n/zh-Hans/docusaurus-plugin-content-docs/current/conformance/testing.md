@@ -6,6 +6,24 @@ sidebar_position: 3
 
 使用官方测试向量验证运行时是否符合 Cognitive 2.2.7。
 
+## 推荐方式（CLI）
+
+使用参考 CLI 跑官方向量（离线、确定性）：
+
+```bash
+# 最小合同（Level 1，仅 envelope）
+npx cogn@<version> test --conformance --suite envelope --level 1
+
+# 完整合同（Level 3，envelope + stream + registry）
+npx cogn@<version> test --conformance --suite all --level 3 --verbose
+```
+
+如果你不在 repo 根目录运行，可以显式传入 `--spec-dir`：
+
+```bash
+npx cogn@<version> test --conformance --spec-dir /path/to/cognitive --suite all --level 3
+```
+
 ## 测试重点
 
 - 合法成功 envelope

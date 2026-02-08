@@ -8,27 +8,25 @@ This guide is for developers implementing a Cognitive Modules runtime who want t
 
 ```bash
 git clone https://github.com/Cognary/cognitive.git
-cd cognitive-modules/spec/test-vectors
+cd cognitive
 ```
 
 ### 2. Run Official Validators
 
-**TypeScript/Node.js:**
 ```bash
-npm install ajv tsx
-npx tsx scripts/validate-test-vectors.ts --level 3 --verbose
+# Minimal contract (Level 1, envelope only)
+npx cogn@<version> test --conformance --suite envelope --level 1
+
+# Full contract (Level 3, envelope + stream + registry)
+npx cogn@<version> test --conformance --suite all --level 3 --verbose
 ```
 
-**CEP streaming vectors (events + terminal envelope):**
-```bash
-npm install ajv ajv-formats tsx
-npx tsx scripts/validate-stream-vectors.ts --level 3 --verbose
-```
+You can also run the standalone scripts (they validate the same vectors):
 
-**CEP registry vectors (index + entries):**
 ```bash
-npm install ajv ajv-formats tsx
-npx tsx scripts/validate-registry-vectors.ts --level 3 --verbose
+tsx scripts/validate-test-vectors.ts --level 3 --verbose
+tsx scripts/validate-stream-vectors.ts --level 3 --verbose
+tsx scripts/validate-registry-vectors.ts --level 3 --verbose
 ```
 
 **Registry safety (tarball extraction):**
@@ -74,186 +72,14 @@ Each test vector file contains:
 | 2 | Standard | + Tier support, overflow handling, error codes |
 | 3 | Full | + Composition, context protocol, all features |
 
-## Running Tests in Your Implementation
+## Implementer Notes
 
-### Python Example
+If you're writing your own runtime in another language, the contract is defined by:
 
-```python
-import json
-from pathlib import Path
-from your_runtime import validate_envelope, ValidationError
-
-def run_conformance_tests(test_dir: Path, level: int = 1):
-    results = {"passed": 0, "failed": 0, "skipped": 0}
-    
-    for file in test_dir.glob("**/*.json"):
-        with open(file) as f:
-            test = json.load(f)
-        
-        meta = test["$test"]
-        
-        # Skip tests above our conformance level
-        if meta["conformance_level"] > level:
-            results["skipped"] += 1
-            continue
-        
-        envelope = test["envelope"]
-        expected = meta["expects"]
-        
-        try:
-            validate_envelope(envelope)
-            actual = "accept"
-        except ValidationError:
-            actual = "reject"
-        
-        if actual == expected:
-            results["passed"] += 1
-            print(f"✅ PASS: {meta['name']}")
-        else:
-            results["failed"] += 1
-            print(f"❌ FAIL: {meta['name']} (expected {expected}, got {actual})")
-    
-    return results
-
-# Run all level 1 tests
-run_conformance_tests(Path("spec/test-vectors"), level=1)
-```
-
-### TypeScript/Node.js Example
-
-```typescript
-import { readFileSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
-import { validateEnvelope, ValidationError } from 'your-runtime';
-
-interface TestMeta {
-  name: string;
-  description: string;
-  expects: 'accept' | 'reject';
-  conformance_level: number;
-  error_codes?: string[];
-}
-
-interface TestVector {
-  $test: TestMeta;
-  envelope: unknown;
-}
-
-function runConformanceTests(testDir: string, level: number = 1) {
-  const results = { passed: 0, failed: 0, skipped: 0 };
-  
-  function processDir(dir: string) {
-    for (const entry of readdirSync(dir)) {
-      const path = join(dir, entry);
-      if (statSync(path).isDirectory()) {
-        processDir(path);
-      } else if (entry.endsWith('.json')) {
-        const test: TestVector = JSON.parse(readFileSync(path, 'utf-8'));
-        const meta = test.$test;
-        
-        if (meta.conformance_level > level) {
-          results.skipped++;
-          continue;
-        }
-        
-        let actual: 'accept' | 'reject';
-        try {
-          validateEnvelope(test.envelope);
-          actual = 'accept';
-        } catch (e) {
-          actual = 'reject';
-        }
-        
-        if (actual === meta.expects) {
-          results.passed++;
-          console.log(`✅ PASS: ${meta.name}`);
-        } else {
-          results.failed++;
-          console.log(`❌ FAIL: ${meta.name} (expected ${meta.expects}, got ${actual})`);
-        }
-      }
-    }
-  }
-  
-  processDir(testDir);
-  return results;
-}
-
-// Run all level 2 tests
-runConformanceTests('spec/test-vectors', 2);
-```
-
-### Go Example
-
-```go
-package conformance
-
-import (
-    "encoding/json"
-    "io/fs"
-    "os"
-    "path/filepath"
-    "testing"
-)
-
-type TestMeta struct {
-    Name             string   `json:"name"`
-    Description      string   `json:"description"`
-    Expects          string   `json:"expects"`
-    ConformanceLevel int      `json:"conformance_level"`
-    ErrorCodes       []string `json:"error_codes,omitempty"`
-}
-
-type TestVector struct {
-    Test     TestMeta    `json:"$test"`
-    Envelope interface{} `json:"envelope"`
-}
-
-func TestConformance(t *testing.T) {
-    level := 1 // Adjust based on your implementation
-    
-    err := filepath.WalkDir("spec/test-vectors", func(path string, d fs.DirEntry, err error) error {
-        if err != nil || d.IsDir() || filepath.Ext(path) != ".json" {
-            return err
-        }
-        
-        data, err := os.ReadFile(path)
-        if err != nil {
-            return err
-        }
-        
-        var test TestVector
-        if err := json.Unmarshal(data, &test); err != nil {
-            return err
-        }
-        
-        if test.Test.ConformanceLevel > level {
-            t.Logf("SKIP: %s (level %d > %d)", test.Test.Name, test.Test.ConformanceLevel, level)
-            return nil
-        }
-        
-        t.Run(test.Test.Name, func(t *testing.T) {
-            err := ValidateEnvelope(test.Envelope)
-            actual := "accept"
-            if err != nil {
-                actual = "reject"
-            }
-            
-            if actual != test.Test.Expects {
-                t.Errorf("expected %s, got %s", test.Test.Expects, actual)
-            }
-        })
-        
-        return nil
-    })
-    
-    if err != nil {
-        t.Fatal(err)
-    }
-}
-```
-
----
+- `spec/response-envelope.schema.json`
+- `spec/test-vectors/` (accept/reject)
+- `spec/stream-events.schema.json` + `spec/stream-vectors/`
+- `spec/registry.schema.json` + `spec/registry-entry.schema.json` + `spec/registry-vectors/`
 
 ## CI Integration
 
@@ -269,16 +95,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Clone Cognitive Modules test vectors
+
+      - name: Run conformance vectors
         run: |
-          git clone --depth 1 https://github.com/Cognary/cognitive.git /tmp/cognitive
-          cp -r /tmp/cognitive/spec/test-vectors ./test-vectors
-      
-      - name: Run conformance tests
-        run: |
-          # Your test command here
-          npm test -- --grep "conformance"
+          npx cogn@<version> test --conformance --suite all --level 3 --json
 ```
 
 ---

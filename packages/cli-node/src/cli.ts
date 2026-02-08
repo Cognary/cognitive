@@ -16,7 +16,7 @@
 
 import { parseCliArgs } from './cli-args.js';
 import { getProvider, listProviders } from './providers/index.js';
-import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo, validate, validateAll, migrate, migrateAll, test, testAll, search, listCategories, info, core } from './commands/index.js';
+import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo, validate, validateAll, migrate, migrateAll, test, testAll, conformance, search, listCategories, info, core } from './commands/index.js';
 import { listModules, getDefaultSearchPaths } from './modules/loader.js';
 import type { CommandContext } from './types.js';
 import { VERSION } from './version.js';
@@ -729,6 +729,47 @@ async function main() {
 
       case 'test': {
         const target = args[1];
+
+        if (values.conformance) {
+          const result = await conformance(ctx, {
+            specDir: values['spec-dir'] as string | undefined,
+            suite: values.suite as any,
+            level: values.level ? parseInt(values.level as string, 10) : undefined,
+            verbose: values.verbose,
+            json: values.json,
+          });
+
+          if (!result.success && !result.data) {
+            console.error(`Error: ${result.error ?? 'Unknown error'}`);
+            process.exit(1);
+          }
+
+          if (values.json || values.pretty) {
+            console.log(JSON.stringify(result.data, null, values.pretty ? 2 : 0));
+            process.exit(result.success ? 0 : 1);
+          }
+
+          const data = result.data as any;
+          console.log('═══════════════════════════════════════════════════════════');
+          console.log('Conformance Vectors');
+          console.log('═══════════════════════════════════════════════════════════');
+          console.log(`Suite: ${data.suite}  Level: ${data.level}`);
+          console.log(`Spec:  ${data.spec_dir}`);
+          console.log(`Total: ${data.total}, Passed: ${data.passed}, Failed: ${data.failed}`);
+
+          if (data.failed > 0) {
+            console.log('');
+            console.log('Failures:');
+            for (const r of data.results as any[]) {
+              if (r.passed) continue;
+              const phase = r.phase ? ` (${r.phase})` : '';
+              console.log(`  ✗ ${r.file}${phase}`);
+              if (r.error) console.log(`    ${r.error}`);
+            }
+          }
+
+          process.exit(result.success ? 0 : 1);
+        }
         
         if (values.all) {
           // Test all modules
@@ -782,7 +823,7 @@ async function main() {
         }
         
         if (!target || target.startsWith('-')) {
-          console.error('Usage: cog test <module> [--all] [--verbose] [--timeout <ms>]');
+          console.error('Usage: cog test <module> [--all] [--verbose] [--timeout <ms>]\n       cog test --conformance [--suite envelope|stream|registry|all] [--level 1|2|3] [--spec-dir <path>] [--json]');
           process.exit(1);
         }
         
@@ -1128,6 +1169,11 @@ OPTIONS:
   --dry-run             Show what would be done without changes (for migrate)
   --no-backup           Skip backup before migration (for migrate)
   --all                 Process all modules (for validate/migrate)
+  --conformance         Run official spec vectors (for test)
+  --suite <name>        Conformance suite: envelope|stream|registry|all
+  --level <n>           Conformance level: 1|2|3
+  --spec-dir <path>     Repo root or spec dir (defaults: auto-detect)
+  --json                Machine-readable JSON output (for conformance)
   -f, --format <fmt>    Output format: text or json (for validate)
   -c, --category <cat>  Filter by category (for search)
   --registry <url>      Override registry index URL (or set env COGNITIVE_REGISTRY_URL)
@@ -1170,6 +1216,8 @@ EXAMPLES:
   cog test code-simplifier              # Run golden tests
   cog test code-simplifier --verbose    # With detailed output
   cog test --all                        # Test all modules
+  cog test --conformance --suite envelope --level 1  # Minimal conformance (envelope only)
+  cog test --conformance --suite all --level 3       # Full conformance (envelope+stream+registry)
   cog migrate code-reviewer --dry-run
   cog migrate code-reviewer
   cog migrate --all --no-backup
