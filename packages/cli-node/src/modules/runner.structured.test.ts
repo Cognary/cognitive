@@ -62,6 +62,29 @@ class SchemaSensitiveProvider implements Provider {
 }
 
 describe('runner structured output preference', () => {
+  it('auto(validate=auto): tier=exploration disables provider schema hints but keeps post-hoc output validation', async () => {
+    const provider = new SchemaSensitiveProvider();
+    const module = makeModule();
+    module.tier = 'exploration';
+    const policy = makePolicy({ validate: 'auto', structured: 'auto' });
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      policy,
+    });
+
+    expect(res.ok).toBe(true);
+    expect(provider.calls.length).toBe(1);
+    expect(provider.calls[0].jsonSchema).toBeUndefined();
+    expect(provider.calls[0].jsonSchemaMode).toBeUndefined();
+
+    const metaPolicy = (res as any).meta?.policy;
+    expect(metaPolicy?.structured?.resolved).toBe('off');
+    expect(metaPolicy?.validation?.output).toBe(true);
+    expect(metaPolicy?.validation?.input).toBe(false);
+  });
+
   it('auto: falls back native -> prompt on schema compatibility error', async () => {
     const provider = new SchemaSensitiveProvider();
     const module = makeModule();
