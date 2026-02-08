@@ -35,20 +35,29 @@ Tarball layout is strict:
 node scripts/release/set-version.js --version X.Y.Z
 ```
 
-2. Regenerate the default registry index tracked in `main`
+2. Build the CLI (required for registry tooling)
+
+```bash
+cd packages/cli-node
+npm ci
+npm run build
+cd ../..
+```
+
+3. Regenerate the default registry index tracked in `main`
 
 This repo keeps a “default” `cognitive-registry.v2.json` for development and test vectors.
 It intentionally uses the **latest** download strategy:
 
 - `https://github.com/Cognary/cognitive/releases/latest/download/<module>-<version>.tar.gz`
 
-Regenerate it after version bumps:
+Regenerate it after version bumps (uses the built CLI):
 
 ```bash
 node scripts/release/regen-registry.js
 ```
 
-3. Run local release checks (npm)
+4. Run local release checks (npm)
 
 ```bash
 cd packages/cli-node
@@ -59,7 +68,7 @@ cd ../cogn
 npm run release:check
 ```
 
-4. Commit and tag
+5. Commit and tag
 
 ```bash
 git add -A
@@ -68,7 +77,7 @@ git tag vX.Y.Z
 git push origin main --tags
 ```
 
-5. Create a GitHub Release
+6. Create a GitHub Release
 
 Publishing a GitHub Release triggers `.github/workflows/release-assets.yml` which will:
 
@@ -78,7 +87,7 @@ Publishing a GitHub Release triggers `.github/workflows/release-assets.yml` whic
 
 Important: the workflow runs `node scripts/release/check-release.js --tag vX.Y.Z` and will fail fast if any versions drift.
 
-6. Publish to npm
+7. Publish to npm
 
 ```bash
 cd packages/cli-node
