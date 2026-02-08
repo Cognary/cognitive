@@ -4,7 +4,6 @@
 // Repo-local dev wrapper for the Node runtime.
 //
 // This repository intentionally presents an npm-only surface area.
-// If you are looking for the legacy Python runtime, see `experimental/python/`.
 
 const cp = require('node:child_process');
 const fs = require('node:fs');
@@ -21,4 +20,3 @@ if (!fs.existsSync(cliPath)) {
 const args = process.argv.slice(2);
 const res = cp.spawnSync(process.execPath, [cliPath, ...args], { stdio: 'inherit' });
 process.exit(res.status ?? 1);
-

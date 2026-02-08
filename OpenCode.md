@@ -23,7 +23,3 @@ node scripts/release/check-release.js --tag vX.Y.Z
 - Keep CLI behavior backwards compatible unless the release notes call it out.
 - Use descriptive variable names
 - Handle errors with actionable messages (what failed + how to fix).
-
-## Legacy Python
-
-The legacy Python runtime has been moved under `experimental/python/` and is not part of the supported surface area.
