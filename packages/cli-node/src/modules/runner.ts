@@ -32,12 +32,42 @@ import type {
 } from '../types.js';
 import { aggregateRisk, isV22Envelope } from '../types.js';
 import { readModuleProvenance, verifyModuleIntegrity } from '../provenance.js';
+import { extractJsonCandidates, type JsonExtractResult } from './json-extract.js';
 
 // =============================================================================
 // Schema Validation
 // =============================================================================
 
 const ajv = new Ajv({ allErrors: true, strict: false });
+
+type JsonParseAttempt = { strategy: string; error: string };
+
+function safeSnippet(s: string, max = 500): string {
+  const raw = String(s ?? '');
+  if (raw.length <= max) return raw;
+  return raw.slice(0, max) + `…(+${raw.length - max} chars)`;
+}
+
+function parseJsonWithCandidates(raw: string): { parsed: unknown; extracted: JsonExtractResult; attempts: JsonParseAttempt[] } {
+  const candidates = extractJsonCandidates(raw);
+  const attempts: JsonParseAttempt[] = [];
+
+  for (const c of candidates) {
+    try {
+      const parsed = JSON.parse(c.json.trim());
+      return { parsed, extracted: c, attempts };
+    } catch (e) {
+      attempts.push({ strategy: c.strategy, error: (e as Error).message });
+    }
+  }
+
+  const err = new Error(attempts[0]?.error ?? 'Unable to parse JSON');
+  (err as any).details = {
+    parse_attempts: attempts,
+    raw_response_snippet: safeSnippet(raw, 500),
+  };
+  throw err;
+}
 
 /**
  * Validate data against JSON schema. Returns list of errors.
@@ -1911,26 +1941,27 @@ export async function runModule(
   try {
     // Invoke provider
     const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = structuredPlan;
+    const invokeParams: Record<string, unknown> = { ...invokeSchemaParams };
     let result: InvokeResult;
     try {
       result = await provider.invoke({
         messages,
         // Progressive Complexity: only enforce schema at the provider layer when validation is enabled.
-        ...invokeSchemaParams,
+        ...invokeParams,
         temperature: 0.3,
       });
     } catch (e) {
       // If the provider rejects native structured output schemas, retry once in prompt mode.
       if (
         allowSchemaFallback &&
-        invokeSchemaParams.jsonSchema &&
-        invokeSchemaParams.jsonSchemaMode === 'native' &&
+        invokeParams.jsonSchema &&
+        invokeParams.jsonSchemaMode === 'native' &&
         isSchemaCompatibilityError(e)
       ) {
+        invokeParams.jsonSchemaMode = 'prompt';
         result = await provider.invoke({
           messages,
-          jsonSchema: invokeSchemaParams.jsonSchema,
-          jsonSchemaMode: 'prompt',
+          ...invokeParams,
           temperature: 0.3,
         });
       } else {
@@ -1949,20 +1980,69 @@ export async function runModule(
 
     // Parse response
     let parsed: unknown;
+    let parseExtracted: JsonExtractResult | null = null;
+    let parseAttempts: JsonParseAttempt[] = [];
+    let parseRetries = 0;
     try {
-      const jsonMatch = result.content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : result.content;
-      parsed = JSON.parse(jsonStr.trim());
+      const r = parseJsonWithCandidates(result.content);
+      parsed = r.parsed;
+      parseExtracted = r.extracted;
+      parseAttempts = r.attempts;
     } catch (e) {
-      const errorResult = makeErrorResponse({
-        code: 'E1000', // PARSE_ERROR
-        message: `Failed to parse JSON response: ${(e as Error).message}`,
-        explain: 'Failed to parse LLM response as JSON.',
-        details: { raw_response: result.content.substring(0, 500) },
-        suggestion: 'The LLM response was not valid JSON. Try again or adjust the prompt.',
-      });
-      _invokeErrorHooks(module.name, e as Error, null);
-      return errorResult as ModuleResult;
+      // Retry once with stronger formatting instructions (prompt-only enforcement).
+      const firstDetails = (e as any)?.details;
+      if (firstDetails && typeof firstDetails === 'object' && Array.isArray((firstDetails as any).parse_attempts)) {
+        parseAttempts = (firstDetails as any).parse_attempts as JsonParseAttempt[];
+      }
+      parseRetries = 1;
+      const retryMessages: Message[] = [
+        ...messages,
+        {
+          role: 'user',
+          content:
+            'Your previous response was not valid JSON.\n\nReturn ONLY a single valid JSON value (no markdown, no code fences, no commentary, no trailing text).',
+        },
+      ];
+      try {
+        const retryResult = await provider.invoke({
+          messages: retryMessages,
+          ...invokeParams,
+          temperature: 0.3,
+        });
+        if (verbose) {
+          console.error('--- Response (retry) ---');
+          console.error(retryResult.content);
+          console.error('--- End Response (retry) ---');
+        }
+        const r2 = parseJsonWithCandidates(retryResult.content);
+        parsed = r2.parsed;
+        parseExtracted = r2.extracted;
+        parseAttempts = [...parseAttempts, ...r2.attempts];
+      } catch (e2) {
+        const combinedAttempts = [
+          ...parseAttempts,
+          ...((typeof (e2 as any)?.details === 'object' && (e2 as any)?.details && Array.isArray((e2 as any).details.parse_attempts))
+            ? ((e2 as any).details.parse_attempts as JsonParseAttempt[])
+            : []),
+        ];
+        const details =
+          typeof (e2 as any)?.details === 'object' && (e2 as any)?.details
+            ? (e2 as any).details
+            : { raw_response_snippet: safeSnippet(result.content, 500) };
+        const errorResult = makeErrorResponse({
+          code: 'E1000', // PARSE_ERROR
+          message: `Failed to parse JSON response: ${(e2 as Error).message}`,
+          explain: 'Failed to parse LLM response as JSON.',
+          details: {
+            ...details,
+            parse_attempts: combinedAttempts.length ? combinedAttempts : undefined,
+            parse_retry: { attempted: true, count: 1 },
+          },
+          suggestion: 'The LLM response was not valid JSON. Try again or adjust the prompt.',
+        });
+        _invokeErrorHooks(module.name, e2 as Error, null);
+        return errorResult as ModuleResult;
+      }
     }
 
     // Convert to v2.2 envelope
@@ -2000,6 +2080,15 @@ export async function runModule(
           repair: { enabled: enableRepair === true },
         };
       }
+      // Record parse strategy and retry count for publish-grade diagnostics.
+      (response.meta as any).policy = {
+        ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+        parse: {
+          strategy: parseExtracted?.strategy ?? null,
+          retries: parseRetries,
+          attempts: parseAttempts.length ? parseAttempts : undefined,
+        },
+      };
       if (traceId) {
         response.meta.trace_id = traceId;
       }
@@ -2307,12 +2396,13 @@ export async function* runModuleStream(
     // Invoke provider with streaming if supported
     let fullContent: string;
     const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = structuredPlan;
+    const invokeParams: Record<string, unknown> = { ...invokeSchemaParams };
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
       const stream = provider.invokeStream({
         messages,
-        ...invokeSchemaParams,
+        ...invokeParams,
         temperature: 0.3,
       });
       
@@ -2330,14 +2420,14 @@ export async function* runModuleStream(
         // If streaming fails (e.g., schema rejected), retry once non-streaming in prompt mode.
         if (
           allowSchemaFallback &&
-          invokeSchemaParams.jsonSchema &&
-          invokeSchemaParams.jsonSchemaMode === 'native' &&
+          invokeParams.jsonSchema &&
+          invokeParams.jsonSchemaMode === 'native' &&
           isSchemaCompatibilityError(e)
         ) {
+          invokeParams.jsonSchemaMode = 'prompt';
           const result = await provider.invoke({
             messages,
-            jsonSchema: invokeSchemaParams.jsonSchema,
-            jsonSchemaMode: 'prompt',
+            ...invokeParams,
             temperature: 0.3,
           });
           fullContent = result.content;
@@ -2352,20 +2442,20 @@ export async function* runModuleStream(
       try {
         result = await provider.invoke({
           messages,
-          ...invokeSchemaParams,
+          ...invokeParams,
           temperature: 0.3,
         });
       } catch (e) {
         if (
           allowSchemaFallback &&
-          invokeSchemaParams.jsonSchema &&
-          invokeSchemaParams.jsonSchemaMode === 'native' &&
+          invokeParams.jsonSchema &&
+          invokeParams.jsonSchemaMode === 'native' &&
           isSchemaCompatibilityError(e)
         ) {
+          invokeParams.jsonSchemaMode = 'prompt';
           result = await provider.invoke({
             messages,
-            jsonSchema: invokeSchemaParams.jsonSchema,
-            jsonSchemaMode: 'prompt',
+            ...invokeParams,
             temperature: 0.3,
           });
         } else {
@@ -2380,22 +2470,71 @@ export async function* runModuleStream(
 
     // Parse response
     let parsed: unknown;
+    let parseExtracted: JsonExtractResult | null = null;
+    let parseAttempts: JsonParseAttempt[] = [];
+    let parseRetries = 0;
     try {
-      const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : fullContent;
-      parsed = JSON.parse(jsonStr.trim());
+      const r = parseJsonWithCandidates(fullContent);
+      parsed = r.parsed;
+      parseExtracted = r.extracted;
+      parseAttempts = r.attempts;
     } catch (e) {
-      const errorResult = makeErrorResponse({
-        code: 'E1000', // PARSE_ERROR
-        message: `Failed to parse JSON: ${(e as Error).message}`,
-        suggestion: 'The LLM response was not valid JSON. Try again or adjust the prompt.',
-      });
-      _invokeErrorHooks(module.name, e as Error, null);
-      // errorResult is always an error response from makeErrorResponse
-      const errorObj = (errorResult as { error: { code: string; message: string } }).error;
-      yield makeEvent('error', { error: errorObj });
-      yield makeEvent('end', { result: errorResult });
-      return;
+      const firstDetails = (e as any)?.details;
+      if (firstDetails && typeof firstDetails === 'object' && Array.isArray((firstDetails as any).parse_attempts)) {
+        parseAttempts = (firstDetails as any).parse_attempts as JsonParseAttempt[];
+      }
+
+      // Retry once (non-streaming) with stronger JSON-only instructions.
+      parseRetries = 1;
+      const retryMessages: Message[] = [
+        ...messages,
+        {
+          role: 'user',
+          content:
+            'Your previous response was not valid JSON.\n\nReturn ONLY a single valid JSON value (no markdown, no code fences, no commentary, no trailing text).',
+        },
+      ];
+      try {
+        const retryResult = await provider.invoke({
+          messages: retryMessages,
+          ...invokeParams,
+          temperature: 0.3,
+        });
+        fullContent = retryResult.content; // do not emit delta for retry; clients should rely on final envelope
+        const r2 = parseJsonWithCandidates(fullContent);
+        parsed = r2.parsed;
+        parseExtracted = r2.extracted;
+        parseAttempts = [...parseAttempts, ...r2.attempts];
+      } catch (e2) {
+        const combinedAttempts = [
+          ...parseAttempts,
+          ...((typeof (e2 as any)?.details === 'object' &&
+          (e2 as any)?.details &&
+          Array.isArray((e2 as any).details.parse_attempts))
+            ? ((e2 as any).details.parse_attempts as JsonParseAttempt[])
+            : []),
+        ];
+        const details =
+          typeof (e2 as any)?.details === 'object' && (e2 as any)?.details
+            ? (e2 as any).details
+            : { raw_response_snippet: safeSnippet(fullContent, 500) };
+        const errorResult = makeErrorResponse({
+          code: 'E1000', // PARSE_ERROR
+          message: `Failed to parse JSON: ${(e2 as Error).message}`,
+          details: {
+            ...details,
+            parse_attempts: combinedAttempts.length ? combinedAttempts : undefined,
+            parse_retry: { attempted: true, count: 1 },
+          },
+          suggestion: 'The LLM response was not valid JSON. Try again or adjust the prompt.',
+        });
+        _invokeErrorHooks(module.name, e2 as Error, null);
+        // errorResult is always an error response from makeErrorResponse
+        const errorObj = (errorResult as { error: { code: string; message: string } }).error;
+        yield makeEvent('error', { error: errorObj });
+        yield makeEvent('end', { result: errorResult });
+        return;
+      }
     }
 
     // Convert to v2.2 envelope
@@ -2432,6 +2571,14 @@ export async function* runModuleStream(
           repair: { enabled: enableRepair === true },
         };
       }
+      (response.meta as any).policy = {
+        ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+        parse: {
+          strategy: parseExtracted?.strategy ?? null,
+          retries: parseRetries,
+          attempts: parseAttempts.length ? parseAttempts : undefined,
+        },
+      };
       if (traceId) {
         response.meta.trace_id = traceId;
       }
