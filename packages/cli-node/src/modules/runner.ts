@@ -1615,8 +1615,13 @@ function resolveJsonSchemaParams(
   if (pref === 'native') {
     // "native" means "prefer native", not "fail hard".
     // If the provider doesn't support native structured output at all, safely downgrade to prompt guidance.
-    // If the provider uses a non-JSON-schema dialect (e.g. Gemini responseSchema), still attempt native,
-    // but allow a retry in prompt mode on compatibility errors.
+    //
+    // Important: "native" only covers JSON Schema-native providers. For providers whose schema dialect is
+    // not JSON Schema (e.g. Gemini responseSchema), we do NOT attempt to translate arbitrary JSON Schema
+    // into the provider dialect (too many subset incompatibilities).
+    //
+    // Instead, we safely downgrade to prompt-only JSON guidance and rely on post-validation. This avoids
+    // user-visible 400s and keeps the protocol contract stable.
     if (!providerSupportsNativeStructuredOutput(caps)) {
       const dialect = caps.nativeSchemaDialect ?? 'unknown';
       return {
@@ -1628,6 +1633,19 @@ function resolveJsonSchemaParams(
           resolved: 'prompt',
           reason:
             `provider lacks native structured output (${caps.structuredOutput}); dialect=${dialect}`,
+        },
+      };
+    }
+    const dialect = caps.nativeSchemaDialect ?? 'json-schema';
+    if (dialect !== 'json-schema') {
+      return {
+        jsonSchema: module.outputSchema,
+        jsonSchemaMode: 'prompt',
+        allowSchemaFallback: false,
+        policy: {
+          requested: pref,
+          resolved: 'prompt',
+          reason: `native schema dialect is not JSON Schema (${dialect}); using prompt-only guidance`,
         },
       };
     }
@@ -1646,7 +1664,6 @@ function resolveJsonSchemaParams(
 
     // Some providers accept only a restricted schema subset and can reject otherwise-valid JSON Schema.
     // Retrying once in prompt mode yields a much better UX while still keeping the initial attempt "native".
-    const dialect = caps.nativeSchemaDialect ?? 'json-schema';
     return {
       jsonSchema: module.outputSchema,
       jsonSchemaMode: 'native',
@@ -1654,7 +1671,7 @@ function resolveJsonSchemaParams(
       policy: {
         requested: pref,
         resolved: 'native',
-        reason: dialect === 'json-schema' ? 'structured=native' : `structured=native (dialect=${dialect}; may downgrade)`,
+        reason: 'structured=native',
       },
     };
   }
