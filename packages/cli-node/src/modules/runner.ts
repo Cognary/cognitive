@@ -33,7 +33,7 @@ import type {
 import { aggregateRisk, isV22Envelope } from '../types.js';
 import { readModuleProvenance, verifyModuleIntegrity } from '../provenance.js';
 import { extractJsonCandidates, type JsonExtractResult } from './json-extract.js';
-import { formatPolicySummaryLine } from '../policy-summary.js';
+import { compactReason, formatPolicySummaryLine } from '../policy-summary.js';
 
 // =============================================================================
 // Schema Validation
@@ -1956,6 +1956,14 @@ export async function runModule(
     // Invoke provider
     const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = structuredPlan;
     const invokeParams: Record<string, unknown> = { ...invokeSchemaParams };
+    const capsSnapshot = getProviderCapabilities(provider);
+    const plannedSchemaMode: JsonSchemaMode | 'off' =
+      invokeParams.jsonSchema && typeof invokeParams.jsonSchema === 'object'
+        ? ((invokeParams.jsonSchemaMode as JsonSchemaMode | undefined) ?? 'prompt')
+        : 'off';
+    let appliedSchemaMode: JsonSchemaMode | 'off' = plannedSchemaMode;
+    let schemaFallbackAttempted = false;
+    let schemaFallbackReason: string | null = null;
     let result: InvokeResult;
     try {
       result = await provider.invoke({
@@ -1972,7 +1980,10 @@ export async function runModule(
         invokeParams.jsonSchemaMode === 'native' &&
         isSchemaCompatibilityError(e)
       ) {
+        schemaFallbackAttempted = true;
+        schemaFallbackReason = compactReason(e instanceof Error ? e.message : String(e ?? ''), 180);
         invokeParams.jsonSchemaMode = 'prompt';
+        appliedSchemaMode = 'prompt';
         result = await provider.invoke({
           messages,
           ...invokeParams,
@@ -1982,6 +1993,22 @@ export async function runModule(
         throw e;
       }
     }
+
+    const structuredPolicyMeta =
+      structuredPolicy
+        ? {
+            ...structuredPolicy,
+            planned: structuredPolicy.resolved,
+            applied: appliedSchemaMode,
+            downgraded: appliedSchemaMode !== structuredPolicy.resolved,
+            fallback: schemaFallbackAttempted ? { attempted: true, reason: schemaFallbackReason ?? undefined } : { attempted: false },
+            provider: {
+              structuredOutput: capsSnapshot.structuredOutput,
+              nativeSchemaDialect: capsSnapshot.nativeSchemaDialect,
+              maxNativeSchemaBytes: capsSnapshot.maxNativeSchemaBytes,
+            },
+          }
+        : undefined;
 
     if (verbose) {
       console.error('--- Response ---');
@@ -2094,12 +2121,12 @@ export async function runModule(
     response.version = ENVELOPE_VERSION;
     if (response.meta) {
       response.meta.latency_ms = latencyMs;
-      if (structuredPolicy) {
+      if (structuredPolicyMeta) {
         // Publish-grade parity: record how structured output was applied for this run.
         // This is intentionally small and stable, so users can reason about provider differences.
         (response.meta as any).policy = {
           ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
-          structured: structuredPolicy,
+          structured: structuredPolicyMeta,
         };
       }
       if (policy) {
@@ -2433,6 +2460,14 @@ export async function* runModuleStream(
     let fullContent: string;
     const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = structuredPlan;
     const invokeParams: Record<string, unknown> = { ...invokeSchemaParams };
+    const capsSnapshot = getProviderCapabilities(provider);
+    const plannedSchemaMode: JsonSchemaMode | 'off' =
+      invokeParams.jsonSchema && typeof invokeParams.jsonSchema === 'object'
+        ? ((invokeParams.jsonSchemaMode as JsonSchemaMode | undefined) ?? 'prompt')
+        : 'off';
+    let appliedSchemaMode: JsonSchemaMode | 'off' = plannedSchemaMode;
+    let schemaFallbackAttempted = false;
+    let schemaFallbackReason: string | null = null;
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
@@ -2460,7 +2495,10 @@ export async function* runModuleStream(
           invokeParams.jsonSchemaMode === 'native' &&
           isSchemaCompatibilityError(e)
         ) {
+          schemaFallbackAttempted = true;
+          schemaFallbackReason = compactReason(e instanceof Error ? e.message : String(e ?? ''), 180);
           invokeParams.jsonSchemaMode = 'prompt';
+          appliedSchemaMode = 'prompt';
           const result = await provider.invoke({
             messages,
             ...invokeParams,
@@ -2488,7 +2526,10 @@ export async function* runModuleStream(
           invokeParams.jsonSchemaMode === 'native' &&
           isSchemaCompatibilityError(e)
         ) {
+          schemaFallbackAttempted = true;
+          schemaFallbackReason = compactReason(e instanceof Error ? e.message : String(e ?? ''), 180);
           invokeParams.jsonSchemaMode = 'prompt';
+          appliedSchemaMode = 'prompt';
           result = await provider.invoke({
             messages,
             ...invokeParams,
@@ -2503,6 +2544,22 @@ export async function* runModuleStream(
       // Emit chunk event with full response
       yield makeEvent('delta', { delta: result.content });
     }
+
+    const structuredPolicyMeta =
+      structuredPolicy
+        ? {
+            ...structuredPolicy,
+            planned: structuredPolicy.resolved,
+            applied: appliedSchemaMode,
+            downgraded: appliedSchemaMode !== structuredPolicy.resolved,
+            fallback: schemaFallbackAttempted ? { attempted: true, reason: schemaFallbackReason ?? undefined } : { attempted: false },
+            provider: {
+              structuredOutput: capsSnapshot.structuredOutput,
+              nativeSchemaDialect: capsSnapshot.nativeSchemaDialect,
+              maxNativeSchemaBytes: capsSnapshot.maxNativeSchemaBytes,
+            },
+          }
+        : undefined;
 
     // Parse response
     let parsed: unknown;
@@ -2610,10 +2667,10 @@ export async function* runModuleStream(
     const latencyMs = Date.now() - startTime;
     if (response.meta) {
       response.meta.latency_ms = latencyMs;
-      if (structuredPolicy) {
+      if (structuredPolicyMeta) {
         (response.meta as any).policy = {
           ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
-          structured: structuredPolicy,
+          structured: structuredPolicyMeta,
         };
       }
       if (policy) {

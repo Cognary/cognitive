@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { CognitiveModule, ExecutionPolicy, InvokeParams, InvokeResult, Provider } from '../types.js';
-import { runModule } from './runner.js';
+import { runModule, runModuleStream } from './runner.js';
 
 function makePolicy(overrides: Partial<ExecutionPolicy> = {}): ExecutionPolicy {
   return {
@@ -81,6 +81,10 @@ describe('runner structured output preference', () => {
 
     const metaPolicy = (res as any).meta?.policy;
     expect(metaPolicy?.structured?.resolved).toBe('off');
+    expect(metaPolicy?.structured?.planned).toBe('off');
+    expect(metaPolicy?.structured?.applied).toBe('off');
+    expect(metaPolicy?.structured?.downgraded).toBe(false);
+    expect(metaPolicy?.structured?.fallback?.attempted).toBe(false);
     expect(metaPolicy?.validation?.output).toBe(true);
     expect(metaPolicy?.validation?.input).toBe(false);
   });
@@ -101,6 +105,13 @@ describe('runner structured output preference', () => {
     expect(provider.calls.length).toBe(2);
     expect(provider.calls[0].jsonSchemaMode).toBe('native');
     expect(provider.calls[1].jsonSchemaMode).toBe('prompt');
+
+    const metaPolicy = (res as any).meta?.policy;
+    expect(metaPolicy?.structured?.resolved).toBe('native');
+    expect(metaPolicy?.structured?.applied).toBe('prompt');
+    expect(metaPolicy?.structured?.downgraded).toBe(true);
+    expect(metaPolicy?.structured?.fallback?.attempted).toBe(true);
+    expect(String(metaPolicy?.structured?.fallback?.reason ?? '')).toContain('Invalid JSON payload');
   });
 
   it('native: still falls back native -> prompt on schema compatibility error (UX over fail-fast)', async () => {
@@ -119,6 +130,12 @@ describe('runner structured output preference', () => {
     expect(provider.calls.length).toBe(2);
     expect(provider.calls[0].jsonSchemaMode).toBe('native');
     expect(provider.calls[1].jsonSchemaMode).toBe('prompt');
+
+    const metaPolicy = (res as any).meta?.policy;
+    expect(metaPolicy?.structured?.resolved).toBe('native');
+    expect(metaPolicy?.structured?.applied).toBe('prompt');
+    expect(metaPolicy?.structured?.downgraded).toBe(true);
+    expect(metaPolicy?.structured?.fallback?.attempted).toBe(true);
   });
 
   it('native: downgrades to prompt when provider native dialect is not JSON Schema', async () => {
@@ -207,5 +224,53 @@ describe('runner structured output preference', () => {
     expect(provider.calls.length).toBe(1);
     expect(provider.calls[0].jsonSchema).toBeUndefined();
     expect(provider.calls[0].jsonSchemaMode).toBeUndefined();
+  });
+
+  it('streaming: falls back native -> prompt on schema compatibility error and records applied mode', async () => {
+    class StreamSchemaSensitiveProvider extends SchemaSensitiveProvider {
+      supportsStreaming() {
+        return true;
+      }
+      getCapabilities() {
+        return { structuredOutput: 'native' as const, streaming: true };
+      }
+      async *invokeStream(params: InvokeParams): AsyncGenerator<string, InvokeResult> {
+        this.calls.push(params);
+        if (params.jsonSchemaMode === 'native') {
+          throw new Error(
+            'Gemini API error: 400 - Invalid JSON payload received. Unknown name "const" at generation_config.response_schema'
+          );
+        }
+        // For prompt mode, emit one delta and return a final JSON envelope.
+        yield '{"ok": true,';
+        return {
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 1, risk: 'none', explain: 'ok' },
+            data: { rationale: 'r', result: 'x' },
+          }),
+        };
+      }
+    }
+
+    const provider = new StreamSchemaSensitiveProvider();
+    const module = makeModule();
+    const policy = makePolicy({ structured: 'auto' });
+
+    let final: any = null;
+    for await (const ev of runModuleStream(module, provider, { args: 'hello', useV22: true, validateOutput: true, policy })) {
+      if (ev.type === 'end') final = ev.result;
+    }
+
+    expect(final?.ok).toBe(true);
+    expect(provider.calls.length).toBe(2);
+    expect(provider.calls[0].jsonSchemaMode).toBe('native');
+    expect(provider.calls[1].jsonSchemaMode).toBe('prompt');
+
+    const metaPolicy = final?.meta?.policy;
+    expect(metaPolicy?.structured?.resolved).toBe('native');
+    expect(metaPolicy?.structured?.applied).toBe('prompt');
+    expect(metaPolicy?.structured?.downgraded).toBe(true);
+    expect(metaPolicy?.structured?.fallback?.attempted).toBe(true);
   });
 });
