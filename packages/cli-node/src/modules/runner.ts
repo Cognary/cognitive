@@ -1519,13 +1519,15 @@ function resolveValidationFlags(
   const strictness: SchemaStrictness = (module.schemaStrictness as SchemaStrictness | undefined) ?? 'medium';
 
   // Certified/strict flows already set policy.validate=on in resolveExecutionPolicy().
-  // Keep auto conservative for exec/decision, permissive for exploration (unless strictness is explicitly high).
+  // Keep auto conservative for exec/decision.
+  // For exploration: do not validate inputs by default, but still validate outputs post-hoc.
+  // This preserves "5-minute path" ergonomics while keeping envelopes structurally reliable.
   if (strictness === 'high') {
     return { validateInput: true, validateOutput: true, reason: `auto: schema_strictness=high (tier=${tier})` };
   }
 
   if (tier === 'exploration') {
-    return { validateInput: false, validateOutput: false, reason: 'auto: tier=exploration' };
+    return { validateInput: false, validateOutput: true, reason: 'auto: tier=exploration (post-hoc output only)' };
   }
 
   // exec + decision default to validation on.
@@ -1655,6 +1657,42 @@ function isSchemaCompatibilityError(e: unknown): boolean {
   );
 }
 
+function resolveStructuredSchemaPlan(
+  module: CognitiveModule,
+  provider: Provider,
+  validateOutput: boolean,
+  structuredPref: StructuredOutputPreference | undefined,
+  policy: ExecutionPolicy | undefined
+): {
+  jsonSchema?: object;
+  jsonSchemaMode?: JsonSchemaMode;
+  allowSchemaFallback?: boolean;
+  policy?: { requested: StructuredOutputPreference; resolved: StructuredOutputPreference; reason: string };
+} {
+  // If output validation is disabled, never pass schema hints to providers.
+  if (!validateOutput) return {};
+  if (!module.outputSchema) return {};
+
+  const requested: StructuredOutputPreference = structuredPref ?? 'auto';
+
+  // Progressive Complexity trigger:
+  // When validate is `auto` and tier=exploration, default to "post-hoc validation only":
+  // do not enforce/guide with schemas at the provider layer unless the user explicitly opts in.
+  const tier: ModuleTier = (module.tier as ModuleTier | undefined) ?? 'decision';
+  const strictness: SchemaStrictness = (module.schemaStrictness as SchemaStrictness | undefined) ?? 'medium';
+  if (requested === 'auto' && policy?.validate === 'auto' && tier === 'exploration' && strictness !== 'high') {
+    return {
+      policy: {
+        requested,
+        resolved: 'off',
+        reason: 'auto: tier=exploration defaults to post-hoc validation (no provider schema hints)',
+      },
+    };
+  }
+
+  return resolveJsonSchemaParams(module, provider, validateOutput, requested);
+}
+
 // =============================================================================
 // Main Runner
 // =============================================================================
@@ -1751,6 +1789,15 @@ export async function runModule(
   // Build prompt with clean substitution
   const prompt = buildPrompt(module, inputData);
 
+  const effectiveStructuredPref: StructuredOutputPreference | undefined = structuredOverride ?? policy?.structured;
+  const structuredPlan = resolveStructuredSchemaPlan(
+    module,
+    provider,
+    validateOutput,
+    effectiveStructuredPref,
+    policy
+  );
+
   if (verbose) {
     console.error('--- Module ---');
     console.error(`Name: ${module.name} (${module.format})`);
@@ -1768,7 +1815,9 @@ export async function runModule(
             validate_reason: validateReason,
             audit: policy.audit,
             enableRepair,
-            structured: structuredOverride ?? policy.structured,
+            structured: effectiveStructuredPref,
+            structured_effective: structuredPlan.jsonSchemaMode ?? 'off',
+            structured_reason: structuredPlan.policy?.reason ?? null,
             requireV22: policy.requireV22,
           },
           null,
@@ -1847,13 +1896,7 @@ export async function runModule(
 
   try {
     // Invoke provider
-    const schemaParams = resolveJsonSchemaParams(
-      module,
-      provider,
-      validateOutput,
-      structuredOverride ?? policy?.structured
-    );
-    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = schemaParams;
+    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = structuredPlan;
     let result: InvokeResult;
     try {
       result = await provider.invoke({
@@ -1928,6 +1971,19 @@ export async function runModule(
         (response.meta as any).policy = {
           ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
           structured: structuredPolicy,
+        };
+      }
+      if (policy) {
+        (response.meta as any).policy = {
+          ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+          validation: {
+            mode: policy.validate,
+            input: validateInput,
+            output: validateOutput,
+            reason: validateReason,
+          },
+          audit: { enabled: policy.audit === true },
+          repair: { enabled: enableRepair === true },
         };
       }
       if (traceId) {
@@ -2130,7 +2186,12 @@ export async function* runModuleStream(
     policy,
     structured: structuredOverride,
   } = options;
-  const { validateInput, validateOutput } = resolveValidationFlags(module, policy, validateInputOpt, validateOutputOpt);
+  const { validateInput, validateOutput, reason: validateReason } = resolveValidationFlags(
+    module,
+    policy,
+    validateInputOpt,
+    validateOutputOpt
+  );
   const enableRepair = enableRepairOpt ?? policy?.enableRepair ?? true;
   const startTime = Date.now();
   const moduleName = module.name;
@@ -2201,6 +2262,14 @@ export async function* runModuleStream(
 
     // Build prompt
     const prompt = buildPrompt(module, inputData);
+    const effectiveStructuredPref: StructuredOutputPreference | undefined = structuredOverride ?? policy?.structured;
+    const structuredPlan = resolveStructuredSchemaPlan(
+      module,
+      provider,
+      validateOutput,
+      effectiveStructuredPref,
+      policy
+    );
 
     // Build messages
     const systemParts: string[] = [
@@ -2223,13 +2292,7 @@ export async function* runModuleStream(
 
     // Invoke provider with streaming if supported
     let fullContent: string;
-    const schemaParams = resolveJsonSchemaParams(
-      module,
-      provider,
-      validateOutput,
-      structuredOverride ?? policy?.structured
-    );
-    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = schemaParams;
+    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = structuredPlan;
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
@@ -2340,6 +2403,19 @@ export async function* runModuleStream(
         (response.meta as any).policy = {
           ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
           structured: structuredPolicy,
+        };
+      }
+      if (policy) {
+        (response.meta as any).policy = {
+          ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+          validation: {
+            mode: policy.validate,
+            input: validateInput,
+            output: validateOutput,
+            reason: validateReason,
+          },
+          audit: { enabled: policy.audit === true },
+          repair: { enabled: enableRepair === true },
         };
       }
       if (traceId) {
