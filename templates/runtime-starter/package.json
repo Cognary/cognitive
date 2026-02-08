@@ -2,7 +2,7 @@
   "name": "cognitive-runtime-starter",
   "version": "0.1.0",
   "description": "Starter template for Cognitive Modules runtime implementation",
-  "main": "runtime.js",
+  "main": "runtime.ts",
   "scripts": {
     "validate": "tsx validate.ts",
     "build": "tsc"
