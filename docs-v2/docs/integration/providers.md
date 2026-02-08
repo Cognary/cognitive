@@ -6,6 +6,19 @@ sidebar_position: 5
 
 Cognitive Modules is **provider-agnostic**. Different LLM providers have different feature support (especially for structured output / JSON Schema).
 
+## Stable Support Surface
+
+To reduce cognitive load and avoid over-promising stability across a long tail of provider quirks, the npm runtime documents and CI-gates a **stable support surface**:
+
+- OpenAI (ChatGPT)
+- Anthropic (Claude)
+- Gemini
+- MiniMax
+- DeepSeek
+- Qwen (DashScope)
+
+Other providers may exist as experimental/community integrations. They can be used, but are not part of the stable promise and may require provider-specific adaptation.
+
 The runtime is designed to keep the **user-visible contract stable**:
 
 - It always emits the unified v2.2 envelope (`ok/meta/data|error`).
@@ -24,6 +37,12 @@ To see what the runtime thinks is available:
 
 ```bash
 npx cogn@<version> providers --pretty
+```
+
+To include experimental/community providers in the listing:
+
+```bash
+npx cogn@<version> providers --pretty --all
 ```
 
 ## Structured Output (Schema) Policy
@@ -93,13 +112,13 @@ If you hit schema-compatibility errors, force prompt mode:
 npx cogn@<version> run <module> --structured prompt
 ```
 
-### Moonshot (Kimi)
+### Moonshot (Kimi) (Experimental)
 
 Some Kimi models may enforce fixed generation parameters (for example, specific `temperature` rules).
 
 If you see an error like "invalid temperature ...", use the recommended defaults and avoid forcing generation params.
 
-### MiniMax / DeepSeek / OpenAI / Anthropic / Qwen
+### MiniMax / OpenAI / Anthropic / Qwen
 
 These providers typically work well with prompt-only JSON and the runtime's post-validation.
 Native structured output support varies and may be introduced/changed over time.

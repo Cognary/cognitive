@@ -38,16 +38,29 @@ echo "review this code" | npx cogn@2.2.13 pipe --module code-reviewer
 
 ## 支持的 Provider
 
-| Provider | 环境变量 | 说明 |
+对外“稳定支持面”收敛为 6 个 provider（减少认知负担与维护成本）：
+
+| Provider（Stable） | 环境变量 | 说明 |
 |----------|----------|------|
-| OpenAI | `OPENAI_API_KEY` | OpenAI API |
-| Anthropic | `ANTHROPIC_API_KEY` | Claude |
+| OpenAI (ChatGPT) | `OPENAI_API_KEY` | OpenAI API |
+| Anthropic (Claude) | `ANTHROPIC_API_KEY` | Claude |
 | Gemini | `GEMINI_API_KEY` | Google Gemini |
-| DeepSeek | `DEEPSEEK_API_KEY` | DeepSeek |
 | MiniMax | `MINIMAX_API_KEY` | MiniMax |
-| Moonshot | `MOONSHOT_API_KEY` | Kimi |
-| Qwen | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` | 通义千问 |
-| Ollama | `OLLAMA_HOST` | 本地模型 |
+| DeepSeek | `DEEPSEEK_API_KEY` | DeepSeek API |
+| Qwen (DashScope) | `DASHSCOPE_API_KEY` / `QWEN_API_KEY` | 通义千问 |
+
+实验/社区 provider 仍保留实现，但默认不在文档/能力矩阵中承诺稳定性（需要显式指定 `--provider`）：
+
+| Provider（Experimental/Community） | 环境变量 | 说明 |
+|----------|----------|------|
+| Moonshot (Kimi) | `MOONSHOT_API_KEY` | experimental |
+| Ollama (local) | `OLLAMA_HOST` | community |
+
+查看全部 provider（含实验/社区）：
+
+```bash
+npx cogn@2.2.13 providers --pretty --all
+```
 
 ## 命令
 

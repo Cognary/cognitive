@@ -12,12 +12,31 @@ Cognitive 把下列概念分开：
 
 本页说明 provider 之间最常见的差异点，以及 Cognitive 如何把行为“协议化”到一致。
 
+## 稳定支持面（Stable Support Surface）
+
+为了减少认知负担、避免对长尾 provider 过度承诺，npm 运行时对外只承诺以下 6 个 provider 的“稳定支持面”（文档/CI/发布门禁保证）：
+
+- OpenAI (ChatGPT)
+- Anthropic (Claude)
+- Gemini
+- MiniMax
+- DeepSeek
+- Qwen (DashScope)
+
+其他 provider 可能作为实验/社区集成保留实现，但默认不在“稳定支持矩阵”里承诺稳定性，通常需要显式指定 `--provider`，并可能需要 provider 级适配。
+
 ## 快速检查
 
-用 `npx cogn@2.2.13 providers` 查看当前环境能力：
+用 `npx cogn@2.2.13 providers` 查看当前环境能力（默认只列出稳定支持面）：
 
 ```bash
 npx cogn@2.2.13 providers
+```
+
+如需查看全部 provider（含实验/社区）：
+
+```bash
+npx cogn@2.2.13 providers --all
 ```
 
 典型字段：

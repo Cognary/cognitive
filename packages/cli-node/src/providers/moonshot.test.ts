@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MoonshotProvider } from './moonshot.js';
 
-describe('MoonshotProvider request shaping', () => {
+const d = process.env.COG_TEST_EXPERIMENTAL_PROVIDERS === '1' ? describe : describe.skip;
+
+d('MoonshotProvider request shaping (experimental)', () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {

@@ -206,19 +206,22 @@ compat:
 
 ## LLM Configuration
 
-Cognitive Modules auto-selects a provider based on which API key is present. You can override with `--provider` and `--model`.
+Cognitive Modules auto-selects a provider based on which API key is present (stable providers only). You can override with `--provider` and `--model`.
 
 Environment variables:
 
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `GEMINI_API_KEY`
-- `DEEPSEEK_API_KEY`
 - `MINIMAX_API_KEY`
-- `MOONSHOT_API_KEY`
+- `DEEPSEEK_API_KEY`
 - `DASHSCOPE_API_KEY` or `QWEN_API_KEY`
-- `OLLAMA_HOST` (for Ollama local)
 - `COG_MODEL` (override default model)
+
+Experimental/community (not part of the stable support promise; require explicit `--provider`):
+
+- `MOONSHOT_API_KEY`
+- `OLLAMA_HOST` (Ollama local)
 
 ## Provider Differences (Downgrade Is Expected)
 
