@@ -84,16 +84,22 @@ function providerRow(
   configured: boolean;
   model: string;
   structuredOutput: StructuredOutputMode;
+  structuredJsonSchema: Exclude<StructuredOutputMode, 'native'> | 'native';
   nativeSchemaDialect?: string;
   maxNativeSchemaBytes?: number;
   streaming: boolean;
 } {
   const caps = safeCapabilities(make());
+  const structuredJsonSchema: Exclude<StructuredOutputMode, 'native'> | 'native' =
+    caps.structuredOutput === 'native' && (caps.nativeSchemaDialect ?? 'json-schema') !== 'json-schema'
+      ? 'prompt'
+      : caps.structuredOutput;
   return {
     name,
     configured,
     model,
     structuredOutput: caps.structuredOutput,
+    structuredJsonSchema,
     nativeSchemaDialect: caps.nativeSchemaDialect,
     maxNativeSchemaBytes: caps.maxNativeSchemaBytes,
     streaming: caps.streaming,
@@ -105,6 +111,7 @@ export function listProviders(): Array<{
   configured: boolean;
   model: string;
   structuredOutput: StructuredOutputMode;
+  structuredJsonSchema: Exclude<StructuredOutputMode, 'native'> | 'native';
   nativeSchemaDialect?: string;
   maxNativeSchemaBytes?: number;
   streaming: boolean;

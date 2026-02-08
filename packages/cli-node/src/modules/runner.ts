@@ -1547,6 +1547,15 @@ function providerSupportsNativeJsonSchema(caps: ProviderCapabilities): boolean {
   return dialect === 'json-schema';
 }
 
+function schemaByteLength(schema: object): number {
+  try {
+    return Buffer.byteLength(JSON.stringify(schema), 'utf8');
+  } catch {
+    // If something is non-serializable, treat as huge and disable native.
+    return Number.MAX_SAFE_INTEGER;
+  }
+}
+
 function resolveJsonSchemaParams(
   module: CognitiveModule,
   provider: Provider,
@@ -1585,13 +1594,37 @@ function resolveJsonSchemaParams(
         },
       };
     }
+    const maxBytes = caps.maxNativeSchemaBytes;
+    if (typeof maxBytes === 'number' && maxBytes > 0) {
+      const bytes = schemaByteLength(module.outputSchema);
+      if (bytes > maxBytes) {
+        return {
+          jsonSchema: module.outputSchema,
+          jsonSchemaMode: 'prompt',
+          allowSchemaFallback: false,
+          policy: { requested: pref, resolved: 'prompt', reason: `native schema too large (${bytes}B > ${maxBytes}B)` },
+        };
+      }
+    }
+
     // Some providers accept only a restricted schema subset and can reject otherwise-valid JSON Schema.
     // Retrying once in prompt mode yields a much better UX while still keeping the initial attempt "native".
     return { jsonSchema: module.outputSchema, jsonSchemaMode: 'native', allowSchemaFallback: true, policy: { requested: pref, resolved: 'native', reason: 'structured=native' } };
   }
 
   // auto: choose based on provider capabilities.
-  const jsonSchemaMode: JsonSchemaMode = providerSupportsNativeJsonSchema(caps) ? 'native' : 'prompt';
+  let jsonSchemaMode: JsonSchemaMode = providerSupportsNativeJsonSchema(caps) ? 'native' : 'prompt';
+  let sizeReason: string | null = null;
+  if (jsonSchemaMode === 'native') {
+    const maxBytes = caps.maxNativeSchemaBytes;
+    if (typeof maxBytes === 'number' && maxBytes > 0) {
+      const bytes = schemaByteLength(module.outputSchema);
+      if (bytes > maxBytes) {
+        jsonSchemaMode = 'prompt';
+        sizeReason = `native schema too large (${bytes}B > ${maxBytes}B)`;
+      }
+    }
+  }
   return {
     jsonSchema: module.outputSchema,
     jsonSchemaMode,
@@ -1599,8 +1632,10 @@ function resolveJsonSchemaParams(
     policy: {
       requested: pref,
       resolved: jsonSchemaMode,
-      reason: providerSupportsNativeJsonSchema(caps)
-        ? `auto: native JSON Schema supported`
+      reason: sizeReason
+        ? `auto: ${sizeReason}`
+        : providerSupportsNativeJsonSchema(caps)
+          ? `auto: native JSON Schema supported`
         : caps.structuredOutput === 'native'
           ? `auto: native schema dialect is not JSON Schema (${caps.nativeSchemaDialect ?? 'unknown'})`
           : `auto: provider structuredOutput=${caps.structuredOutput}`,
@@ -2134,6 +2169,12 @@ export async function* runModuleStream(
       }
     }
 
+    // Single-file core modules promise "missing fields are empty".
+    if (typeof module.location === 'string' && /\.(md|markdown)$/i.test(module.location)) {
+      if (inputData.query === undefined) inputData.query = '';
+      if (inputData.code === undefined) inputData.code = '';
+    }
+
     _invokeBeforeHooks(module.name, inputData, module);
 
     // Validate input if enabled
@@ -2188,7 +2229,7 @@ export async function* runModuleStream(
       validateOutput,
       structuredOverride ?? policy?.structured
     );
-    const { allowSchemaFallback, ...invokeSchemaParams } = schemaParams;
+    const { allowSchemaFallback, policy: structuredPolicy, ...invokeSchemaParams } = schemaParams;
     
     if (provider.supportsStreaming?.() && provider.invokeStream) {
       // Use true streaming
@@ -2295,6 +2336,12 @@ export async function* runModuleStream(
     const latencyMs = Date.now() - startTime;
     if (response.meta) {
       response.meta.latency_ms = latencyMs;
+      if (structuredPolicy) {
+        (response.meta as any).policy = {
+          ...(typeof (response.meta as any).policy === 'object' && (response.meta as any).policy ? (response.meta as any).policy : {}),
+          structured: structuredPolicy,
+        };
+      }
       if (traceId) {
         response.meta.trace_id = traceId;
       }
