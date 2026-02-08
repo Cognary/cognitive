@@ -18,7 +18,7 @@ Cognitive Modules 是一套用于 **可验证、可审计、强约束** AI 任�
 
 ## 版本
 
-- **运行时（npm）**：`2.2.12`
+- **运行时（npm）**：`2.2.13`
 - **规范**：v2.2
 
 ## 安装（Node.js）
@@ -72,6 +72,7 @@ EOF
 
 - 推荐入口是 `npx cogn@2.2.13 ...`（避免你机器上存在其他 `cog` 命令导致误用）。
 - 需要指定 `--provider/--model` 时，把它们放在命令后面，例如 `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`。
+- 如果你同时配置了多个 provider 的 API key，CLI 会按优先级自动选择默认 provider。建议显式传 `--provider ...`，或临时 `unset GEMINI_API_KEY`（等）避免误判。
 
 ## v2.2 响应格式
 

@@ -18,7 +18,7 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ## Version
 
-- **Runtime (npm)**: `2.2.12`
+- **Runtime (npm)**: `2.2.13`
 - **Spec**: v2.2
 
 ## Installation (Node.js)
@@ -72,6 +72,7 @@ Notes:
 
 - The recommended, unambiguous entrypoint is `npx cogn@2.2.13 ...` (avoids any `cog` binary conflicts on your machine).
 - When passing `--provider/--model`, put them after the command, e.g. `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`.
+- If multiple provider API keys are set, the CLI auto-selects a provider by priority order. Use `--provider ...` (recommended) or `unset GEMINI_API_KEY` (etc.) to avoid surprises.
 
 ## v2.2 Response Format
 

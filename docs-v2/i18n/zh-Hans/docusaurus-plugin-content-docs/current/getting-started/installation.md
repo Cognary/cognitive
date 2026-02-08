@@ -80,7 +80,7 @@ npm install -g cogn@2.2.13
 
 ```bash
 npx cogn@2.2.13 --version
-# 输出：Cognitive Runtime v2.2.12
+# 输出：Cognitive Runtime v2.2.13
 
 npx cogn@2.2.13 doctor
 ```

@@ -6,6 +6,11 @@ sidebar_position: 3
 
 Cognitive Modules (Node CLI) supports multiple LLM providers. The CLI auto-selects a provider based on which API key is present, or you can force one with `--provider`.
 
+Notes:
+
+- If multiple provider API keys are set, the CLI will auto-select the first provider it finds. Prefer passing `--provider ...` explicitly to avoid surprises.
+- If you have `GEMINI_API_KEY` set, Gemini becomes the default provider unless overridden. If your Gemini account does not support the default model, set `--model ...` or use a different provider.
+
 ## Supported Providers
 
 | Provider | Environment Variable |
