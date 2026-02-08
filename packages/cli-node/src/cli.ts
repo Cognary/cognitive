@@ -14,7 +14,7 @@
  * npx cognitive-modules add ziel-io/cognitive-modules -m code-simplifier
  */
 
-import { parseCliArgs } from './cli-args.js';
+import { normalizeCliParseResult, parseCliArgs } from './cli-args.js';
 import { getProvider, listProviders } from './providers/index.js';
 import { run, list, pipe, init, add, update, remove, versions, compose, composeInfo, validate, validateAll, migrate, migrateAll, test, testAll, conformance, search, listCategories, info, core } from './commands/index.js';
 import { listModules, getDefaultSearchPaths } from './modules/loader.js';
@@ -25,7 +25,7 @@ import { buildRegistryAssets, verifyRegistryAssets } from './registry/assets.js'
 import { DEFAULT_REGISTRY_URL } from './registry/client.js';
 
 async function main() {
-  const parsed = parseCliArgs(process.argv.slice(2));
+  const parsed = normalizeCliParseResult(parseCliArgs(process.argv.slice(2)));
   const values = parsed.values as any;
   const positionals = parsed.positionals;
   const args = parsed.args;

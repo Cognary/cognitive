@@ -16,6 +16,73 @@ export type CliParseResult = {
   values: Record<string, unknown>;
 };
 
+const KNOWN_COMMANDS = new Set([
+  'run',
+  'list',
+  'pipe',
+  'init',
+  'add',
+  'update',
+  'remove',
+  'versions',
+  'compose',
+  'compose-info',
+  'validate',
+  'migrate',
+  'test',
+  'conformance',
+  'search',
+  'categories',
+  'info',
+  'providers',
+  'registry',
+  'serve',
+  'doctor',
+  'mcp',
+  'core',
+]);
+
+/**
+ * Recover from `npx`/`npm exec` swallowing unknown flags.
+ *
+ * Example user intent:
+ *   npx cogn@X --provider minimax --model MiniMax-M2.1 core run --stdin ...
+ *
+ * Some `npx` flows interpret `--provider/--model` as `npx` flags and strip them,
+ * leaving the values as positionals:
+ *   minimax MiniMax-M2.1 core run --stdin ...
+ *
+ * This normalization attempts to restore:
+ * - command = core
+ * - values.provider/model = prelude tokens
+ * - positionals = remaining args after core
+ *
+ * We intentionally scope the recovery to the "core" entrypoint to avoid masking real typos.
+ */
+export function normalizeCliParseResult(parsed: CliParseResult): CliParseResult {
+  const command = parsed.command;
+  if (!command) return parsed;
+  if (KNOWN_COMMANDS.has(command)) return parsed;
+
+  const allPositionals = [command, ...parsed.positionals];
+  const coreIdx = allPositionals.indexOf('core');
+  if (coreIdx <= 0) return parsed;
+
+  const prelude = allPositionals.slice(0, coreIdx);
+  const rest = allPositionals.slice(coreIdx + 1);
+
+  const values = { ...parsed.values };
+  if (values.provider === undefined && prelude[0]) values.provider = prelude[0];
+  if (values.model === undefined && prelude[1]) values.model = prelude[1];
+
+  return {
+    command: 'core',
+    positionals: rest,
+    args: ['core', ...rest],
+    values,
+  };
+}
+
 export function parseCliArgs(argv: string[]): CliParseResult {
   const { values, positionals } = parseArgs({
     args: argv,
