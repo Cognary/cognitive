@@ -9,7 +9,7 @@ Cognitive Modules (Node CLI) supports multiple LLM providers. The CLI auto-selec
 Notes:
 
 - If multiple provider API keys are set, the CLI will auto-select the first provider it finds. Prefer passing `--provider ...` explicitly to avoid surprises.
-- If you have `GEMINI_API_KEY` set, Gemini becomes the default provider unless overridden. If your Gemini account does not support the default model, set `--model ...` or use a different provider.
+- Auto-select uses a fixed priority order: OpenAI -> Anthropic -> Gemini -> MiniMax -> DeepSeek -> Qwen. If your account does not support the default model for the selected provider, pass `--model ...` or choose a different provider.
 
 ## Supported Providers
 

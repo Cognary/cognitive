@@ -146,7 +146,7 @@ export function listProviders(opts?: { all?: boolean }): Array<{
     providerRow('anthropic', !!process.env.ANTHROPIC_API_KEY, 'claude-sonnet-4.5', () => new AnthropicProvider(''), 'stable'),
     providerRow('gemini', !!process.env.GEMINI_API_KEY, 'gemini-3-pro-preview', () => new GeminiProvider(''), 'stable'),
     providerRow('minimax', !!process.env.MINIMAX_API_KEY, 'MiniMax-M2.1', () => new MiniMaxProvider(''), 'stable'),
-    providerRow('deepseek', !!process.env.DEEPSEEK_API_KEY, 'deepseek-v3.2', () => new DeepSeekProvider(''), 'stable'),
+    providerRow('deepseek', !!process.env.DEEPSEEK_API_KEY, 'deepseek-chat', () => new DeepSeekProvider(''), 'stable'),
     providerRow('qwen', !!(process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY), 'qwen3-max', () => new QwenProvider(''), 'stable'),
   ];
 
