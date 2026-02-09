@@ -26,7 +26,7 @@ EOF
 What to look for:
 
 - `meta.risk` is set (`none|low|medium|high`)
-- `meta.explain` is short (<=280 chars)
+- `meta.explain` is short (max 280 chars)
 - `data` is structured and auditable (`data.rationale` is long-form)
 
 ## CI Gate: Block High Risk, Allow Low Risk
