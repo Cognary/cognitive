@@ -18,7 +18,7 @@ You get:
 ```bash
 export DEEPSEEK_API_KEY=sk-xxx
 
-cat <<'EOF' | npx cogn@2.2.13 run code-reviewer --stdin --pretty
+cat <<'EOF' | npx cogn@2.2.13 pipe --module code-reviewer --pretty
 def login(u,p): pass
 EOF
 ```
@@ -50,7 +50,7 @@ We ship a copy-paste template:
 Example:
 
 ```bash
-npx cogn@2.2.13 run code-reviewer --stdin --pretty --profile standard --structured auto
+npx cogn@2.2.13 pipe --module code-reviewer --pretty --profile standard --structured auto
 ```
 
 ## Why This Works (And “Just Prompting” Doesn’t)
@@ -58,4 +58,3 @@ npx cogn@2.2.13 run code-reviewer --stdin --pretty --profile standard --structur
 - CI needs a machine-readable contract. Free-form text is brittle.
 - Providers have different schema/JSON mode behavior. Cognitive normalizes to one contract and records decisions.
 - Risk + confidence gives you a routing primitive: allow, require review, block.
-
