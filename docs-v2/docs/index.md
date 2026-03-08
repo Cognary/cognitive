@@ -38,6 +38,19 @@ If you want a "protocol-grade" path, but only when needed:
 
 - [Progressive Complexity](./getting-started/progressive-complexity)
 - [Killer Use Cases](./getting-started/use-cases)
+- [Roadmap](./roadmap)
+
+---
+
+## Roadmap
+
+Cognitive is being tightened in three stages:
+
+- `v2.2.x` - stabilize the runtime, reduce ambiguity, and close contract-consistency bugs
+- `v2.3` - clarify the product, simplify the default path, and lead with killer use cases
+- `v2.4` - open the protocol surface for compatible providers, runtimes, and publishable artifacts
+
+For the detailed plan and exit criteria, see [Roadmap](./roadmap).
 
 ---
 
@@ -98,6 +111,7 @@ If you want a "protocol-grade" path, but only when needed:
 - [First Module](./getting-started/first-module)
 - [Module Format](./guide/module-format)
 - [CLI Reference](./cli/overview)
+- [Roadmap](./roadmap)
 - [Conformance Center](./conformance)
 - [Registry and Distribution](./registry)
 - [Release Notes](./release-notes)

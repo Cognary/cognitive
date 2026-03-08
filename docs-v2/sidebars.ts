@@ -8,6 +8,11 @@ const sidebars: SidebarsConfig = {
       label: 'Introduction',
     },
     {
+      type: 'doc',
+      id: 'roadmap',
+      label: 'Roadmap',
+    },
+    {
       type: 'category',
       label: 'Getting Started',
       collapsed: false,
