@@ -19,16 +19,38 @@
         "additionalProperties": false,
         "required": ["issue_type", "severity", "affected_surface", "customer_impact", "next_action"],
         "properties": {
-          "issue_type": { "type": "string" },
-          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-          "affected_surface": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-          "customer_impact": { "type": "string" },
-          "next_action": { "type": "string" }
+          "issue_type": {
+            "type": "string",
+            "enum": ["password_reset_login_failure"],
+            "description": "Use the canonical triage taxonomy label, not a free-form sentence."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Choose high when a user-facing authentication flow is broken on a production platform and support volume is already elevated. Reserve critical for cross-platform outage or no workaround."
+          },
+          "affected_surface": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 2,
+            "description": "List at least the affected client/platform and the workflow or subsystem."
+          },
+          "customer_impact": {
+            "type": "string",
+            "description": "State the concrete user-visible impact in one sentence."
+          },
+          "next_action": {
+            "type": "string",
+            "description": "State the next engineering action, ideally naming the token or validation path to inspect."
+          }
         }
       },
       "semanticChecks": [
-        { "path": "severity", "type": "one_of", "value": ["high", "critical"] },
-        { "path": "affected_surface", "type": "min_items", "value": 1 }
+        { "path": "issue_type", "type": "equals", "value": "password_reset_login_failure" },
+        { "path": "severity", "type": "equals", "value": "high" },
+        { "path": "affected_surface", "type": "min_items", "value": 2 },
+        { "path": "customer_impact", "type": "includes_any", "value": ["login", "log in"] },
+        { "path": "next_action", "type": "includes", "value": "token" }
       ]
     },
     {

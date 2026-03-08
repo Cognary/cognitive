@@ -249,6 +249,15 @@ function evaluateSemanticChecks(normalized, checks = []) {
           failures.push({ check, actual });
         }
         break;
+      case 'includes_any':
+        if (
+          typeof actual !== 'string' ||
+          !Array.isArray(check.value) ||
+          !check.value.some((candidate) => actual.toLowerCase().includes(String(candidate).toLowerCase()))
+        ) {
+          failures.push({ check, actual });
+        }
+        break;
       case 'one_of':
         if (!Array.isArray(check.value) || !check.value.includes(actual)) {
           failures.push({ check, actual });
