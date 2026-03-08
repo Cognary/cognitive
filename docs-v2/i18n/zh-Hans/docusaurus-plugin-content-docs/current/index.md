@@ -38,6 +38,19 @@ EOF
 
 - [渐进复杂（升级触发器）](./getting-started/progressive-complexity)
 - [Killer Use Case](./getting-started/use-cases)
+- [Roadmap](./roadmap)
+
+---
+
+## Roadmap
+
+Cognitive 当前按三个阶段推进：
+
+- `v2.2.x` - 稳定运行时、减少歧义、关闭合同一致性缺陷
+- `v2.3` - 把产品讲清楚、收敛默认路径、围绕 Killer Use Case 组织入口
+- `v2.4` - 打开协议表面，让兼容 provider、runtime 与可发布产物更容易落地
+
+完整计划与阶段退出条件见 [Roadmap](./roadmap)。
 
 ---
 
@@ -98,6 +111,7 @@ EOF
 - [第一个模块](./getting-started/first-module)
 - [模块格式](./guide/module-format)
 - [CLI 参考](./cli/overview)
+- [Roadmap](./roadmap)
 - [一致性中心](./conformance)
 - [Registry 与分发](./registry)
 - [发布说明](./release-notes)

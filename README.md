@@ -21,6 +21,14 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 - **Runtime (npm)**: `2.2.13`
 - **Spec**: v2.2
 
+## Roadmap
+
+The product direction and release plan are tracked in [`ROADMAP.md`](ROADMAP.md).
+
+- `v2.2.x` - stabilize the current runtime, tighten defaults, and close consistency bugs
+- `v2.3` - make the product easier to understand and lead with killer use cases
+- `v2.4` - open the protocol surface for compatible providers and runtimes
+
 ## Installation (Node.js)
 
 ```bash

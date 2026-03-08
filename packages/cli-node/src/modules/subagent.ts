@@ -34,6 +34,8 @@ export interface CallDirective {
   module: string;
   args: string;
   match: string;
+  start: number;
+  end: number;
 }
 
 export interface SubagentRunOptions {
@@ -108,7 +110,9 @@ export function parseCalls(text: string): CallDirective[] {
     calls.push({
       module: match[1],
       args: match[2] || '',
-      match: match[0]
+      match: match[0],
+      start: match.index,
+      end: match.index + match[0].length
     });
   }
   
@@ -120,22 +124,60 @@ export function parseCalls(text: string): CallDirective[] {
  */
 export function substituteCallResults(
   text: string, 
-  callResults: Array<{ match: string; module: string; result: unknown }>
+  callResults: Array<{
+    match?: string;
+    start?: number;
+    end?: number;
+    module: string;
+    result: unknown;
+  }>
 ): string {
-  let result = text;
-  
-  for (const entry of callResults) {
-    const resultStr = typeof entry.result === 'object' 
+  const buildReplacement = (entry: { module: string; result: unknown }): string => {
+    const resultStr = typeof entry.result === 'object'
       ? JSON.stringify(entry.result, null, 2)
       : String(entry.result);
-    
-    const replacement = `[Result from ${entry.module}]:\n${resultStr}`;
+
+    return `[Result from ${entry.module}]:\n${resultStr}`;
+  };
+
+  const hasRanges = callResults.every(
+    (entry) => typeof entry.start === 'number' && typeof entry.end === 'number'
+  );
+
+  if (hasRanges) {
+    const sorted = [...callResults].sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+    let cursor = 0;
+    let result = '';
+
+    for (const entry of sorted) {
+      const start = entry.start!;
+      const end = entry.end!;
+      if (start < cursor) {
+        continue;
+      }
+
+      result += text.slice(cursor, start);
+      result += buildReplacement(entry);
+      cursor = end;
+    }
+
+    result += text.slice(cursor);
+    return result;
+  }
+
+  let result = text;
+  for (const entry of callResults) {
+    if (!entry.match) {
+      continue;
+    }
+
     const idx = result.indexOf(entry.match);
     if (idx !== -1) {
+      const replacement = buildReplacement(entry);
       result = result.slice(0, idx) + replacement + result.slice(idx + entry.match.length);
     }
   }
-  
+
   return result;
 }
 
@@ -201,7 +243,13 @@ export class SubagentOrchestrator {
       
       // Parse @call directives from prompt
       const calls = parseCalls(module.prompt);
-      const callResults: Array<{ match: string; module: string; result: unknown }> = [];
+      const callResults: Array<{
+        match: string;
+        start: number;
+        end: number;
+        module: string;
+        result: unknown;
+      }> = [];
       
       // Resolve each @call directive
       for (const call of calls) {
@@ -231,9 +279,21 @@ export class SubagentOrchestrator {
         
         // Store result
         if (childResult.ok && 'data' in childResult) {
-          callResults.push({ match: call.match, module: call.module, result: childResult.data });
+          callResults.push({
+            match: call.match,
+            start: call.start,
+            end: call.end,
+            module: call.module,
+            result: childResult.data
+          });
         } else if ('error' in childResult) {
-          callResults.push({ match: call.match, module: call.module, result: { error: childResult.error } });
+          callResults.push({
+            match: call.match,
+            start: call.start,
+            end: call.end,
+            module: call.module,
+            result: { error: childResult.error }
+          });
         }
       }
       
