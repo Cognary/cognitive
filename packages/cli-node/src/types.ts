@@ -611,7 +611,16 @@ export interface ModuleInput {
 
 /** Check if response is v2.2 format */
 export function isV22Envelope<T>(response: EnvelopeResponse<T>): response is EnvelopeResponseV22<T> {
-  return 'meta' in response;
+  if (typeof response !== 'object' || response === null) return false;
+  const envelope = response as unknown as Record<string, unknown>;
+  if (typeof envelope.ok !== 'boolean') return false;
+  if (typeof envelope.meta !== 'object' || envelope.meta === null || Array.isArray(envelope.meta)) return false;
+
+  if (envelope.ok === true) {
+    return 'data' in envelope;
+  }
+
+  return typeof envelope.error === 'object' && envelope.error !== null && !Array.isArray(envelope.error);
 }
 
 /** Check if response is successful */

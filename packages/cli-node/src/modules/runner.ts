@@ -1255,6 +1255,13 @@ function repairEnvelope(
   if ((meta.explain as string).length > maxExplainLength) {
     meta.explain = (meta.explain as string).slice(0, maxExplainLength - 3) + '...';
   }
+
+  // data.rationale is commonly required by module contracts and is safely
+  // synthesizable from meta.explain when the model omitted the longer field.
+  if (typeof data.rationale !== 'string' || data.rationale.trim().length === 0) {
+    data.rationale = meta.explain;
+    repaired.data = data;
+  }
   
   // Build proper v2.2 response with version
   const builtMeta: EnvelopeMeta = {
@@ -1268,8 +1275,10 @@ function repairEnvelope(
     version: ENVELOPE_VERSION,
     meta: builtMeta,
     // E4000 is an internal/runtime error fallback (should rarely happen after repair).
-    error: (repaired.error as { code: string; message: string }) ?? { code: 'E4000', message: 'Unknown error' },
-    partial_data: repaired.partial_data
+    error:
+      (repaired.error as { code: string; message: string }) ??
+      { code: 'E4000', message: typeof meta.explain === 'string' && meta.explain.trim() ? meta.explain : 'Unknown error' },
+    partial_data: repaired.partial_data ?? repaired.data
   } : {
     ok: true,
     version: ENVELOPE_VERSION,
@@ -1320,9 +1329,42 @@ function repairErrorEnvelope(
       explain: meta.explain as string,
     },
     // E4000 is an internal/runtime error fallback (should rarely happen after repair).
-    error: (repaired.error as { code: string; message: string }) ?? { code: 'E4000', message: 'Unknown error' },
-    partial_data: repaired.partial_data,
+    error:
+      (repaired.error as { code: string; message: string }) ??
+      { code: 'E4000', message: typeof meta.explain === 'string' && meta.explain.trim() ? meta.explain : 'Unknown error' },
+    partial_data: repaired.partial_data ?? repaired.data,
   };
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeEnvelopeLikeObject(parsed: unknown): unknown {
+  if (!isPlainRecord(parsed) || !isPlainRecord(parsed.meta) || typeof parsed.ok !== 'boolean') {
+    return parsed;
+  }
+
+  const normalized = deepClone(parsed) as Record<string, unknown>;
+  const reserved = new Set(['ok', 'version', 'meta', 'data', 'error', 'partial_data']);
+  const payloadEntries = Object.entries(normalized).filter(([key]) => !reserved.has(key));
+
+  if (normalized.ok === true) {
+    if (!isPlainRecord(normalized.data) && payloadEntries.length > 0) {
+      normalized.data = Object.fromEntries(payloadEntries);
+      for (const [key] of payloadEntries) delete normalized[key];
+    }
+    return normalized;
+  }
+
+  const hasError = isPlainRecord(normalized.error) && typeof normalized.error.code === 'string';
+  if (!hasError && payloadEntries.length > 0) {
+    normalized.data = Object.fromEntries(payloadEntries);
+    for (const [key] of payloadEntries) delete normalized[key];
+    normalized.ok = true;
+  }
+
+  return normalized;
 }
 
 /**
@@ -2126,12 +2168,14 @@ export async function runModule(
 
     // Convert to v2.2 envelope
     let response: EnvelopeResponseV22<unknown>;
-    if (isV22Envelope(parsed as EnvelopeResponse<unknown>)) {
-      response = parsed as EnvelopeResponseV22<unknown>;
-    } else if (isEnvelopeResponse(parsed)) {
-      response = wrapV21ToV22(parsed as EnvelopeResponse<unknown>, riskRule);
+    const normalizedParsed = normalizeEnvelopeLikeObject(parsed);
+
+    if (isV22Envelope(normalizedParsed as EnvelopeResponse<unknown>)) {
+      response = normalizedParsed as EnvelopeResponseV22<unknown>;
+    } else if (isEnvelopeResponse(normalizedParsed)) {
+      response = wrapV21ToV22(normalizedParsed as EnvelopeResponse<unknown>, riskRule);
     } else {
-      response = convertLegacyToEnvelope(parsed);
+      response = convertLegacyToEnvelope(normalizedParsed);
     }
 
     // Add version and meta fields
@@ -2672,12 +2716,14 @@ export async function* runModuleStream(
 
     // Convert to v2.2 envelope
     let response: EnvelopeResponseV22<unknown>;
-    if (isV22Envelope(parsed as EnvelopeResponse<unknown>)) {
-      response = parsed as EnvelopeResponseV22<unknown>;
-    } else if (isEnvelopeResponse(parsed)) {
-      response = wrapV21ToV22(parsed as EnvelopeResponse<unknown>, riskRule);
+    const normalizedParsed = normalizeEnvelopeLikeObject(parsed);
+
+    if (isV22Envelope(normalizedParsed as EnvelopeResponse<unknown>)) {
+      response = normalizedParsed as EnvelopeResponseV22<unknown>;
+    } else if (isEnvelopeResponse(normalizedParsed)) {
+      response = wrapV21ToV22(normalizedParsed as EnvelopeResponse<unknown>, riskRule);
     } else {
-      response = convertLegacyToEnvelope(parsed);
+      response = convertLegacyToEnvelope(normalizedParsed);
     }
 
     // Add version and meta

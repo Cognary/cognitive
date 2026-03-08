@@ -311,4 +311,92 @@ describe('runner structured output preference', () => {
     expect(metaPolicy?.structured?.downgraded).toBe(true);
     expect(metaPolicy?.structured?.fallback?.attempted).toBe(true);
   });
+
+  it('repairs missing rationale from meta.explain before output validation fails', async () => {
+    class MissingRationaleProvider implements Provider {
+      name = 'missing-rationale';
+      isConfigured(): boolean {
+        return true;
+      }
+      async invoke(_params: InvokeParams): Promise<InvokeResult> {
+        return {
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 0.9, risk: 'low', explain: 'derived rationale' },
+            data: { result: 'x' },
+          }),
+        };
+      }
+    }
+
+    const provider = new MissingRationaleProvider();
+    const module = makeModule();
+    module.outputSchema = {
+      type: 'object',
+      required: ['result', 'rationale'],
+      additionalProperties: false,
+      properties: {
+        result: { type: 'string' },
+        rationale: { type: 'string' },
+      },
+    };
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      validateOutput: true,
+      policy: makePolicy(),
+    });
+
+    expect(res.ok).toBe(true);
+    expect((res as any).data?.rationale).toBe('derived rationale');
+  });
+
+  it('normalizes malformed v2.2 envelopes that place payload fields at the top level', async () => {
+    class MalformedEnvelopeProvider implements Provider {
+      name = 'malformed-envelope';
+      isConfigured(): boolean {
+        return true;
+      }
+      async invoke(_params: InvokeParams): Promise<InvokeResult> {
+        return {
+          content: JSON.stringify({
+            ok: false,
+            meta: { confidence: 0.95, risk: 'low', explain: 'clear extraction' },
+            audience: 'urban professionals',
+            primary_goal: 'launch summary',
+            proof_points: ['ingredient transparency'],
+            constraints: ['avoid medical claims'],
+            rationale: 'extracted from brief',
+          }),
+        };
+      }
+    }
+
+    const provider = new MalformedEnvelopeProvider();
+    const module = makeModule();
+    module.outputSchema = {
+      type: 'object',
+      required: ['audience', 'primary_goal', 'proof_points', 'constraints', 'rationale'],
+      additionalProperties: false,
+      properties: {
+        audience: { type: 'string' },
+        primary_goal: { type: 'string' },
+        proof_points: { type: 'array', minItems: 1, items: { type: 'string' } },
+        constraints: { type: 'array', minItems: 1, items: { type: 'string' } },
+        rationale: { type: 'string' },
+      },
+    };
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      validateOutput: true,
+      policy: makePolicy(),
+    });
+
+    expect(res.ok).toBe(true);
+    expect((res as any).data?.audience).toBe('urban professionals');
+    expect((res as any).error).toBeUndefined();
+  });
 });
