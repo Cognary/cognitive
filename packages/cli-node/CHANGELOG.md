@@ -2,14 +2,21 @@
 
 All notable changes to this package are documented in this file.
 
-## 2.2.12 - 2026-02-08
+## 2.2.14 - 2026-03-08
 
-- Conformance: add `runtime` suite (offline, deterministic vectors) to validate publish-grade JSON parsing and profile gates.
-- UX: conformance help/usage now documents `--suite runtime` explicitly.
+- Release: add docs build to `release:check`, so docs regressions fail before npm publish.
+- Hardening: `packages/cogn` now runs the primary runtime release gate before alias-package publish checks.
+- Providers: preserve Anthropic streaming input/output token accounting correctly.
+- Test coverage: add request-shaping tests for the full stable provider set (`openai`, `anthropic`, `gemini`, `minimax`, `deepseek`, `qwen`).
 
 ## 2.2.13 - 2026-02-08
 
 - Fix: do not repair/convert successful envelopes into error envelopes when output validation is disabled (`--profile core`/`validate=off`).
+
+## 2.2.12 - 2026-02-08
+
+- Conformance: add `runtime` suite (offline, deterministic vectors) to validate publish-grade JSON parsing and profile gates.
+- UX: conformance help/usage now documents `--suite runtime` explicitly.
 
 ## 2.2.11 - 2026-02-07
 

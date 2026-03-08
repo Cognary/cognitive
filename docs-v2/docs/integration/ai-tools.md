@@ -11,9 +11,9 @@ Recommended path: **MCP Server**.
 1. Install and start MCP server:
 
 ```bash
-npm install -g cogn@2.2.13
+npm install -g cogn@2.2.14
 npm install @modelcontextprotocol/sdk
-npx cogn@2.2.13 mcp
+npx cogn@2.2.14 mcp
 ```
 
 2. Configure your tool to call MCP server `cognitive`.
@@ -25,10 +25,10 @@ The tool can call:
 
 ## HTTP-based Tools (n8n / Dify / Coze)
 
-Use `npx cogn@2.2.13 serve` and call `POST /run`.
+Use `npx cogn@2.2.14 serve` and call `POST /run`.
 
 ```bash
-npx cogn@2.2.13 serve --port 8000
+npx cogn@2.2.14 serve --port 8000
 ```
 
 ```bash

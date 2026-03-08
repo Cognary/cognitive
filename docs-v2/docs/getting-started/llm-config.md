@@ -35,14 +35,14 @@ Experimental/community providers are still available, but require explicit `--pr
 
 ```bash
 export OPENAI_API_KEY=sk-xxx
-npx cogn@2.2.13 run code-reviewer --args "your code" --provider openai --model gpt-4o
+npx cogn@2.2.14 run code-reviewer --args "your code" --provider openai --model gpt-4o
 ```
 
 ## Example: Anthropic
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-xxx
-npx cogn@2.2.13 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
+npx cogn@2.2.14 run code-reviewer --args "your code" --provider anthropic --model claude-sonnet-4.5
 ```
 
 ## Example: Ollama (Local) (Community)
@@ -50,7 +50,7 @@ npx cogn@2.2.13 run code-reviewer --args "your code" --provider anthropic --mode
 ```bash
 # Install and start Ollama separately
 export OLLAMA_HOST=http://localhost:11434
-npx cogn@2.2.13 run code-reviewer --args "your code" --provider ollama --model llama3.1
+npx cogn@2.2.14 run code-reviewer --args "your code" --provider ollama --model llama3.1
 ```
 
 ## Model Override
@@ -61,5 +61,5 @@ npx cogn@2.2.13 run code-reviewer --args "your code" --provider ollama --model l
 ## Check Configuration
 
 ```bash
-npx cogn@2.2.13 doctor
+npx cogn@2.2.14 doctor
 ```

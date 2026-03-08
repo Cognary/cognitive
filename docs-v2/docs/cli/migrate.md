@@ -8,13 +8,13 @@ Migrate legacy modules to v2.2 format.
 
 Recommended (unambiguous) usage:
 
-- `npx cogn@2.2.13 migrate ...`
+- `npx cogn@2.2.14 migrate ...`
 
 ## Syntax
 
 ```bash
-npx cogn@2.2.13 migrate <module> [--dry-run] [--no-backup]
-npx cogn@2.2.13 migrate --all [--dry-run] [--no-backup]
+npx cogn@2.2.14 migrate <module> [--dry-run] [--no-backup]
+npx cogn@2.2.14 migrate --all [--dry-run] [--no-backup]
 ```
 
 ## Options
@@ -34,18 +34,18 @@ npx cogn@2.2.13 migrate --all [--dry-run] [--no-backup]
 
 ```bash
 # Preview
-npx cogn@2.2.13 migrate code-reviewer --dry-run
+npx cogn@2.2.14 migrate code-reviewer --dry-run
 
 # Execute
-npx cogn@2.2.13 migrate code-reviewer
+npx cogn@2.2.14 migrate code-reviewer
 
 # Migrate all
-npx cogn@2.2.13 migrate --all --dry-run
+npx cogn@2.2.14 migrate --all --dry-run
 ```
 
 ## Post-Migration
 
 ```bash
-npx cogn@2.2.13 validate code-reviewer --v22
-npx cogn@2.2.13 run code-reviewer --args "test code" --pretty
+npx cogn@2.2.14 validate code-reviewer --v22
+npx cogn@2.2.14 run code-reviewer --args "test code" --pretty
 ```

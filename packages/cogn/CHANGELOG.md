@@ -2,13 +2,18 @@
 
 All notable changes to this package are documented in this file.
 
-## 2.2.12 - 2026-02-08
+## 2.2.14 - 2026-03-08
 
-- Alias package aligned with `cognitive-modules-cli@2.2.13`.
+- Alias package aligned with `cognitive-modules-cli@2.2.14`.
+- Publish gate now runs the primary runtime release checks before alias-package checks.
 
 ## 2.2.13 - 2026-02-08
 
 - Alias package aligned with `cognitive-modules-cli@2.2.13`.
+
+## 2.2.12 - 2026-02-08
+
+- Alias package aligned with `cognitive-modules-cli@2.2.12`.
 
 ## 2.2.11 - 2026-02-07
 
