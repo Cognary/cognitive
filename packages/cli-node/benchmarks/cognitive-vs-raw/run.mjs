@@ -268,6 +268,38 @@ function evaluateSemanticChecks(normalized, checks = []) {
           failures.push({ check, actual });
         }
         break;
+      case 'array_object_any': {
+        if (!Array.isArray(actual)) {
+          failures.push({ check, actual });
+          break;
+        }
+        const field = String(check.field || '');
+        const matcher = String(check.matcher || 'equals');
+        const matched = actual.some((item) => {
+          if (!item || typeof item !== 'object') return false;
+          const fieldValue = item[field];
+          switch (matcher) {
+            case 'equals':
+              return fieldValue === check.value;
+            case 'one_of':
+              return Array.isArray(check.value) && check.value.includes(fieldValue);
+            case 'includes':
+              return typeof fieldValue === 'string' && fieldValue.toLowerCase().includes(String(check.value).toLowerCase());
+            case 'includes_any':
+              return (
+                typeof fieldValue === 'string' &&
+                Array.isArray(check.value) &&
+                check.value.some((candidate) => fieldValue.toLowerCase().includes(String(candidate).toLowerCase()))
+              );
+            case 'truthy':
+              return Boolean(fieldValue);
+            default:
+              return false;
+          }
+        });
+        if (!matched) failures.push({ check, actual });
+        break;
+      }
       case 'truthy':
         if (!actual) failures.push({ check, actual });
         break;
@@ -669,6 +701,68 @@ function computeStability(results, mode) {
   return average(scores);
 }
 
+function flattenValuePaths(value, prefix = '', out = new Map()) {
+  if (Array.isArray(value)) {
+    out.set(prefix || '$', stableStringify(value));
+    value.forEach((item, index) => flattenValuePaths(item, prefix ? `${prefix}.${index}` : String(index), out));
+    return out;
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      out.set(prefix || '$', stableStringify(value));
+      return out;
+    }
+    for (const [key, child] of entries) {
+      flattenValuePaths(child, prefix ? `${prefix}.${key}` : key, out);
+    }
+    return out;
+  }
+
+  out.set(prefix || '$', value);
+  return out;
+}
+
+function computeStabilityDiagnostics(results, mode) {
+  const byCase = new Map();
+  for (const result of results.filter((r) => r.mode === mode && r.summary.validJson && r.normalized != null)) {
+    if (!byCase.has(result.caseId)) byCase.set(result.caseId, []);
+    byCase.get(result.caseId).push(result);
+  }
+
+  const diagnostics = [];
+  for (const [caseId, attempts] of byCase.entries()) {
+    const hashes = attempts.map((a) => sha256(stableStringify(a.normalized)));
+    const uniqueHashes = Array.from(new Set(hashes));
+    if (uniqueHashes.length <= 1) continue;
+
+    const pathValues = new Map();
+    for (const attempt of attempts) {
+      const flattened = flattenValuePaths(attempt.normalized);
+      for (const [path, value] of flattened.entries()) {
+        if (!pathValues.has(path)) pathValues.set(path, new Set());
+        pathValues.get(path).add(stableStringify(value));
+      }
+    }
+
+    const differingPaths = Array.from(pathValues.entries())
+      .filter(([, values]) => values.size > 1)
+      .map(([path, values]) => ({
+        path,
+        variants: Array.from(values).slice(0, 3),
+      }))
+      .slice(0, 8);
+
+    diagnostics.push({
+      caseId,
+      variantCount: uniqueHashes.length,
+      differingPaths,
+    });
+  }
+
+  return diagnostics;
+}
+
 function formatPercent(value) {
   return value == null ? 'n/a' : `${(value * 100).toFixed(1)}%`;
 }
@@ -701,6 +795,11 @@ function buildMarkdownReport(report) {
     lines.push('');
     for (const mode of caseReport.modes) {
       lines.push(`- ${mode.mode}: valid_json=${formatPercent(mode.validJsonRate)}, schema=${formatPercent(mode.targetSchemaPassRate)}, semantic=${formatPercent(mode.semanticPassRate)}, stability=${formatPercent(mode.stabilityRate)}`);
+      if (mode.stabilityDiagnostics?.length) {
+        for (const diag of mode.stabilityDiagnostics) {
+          lines.push(`  - stability diff (${diag.variantCount} variants): ${diag.differingPaths.map((d) => d.path).join(', ')}`);
+        }
+      }
     }
     lines.push('');
   }
@@ -736,6 +835,7 @@ function buildReport(suite, provider, options, selectedCases, attempts) {
         targetSchemaPassRate: rate(subset.map((attempt) => attempt.summary.targetSchemaPass)),
         semanticPassRate: rate(subset.map((attempt) => attempt.summary.semanticPass).filter((value) => value != null)),
         stabilityRate: computeStability(subset, mode),
+        stabilityDiagnostics: computeStabilityDiagnostics(subset, mode),
       };
     }),
   }));

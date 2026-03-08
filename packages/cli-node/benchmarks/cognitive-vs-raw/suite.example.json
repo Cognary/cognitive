@@ -90,9 +90,9 @@
         "additionalProperties": false,
         "required": ["summary", "risk", "blocking", "findings"],
         "properties": {
-          "summary": { "type": "string" },
-          "risk": { "type": "string", "enum": ["none", "low", "medium", "high"] },
-          "blocking": { "type": "boolean" },
+          "summary": { "type": "string", "description": "Summarize the blocking issue in one sentence." },
+          "risk": { "type": "string", "enum": ["none", "low", "medium", "high"], "description": "Use high for directly exploitable SQL injection on an authentication path." },
+          "blocking": { "type": "boolean", "description": "Must be true when the issue should stop the PR from merging." },
           "findings": {
             "type": "array",
             "minItems": 1,
@@ -102,7 +102,7 @@
               "required": ["title", "severity", "category", "action"],
               "properties": {
                 "title": { "type": "string" },
-                "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+                "severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Use high for directly exploitable auth-path security issues." },
                 "category": { "type": "string", "enum": ["security", "correctness", "reliability", "maintainability"] },
                 "action": { "type": "string" }
               }
@@ -111,9 +111,12 @@
         }
       },
       "semanticChecks": [
-        { "path": "risk", "type": "one_of", "value": ["medium", "high"] },
+        { "path": "risk", "type": "equals", "value": "high" },
         { "path": "blocking", "type": "equals", "value": true },
-        { "path": "findings", "type": "min_items", "value": 1 }
+        { "path": "findings", "type": "min_items", "value": 1 },
+        { "path": "findings", "type": "array_object_any", "field": "category", "matcher": "equals", "value": "security" },
+        { "path": "findings", "type": "array_object_any", "field": "severity", "matcher": "equals", "value": "high" },
+        { "path": "findings", "type": "array_object_any", "field": "action", "matcher": "includes_any", "value": ["parameterized", "prepared", "bind parameter"] }
       ]
     },
     {
@@ -129,9 +132,9 @@
         "additionalProperties": false,
         "required": ["summary", "risk", "requires_changes", "key_issues"],
         "properties": {
-          "summary": { "type": "string" },
-          "risk": { "type": "string", "enum": ["none", "low", "medium", "high"] },
-          "requires_changes": { "type": "boolean" },
+          "summary": { "type": "string", "description": "Summarize why the diff should not ship without changes." },
+          "risk": { "type": "string", "enum": ["none", "low", "medium", "high"], "description": "Use high when unvalidated input directly affects export jobs or outbound email behavior." },
+          "requires_changes": { "type": "boolean", "description": "Must be true if the diff should be blocked pending validation or sanitization." },
           "key_issues": {
             "type": "array",
             "minItems": 1,
@@ -141,17 +144,20 @@
               "required": ["title", "severity", "why_it_matters"],
               "properties": {
                 "title": { "type": "string" },
-                "severity": { "type": "string", "enum": ["low", "medium", "high"] },
-                "why_it_matters": { "type": "string" }
+                "severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Use high when the issue can trigger unsafe jobs or notification abuse." },
+                "why_it_matters": { "type": "string", "description": "State the operational or security impact." }
               }
             }
           }
         }
       },
       "semanticChecks": [
-        { "path": "risk", "type": "one_of", "value": ["medium", "high"] },
+        { "path": "risk", "type": "equals", "value": "high" },
         { "path": "requires_changes", "type": "equals", "value": true },
-        { "path": "key_issues", "type": "min_items", "value": 1 }
+        { "path": "key_issues", "type": "min_items", "value": 1 },
+        { "path": "key_issues", "type": "array_object_any", "field": "title", "matcher": "includes_any", "value": ["validation", "unvalidated", "sanitize"] },
+        { "path": "key_issues", "type": "array_object_any", "field": "severity", "matcher": "equals", "value": "high" },
+        { "path": "key_issues", "type": "array_object_any", "field": "why_it_matters", "matcher": "includes_any", "value": ["email", "export", "job"] }
       ]
     }
   ]
