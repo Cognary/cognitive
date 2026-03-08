@@ -5,16 +5,19 @@
 import { BaseProvider } from './base.js';
 import type { InvokeParams, InvokeResult } from '../types.js';
 
+const DEFAULT_MINIMAX_BASE_URL = 'https://api.minimax.io/v1';
+
 export class MiniMaxProvider extends BaseProvider {
   name = 'minimax';
   private apiKey: string;
   private model: string;
-  private baseUrl = 'https://api.minimax.chat/v1';
+  private baseUrl: string;
 
   constructor(apiKey?: string, model = 'MiniMax-M2.1') {
     super();
     this.apiKey = apiKey || process.env.MINIMAX_API_KEY || '';
     this.model = model;
+    this.baseUrl = (process.env.MINIMAX_BASE_URL || DEFAULT_MINIMAX_BASE_URL).replace(/\/+$/, '');
   }
 
   isConfigured(): boolean {

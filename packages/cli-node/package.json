@@ -24,6 +24,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "bench:cognitive-vs-raw": "node benchmarks/cognitive-vs-raw/run.mjs",
     "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache",
     "release:check": "node ../../scripts/release/check-docs-build.js && npm run build && npm test && npm run pack:check",
     "prepublishOnly": "npm run release:check"

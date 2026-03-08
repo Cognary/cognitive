@@ -140,6 +140,27 @@ npm run dev -- run code-reviewer --args "..."
 npm run release:check
 ```
 
+## Cognitive 对照基准
+
+如果你要验证“使用 Cognitive”和“直接 prompt/skill 风格 JSON 提示”之间的差异，可以运行内置对照基准：
+
+```bash
+# 先确保 dist 已构建
+npm run build
+
+# 只看计划，不实际调用模型
+npm run bench:cognitive-vs-raw -- --provider gemini --plan
+
+# 实际运行（示例）
+npm run bench:cognitive-vs-raw -- --provider gemini --model gemini-3-pro-preview --runs 3
+```
+
+相关文件：
+
+- `/Users/lucio/Desktop/cognitve/cognitive-demo/packages/cli-node/benchmarks/cognitive-vs-raw/README.md`
+- `/Users/lucio/Desktop/cognitve/cognitive-demo/packages/cli-node/benchmarks/cognitive-vs-raw/suite.example.json`
+- `/Users/lucio/Desktop/cognitve/cognitive-demo/packages/cli-node/benchmarks/cognitive-vs-raw/report-template.md`
+
 ## License
 
 MIT

@@ -3,13 +3,20 @@ import { MiniMaxProvider } from './minimax.js';
 
 describe('MiniMaxProvider request shaping (stable)', () => {
   const originalFetch = globalThis.fetch;
+  const originalBaseUrl = process.env.MINIMAX_BASE_URL;
 
   beforeEach(() => {
     (globalThis as any).fetch = originalFetch;
+    delete process.env.MINIMAX_BASE_URL;
   });
 
   afterEach(() => {
     (globalThis as any).fetch = originalFetch;
+    if (originalBaseUrl === undefined) {
+      delete process.env.MINIMAX_BASE_URL;
+    } else {
+      process.env.MINIMAX_BASE_URL = originalBaseUrl;
+    }
     vi.restoreAllMocks();
   });
 
@@ -45,5 +52,53 @@ describe('MiniMaxProvider request shaping (stable)', () => {
     expect(body.max_tokens).toBe(10);
     expect(body.messages[2].content).toContain('final question');
     expect(body.messages[2].content).toContain('You MUST respond with valid JSON matching this schema:');
+  });
+
+  it('uses the official minimax.io base URL by default', async () => {
+    const p = new MiniMaxProvider('test-key', 'MiniMax-M2.1');
+
+    const fetchMock = vi.fn();
+    (globalThis as any).fetch = fetchMock;
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: '{"ok":true}' } }],
+      }),
+    });
+
+    await p.invoke({
+      messages: [{ role: 'user', content: 'hello' }],
+    } as any);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.minimax.io/v1/text/chatcompletion_v2',
+      expect.any(Object),
+    );
+  });
+
+  it('allows MINIMAX_BASE_URL to override the default endpoint', async () => {
+    process.env.MINIMAX_BASE_URL = 'https://api.minimaxi.com/v1/';
+
+    const p = new MiniMaxProvider('test-key', 'MiniMax-M2.1');
+
+    const fetchMock = vi.fn();
+    (globalThis as any).fetch = fetchMock;
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: '{"ok":true}' } }],
+      }),
+    });
+
+    await p.invoke({
+      messages: [{ role: 'user', content: 'hello' }],
+    } as any);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.minimaxi.com/v1/text/chatcompletion_v2',
+      expect.any(Object),
+    );
   });
 });

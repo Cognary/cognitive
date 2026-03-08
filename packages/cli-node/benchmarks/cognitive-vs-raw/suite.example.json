@@ -1,0 +1,136 @@
+{
+  "name": "cognitive-vs-raw-example",
+  "description": "Small benchmark suite for structured extraction and PR review gate tasks.",
+  "defaults": {
+    "temperature": 0.2,
+    "maxTokens": 1200
+  },
+  "cases": [
+    {
+      "id": "incident-triage-extraction",
+      "kind": "structured-extraction",
+      "description": "Turn an incident description into a fixed triage object.",
+      "taskPrompt": "Read the incident text and extract a compact triage object for an engineering on-call workflow.",
+      "input": {
+        "text": "Users report that login fails after password reset on iOS. Support received 12 tickets in two hours. The temporary workaround is to retry in the web client. The app shows 'reset token expired' even when the link is fresh."
+      },
+      "targetSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["issue_type", "severity", "affected_surface", "customer_impact", "next_action"],
+        "properties": {
+          "issue_type": { "type": "string" },
+          "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "affected_surface": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "customer_impact": { "type": "string" },
+          "next_action": { "type": "string" }
+        }
+      },
+      "semanticChecks": [
+        { "path": "severity", "type": "one_of", "value": ["high", "critical"] },
+        { "path": "affected_surface", "type": "min_items", "value": 1 }
+      ]
+    },
+    {
+      "id": "product-brief-extraction",
+      "kind": "structured-extraction",
+      "description": "Turn a product brief into a stable launch-summary object.",
+      "taskPrompt": "Read the product brief and extract the launch audience, primary goal, proof points, and constraints.",
+      "input": {
+        "query": "We are launching a resilience supplement for urban professionals aged 25-45. The main promise is stress recovery support during high-pressure work cycles. The landing page should stay conservative on claims, avoid medical promises, and highlight three proof points: ingredient transparency, daily usability, and third-party testing."
+      },
+      "targetSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["audience", "primary_goal", "proof_points", "constraints"],
+        "properties": {
+          "audience": { "type": "string" },
+          "primary_goal": { "type": "string" },
+          "proof_points": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+          "constraints": { "type": "array", "items": { "type": "string" }, "minItems": 2 }
+        }
+      },
+      "semanticChecks": [
+        { "path": "proof_points", "type": "min_items", "value": 2 },
+        { "path": "constraints", "type": "min_items", "value": 2 }
+      ]
+    },
+    {
+      "id": "pr-review-sql-injection",
+      "kind": "pr-review-gate",
+      "description": "Review insecure login code and return a fixed review object.",
+      "taskPrompt": "Review the code for correctness and security risk. Focus on issues that would matter in a pull-request gate.",
+      "input": {
+        "code": "def login(user, password):\n    query = f\"SELECT * FROM users WHERE name = '{user}' AND password = '{password}'\"\n    return db.execute(query).fetchone()"
+      },
+      "targetSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary", "risk", "blocking", "findings"],
+        "properties": {
+          "summary": { "type": "string" },
+          "risk": { "type": "string", "enum": ["none", "low", "medium", "high"] },
+          "blocking": { "type": "boolean" },
+          "findings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "severity", "category", "action"],
+              "properties": {
+                "title": { "type": "string" },
+                "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+                "category": { "type": "string", "enum": ["security", "correctness", "reliability", "maintainability"] },
+                "action": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "semanticChecks": [
+        { "path": "risk", "type": "one_of", "value": ["medium", "high"] },
+        { "path": "blocking", "type": "equals", "value": true },
+        { "path": "findings", "type": "min_items", "value": 1 }
+      ]
+    },
+    {
+      "id": "pr-review-input-validation",
+      "kind": "pr-review-gate",
+      "description": "Review an API diff that accepts unvalidated input.",
+      "taskPrompt": "Review the diff and return a release-gate style decision object. Focus on validation and operational risk.",
+      "input": {
+        "diff": "diff --git a/server.js b/server.js\n@@\n-app.post('/export', requireAuth, async (req, res) => {\n-  const job = await queueExport({ userId: req.user.id });\n+app.post('/export', requireAuth, async (req, res) => {\n+  const job = await queueExport({ userId: req.user.id, format: req.body.format, filters: req.body.filters, email: req.body.email });\n   res.json({ id: job.id });\n })"
+      },
+      "targetSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary", "risk", "requires_changes", "key_issues"],
+        "properties": {
+          "summary": { "type": "string" },
+          "risk": { "type": "string", "enum": ["none", "low", "medium", "high"] },
+          "requires_changes": { "type": "boolean" },
+          "key_issues": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "severity", "why_it_matters"],
+              "properties": {
+                "title": { "type": "string" },
+                "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+                "why_it_matters": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "semanticChecks": [
+        { "path": "risk", "type": "one_of", "value": ["medium", "high"] },
+        { "path": "requires_changes", "type": "equals", "value": true },
+        { "path": "key_issues", "type": "min_items", "value": 1 }
+      ]
+    }
+  ]
+}
