@@ -65,6 +65,22 @@ export class AnthropicProvider extends BaseProvider {
     return { body, systemContent: systemMessage?.content };
   }
 
+  private mergeUsage(
+    current: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined,
+    next: { input_tokens?: number; output_tokens?: number } | undefined
+  ): { promptTokens: number; completionTokens: number; totalTokens: number } | undefined {
+    if (!next) return current;
+
+    const promptTokens = next.input_tokens ?? current?.promptTokens ?? 0;
+    const completionTokens = next.output_tokens ?? current?.completionTokens ?? 0;
+
+    return {
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+    };
+  }
+
   async invoke(params: InvokeParams): Promise<InvokeResult> {
     if (!this.isConfigured()) {
       throw new Error('Anthropic API key not configured. Set ANTHROPIC_API_KEY environment variable.');
@@ -177,21 +193,12 @@ export class AnthropicProvider extends BaseProvider {
               
               // Extract usage info (message_delta or message_stop event)
               if (data.type === 'message_delta' && data.usage) {
-                usage = {
-                  promptTokens: data.usage.input_tokens || 0,
-                  completionTokens: data.usage.output_tokens || 0,
-                  totalTokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
-                };
+                usage = this.mergeUsage(usage, data.usage);
               }
               
               // Also check message_start for input tokens
               if (data.type === 'message_start' && data.message?.usage) {
-                const inputTokens = data.message.usage.input_tokens || 0;
-                usage = {
-                  promptTokens: inputTokens,
-                  completionTokens: usage?.completionTokens || 0,
-                  totalTokens: inputTokens + (usage?.completionTokens || 0),
-                };
+                usage = this.mergeUsage(usage, data.message.usage);
               }
             } catch {
               // Skip invalid JSON chunks
@@ -224,20 +231,11 @@ export class AnthropicProvider extends BaseProvider {
             }
 
             if (data.type === 'message_delta' && data.usage) {
-              usage = {
-                promptTokens: data.usage.input_tokens || 0,
-                completionTokens: data.usage.output_tokens || 0,
-                totalTokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
-              };
+              usage = this.mergeUsage(usage, data.usage);
             }
 
             if (data.type === 'message_start' && data.message?.usage) {
-              const inputTokens = data.message.usage.input_tokens || 0;
-              usage = {
-                promptTokens: inputTokens,
-                completionTokens: usage?.completionTokens || 0,
-                totalTokens: inputTokens + (usage?.completionTokens || 0),
-              };
+              usage = this.mergeUsage(usage, data.message.usage);
             }
           } catch {
             // Skip invalid JSON chunks

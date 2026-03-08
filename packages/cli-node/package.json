@@ -25,7 +25,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache",
-    "release:check": "npm run build && npm test && npm run pack:check",
+    "release:check": "node ../../scripts/release/check-docs-build.js && npm run build && npm test && npm run pack:check",
     "prepublishOnly": "npm run release:check"
   },
   "keywords": [

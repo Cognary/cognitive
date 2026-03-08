@@ -13,6 +13,25 @@ Cognitive 现在按三步收敛：
 
 仓库根目录下的 `ROADMAP.md` 是正式版本，这个页面主要用于文档站导航与阅读。
 
+## 当前状态
+
+当前阶段：**v2.2.x - 稳定与收紧**
+
+最近完成：
+
+- 首次体验路径已统一到 `npx cogn@<version> core run`
+- 稳定 provider 表面已收敛到 6 个
+- policy 与 structured output 降级决策可以在 verbose 输出中看到
+- 重复 `@call:` 替换改成按原始位置处理，不再是“只替换第一个”
+- `docs-v2` build 已纳入 `release:check`
+- Anthropic streaming usage 统计现在能正确保留 input/output token
+- 稳定 provider 的 request-shaping 测试已覆盖完整支持面
+- alias 包（`packages/cogn`）现在会先跑主 runtime 的 release gate
+
+接下来的直接动作：
+
+- 默认路径和结构化路径 smoke test 通过后再发下一个 npm 版本
+
 ## 产品方向
 
 Cognitive 不打算成为一个通用 AI 框架。

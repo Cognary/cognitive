@@ -50,9 +50,40 @@ What stays hidden by default:
 - certification details
 - long-tail provider-specific caveats
 
+## Current Phase Snapshot
+
+Current date: 2026-03-08
+
+Current phase: **v2.2.x - Stabilize and Tighten**
+
+Recently completed:
+
+- canonical first-run path unified around `npx cogn@<version> core run`
+- roadmap linked from the repository and docs homepage
+- stable provider surface reduced to the intentionally supported set:
+  `openai`, `anthropic`, `gemini`, `minimax`, `deepseek`, `qwen`
+- provider downgrade and policy decisions exposed in verbose output and `meta.policy`
+- repeated `@call:` substitution now resolves by source location instead of "first match wins"
+- `docs-v2` build now runs inside `packages/cli-node` `release:check`
+- Anthropic streaming usage accounting now preserves input and output token counts correctly
+- stable provider request-shaping tests now cover the full supported set
+- alias package (`packages/cogn`) release gate now runs the primary runtime release gate first
+
+Immediate next queue:
+
+- cut the next npm release only after smoke testing the default path and one structured path
+
+Phase status:
+
+- `v2.2.x` - active
+- `v2.3` - queued next
+- `v2.4` - later, after the product surface is simpler
+
 ## v2.2.x - Stabilize and Tighten
 
 Goal: make the current system reliable enough to ship without hesitation.
+
+Status: **active**
 
 ### Priorities
 
@@ -76,6 +107,13 @@ Goal: make the current system reliable enough to ship without hesitation.
 - minimum conformance checks
 - npm pack verification
 
+### What "done" looks like in this phase
+
+- the default path is obvious and consistent across CLI, README, and docs
+- stable providers fail safe and explain downgrade behavior
+- contract-consistency bugs are treated as release blockers
+- release gates catch runtime and docs regressions before publish
+
 ### Exit Criteria
 
 - publish flow is repeatable
@@ -86,6 +124,8 @@ Goal: make the current system reliable enough to ship without hesitation.
 ## v2.3 - Clarify the Product
 
 Goal: make Cognitive easy to understand, not just technically capable.
+
+Status: **queued next**
 
 ### Priorities
 
@@ -118,6 +158,8 @@ These should be the main outward-facing demos, templates, and docs examples.
 ## v2.4 - Open the Protocol Surface
 
 Goal: move from a strong project to a compatibility-friendly protocol tool.
+
+Status: **later**
 
 ### Priorities
 
@@ -169,3 +211,11 @@ Before shipping a release, use this rule:
 
 If a change does not help one of those outcomes, it is probably not the next best change.
 
+## Operator Rule
+
+When choosing the next PR:
+
+1. prefer the smallest change that reduces user confusion or contract breakage
+2. prefer stable-provider reliability over adding new provider surface
+3. prefer tightening the default path over expanding optional features
+4. prefer publish safety over feature count

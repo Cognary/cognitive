@@ -13,6 +13,25 @@ Cognitive is being tightened in three steps:
 
 The canonical repository roadmap lives in the root `ROADMAP.md`. This docs page is the navigation entry for that plan.
 
+## Current Status
+
+Current phase: **v2.2.x - Stabilize and Tighten**
+
+Recently completed:
+
+- the first-run path is aligned around `npx cogn@<version> core run`
+- the stable provider surface is intentionally limited to 6 providers
+- policy and structured-output downgrade decisions are visible in verbose output
+- repeated `@call:` substitution is now position-based instead of first-match-only
+- `docs-v2` build is now part of `release:check`
+- Anthropic streaming usage accounting now preserves both input and output tokens
+- request-shaping tests now cover all stable providers
+- the alias package release gate now runs the primary runtime release gate first
+
+Immediate next steps:
+
+- cut the next npm release only after smoke testing the default and structured paths
+
 ## Product Direction
 
 Cognitive is not aiming to be a general-purpose AI framework.
