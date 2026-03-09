@@ -82,6 +82,33 @@ Notes:
 - When passing `--provider/--model`, put them after the command, e.g. `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`.
 - If multiple provider API keys are set, the CLI auto-selects a provider by priority order. Use `--provider ...` (recommended) or `unset GEMINI_API_KEY` (etc.) to avoid surprises.
 
+## Primary Use Case: PR Risk Gate
+
+The sharpest Cognitive entrypoint is now **PR Risk Gate**: turn a PR diff into a stable merge decision contract.
+
+Local demo:
+
+```bash
+export GEMINI_API_KEY=sk-xxx
+
+cat <<'EOF' | npx cogn@2.2.14 pipe --module pr-risk-gate --pretty --profile standard --provider gemini --model gemini-3-pro-preview
+diff --git a/auth.py b/auth.py
+@@
+-def login(user, password):
+-    query = "SELECT * FROM users WHERE name = ? AND password = ?"
+-    return db.execute(query, (user, password)).fetchone()
++def login(user, password):
++    query = f"SELECT * FROM users WHERE name = '{user}' AND password = '{password}'"
++    return db.execute(query).fetchone()
+EOF
+```
+
+Template assets:
+
+- Module: `/Users/lucio/Desktop/cognitve/cognitive-demo/cognitive/modules/pr-risk-gate`
+- Workflow + CI script: `/Users/lucio/Desktop/cognitve/cognitive-demo/templates/use-cases/pr-review-gate`
+- Docs entry: `/Users/lucio/Desktop/cognitve/cognitive-demo/docs-v2/docs/getting-started/pr-review-gate.md`
+
 ## v2.2 Response Format
 
 All modules return the unified v2.2 envelope format:
@@ -158,6 +185,7 @@ npx cogn@2.2.14 mcp
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
+| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard` |
 | `code-reviewer` | decision | Code review | `npx cogn@2.2.14 run code-reviewer --args "your code"` |
 | `code-simplifier` | decision | Code simplification | `npx cogn@2.2.14 run code-simplifier --args "complex code"` |
 | `task-prioritizer` | decision | Task priority sorting | `npx cogn@2.2.14 run task-prioritizer --args "task1,task2"` |

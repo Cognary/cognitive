@@ -82,6 +82,33 @@ EOF
 - 需要指定 `--provider/--model` 时，把它们放在命令后面，例如 `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`。
 - 如果你同时配置了多个 provider 的 API key，CLI 会按优先级自动选择默认 provider。建议显式传 `--provider ...`，或临时 `unset GEMINI_API_KEY`（等）避免误判。
 
+## 主打场景：PR 风险门禁
+
+现在最锋利的 Cognitive 入口是 **PR Risk Gate**：把 PR diff 变成稳定的 merge decision contract。
+
+本地演示：
+
+```bash
+export GEMINI_API_KEY=sk-xxx
+
+cat <<'EOF' | npx cogn@2.2.14 pipe --module pr-risk-gate --pretty --profile standard --provider gemini --model gemini-3-pro-preview
+diff --git a/auth.py b/auth.py
+@@
+-def login(user, password):
+-    query = "SELECT * FROM users WHERE name = ? AND password = ?"
+-    return db.execute(query, (user, password)).fetchone()
++def login(user, password):
++    query = f"SELECT * FROM users WHERE name = '{user}' AND password = '{password}'"
++    return db.execute(query).fetchone()
+EOF
+```
+
+模板位置：
+
+- 模块：`/Users/lucio/Desktop/cognitve/cognitive-demo/cognitive/modules/pr-risk-gate`
+- Workflow + CI 脚本：`/Users/lucio/Desktop/cognitve/cognitive-demo/templates/use-cases/pr-review-gate`
+- 文档入口：`/Users/lucio/Desktop/cognitve/cognitive-demo/docs-v2/docs/getting-started/pr-review-gate.md`
+
 ## v2.2 响应格式
 
 所有模块返回统一 v2.2 envelope：
@@ -158,6 +185,7 @@ npx cogn@2.2.14 mcp
 
 | 模块 | 层级 | 功能 | 示例 |
 |------|------|------|------|
+| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard` |
 | `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.14 run code-reviewer --args "your code"` |
 | `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.14 run code-simplifier --args "complex code"` |
 | `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.14 run task-prioritizer --args "task1,task2"` |

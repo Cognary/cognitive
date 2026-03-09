@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "meta": {
+    "risk": "high"
+  },
+  "data": {
+    "decision": "reject_until_security_fix",
+    "blocking": true,
+    "findings": [
+      {
+        "finding_type": "sql_injection",
+        "category": "security",
+        "severity": "high",
+        "affected_path": "authentication_path",
+        "remediation": "parameterized_queries"
+      }
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+{
+  "diff": "diff --git a/server.js b/server.js\n@@\n-app.post('/export', requireAuth, async (req, res) => {\n-  const job = await queueExport({ userId: req.user.id });\n+app.post('/export', requireAuth, async (req, res) => {\n+  const job = await queueExport({ userId: req.user.id, format: req.body.format, filters: req.body.filters, email: req.body.email });\n   res.json({ id: job.id });\n })"
+}

@@ -335,9 +335,9 @@ function HomepageKillerUseCase() {
           </div>
         </div>
         <div className={styles.killerUseCaseCtas}>
-          <Link className={styles.killerUseCasePrimary} to="/docs/getting-started/use-cases">
+          <Link className={styles.killerUseCasePrimary} to="/docs/getting-started/pr-review-gate">
             <Translate id="homepage.killer.cta" description="Homepage killer use case CTA">
-              View use cases →
+              Open PR Risk Gate →
             </Translate>
           </Link>
           <Link className={styles.killerUseCaseSecondary} to="/docs/integration/providers">

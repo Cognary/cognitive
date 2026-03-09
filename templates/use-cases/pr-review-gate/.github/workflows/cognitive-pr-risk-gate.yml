@@ -1,0 +1,35 @@
+name: Cognitive PR Risk Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-risk-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compute PR diff
+        run: |
+          git diff --unified=0 "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > pr.diff
+          test -s pr.diff
+
+      - name: Run Cognitive PR risk gate
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cat pr.diff | npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard --provider gemini --model gemini-3-pro-preview --pretty > cognitive-pr-risk.json
+          cat cognitive-pr-risk.json
+
+      - name: Fail on blocking/high-risk result
+        run: node templates/use-cases/pr-review-gate/scripts/check-risk.mjs cognitive-pr-risk.json

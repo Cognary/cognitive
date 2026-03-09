@@ -1,0 +1,147 @@
+{
+  "$schema": "https://cognitive-modules.dev/schema/v2.2.json",
+  "meta": {
+    "type": "object",
+    "required": ["confidence", "risk", "explain"],
+    "properties": {
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+      "risk": { "type": "string", "enum": ["none", "low", "medium", "high"] },
+      "explain": { "type": "string", "maxLength": 280 },
+      "trace_id": { "type": "string" },
+      "model": { "type": "string" },
+      "latency_ms": { "type": "number", "minimum": 0 }
+    }
+  },
+  "input": {
+    "type": "object",
+    "additionalProperties": true,
+    "properties": {
+      "diff": { "type": "string", "description": "Unified diff text" },
+      "code": { "type": "string", "description": "Code snippet if diff is unavailable" },
+      "language": { "type": "string" },
+      "context": { "type": "string" },
+      "focus": { "type": "array", "items": { "type": "string" } },
+      "query": { "type": "string" },
+      "$ARGUMENTS": { "type": "string" }
+    }
+  },
+  "data": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["decision", "blocking", "findings", "rationale"],
+    "properties": {
+      "decision": {
+        "type": "string",
+        "enum": [
+          "allow",
+          "review_required",
+          "reject_until_security_fix",
+          "reject_until_validation_added",
+          "reject_until_reliability_fix",
+          "reject_until_correctness_fix"
+        ],
+        "x-cognitive-string-normalize": "lower_snake_case"
+      },
+      "blocking": { "type": "boolean" },
+      "findings": {
+        "type": "array",
+        "x-cognitive-unordered": true,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["finding_type", "severity", "category", "affected_path", "remediation"],
+          "properties": {
+            "finding_type": {
+              "type": "string",
+              "enum": [
+                "sql_injection",
+                "missing_input_validation",
+                "auth_bypass_risk",
+                "command_injection",
+                "secret_exposure",
+                "path_traversal",
+                "unsafe_deserialization",
+                "reliability_regression",
+                "correctness_regression",
+                "performance_regression",
+                "maintainability_concern",
+                "custom"
+              ],
+              "x-cognitive-string-normalize": "lower_snake_case"
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["low", "medium", "high"],
+              "x-cognitive-string-normalize": "lowercase"
+            },
+            "category": {
+              "type": "string",
+              "enum": ["security", "correctness", "reliability", "performance", "maintainability"],
+              "x-cognitive-string-normalize": "lowercase"
+            },
+            "affected_path": {
+              "type": "string",
+              "description": "Short lower_snake_case path label, e.g. authentication_path",
+              "x-cognitive-string-normalize": "lower_snake_case"
+            },
+            "remediation": {
+              "type": "string",
+              "enum": [
+                "parameterized_queries",
+                "validate_and_sanitize_request_fields",
+                "add_authorization_check",
+                "escape_shell_arguments",
+                "remove_secret_from_code",
+                "tighten_path_validation",
+                "fix_error_handling",
+                "add_input_bounds_checks",
+                "custom"
+              ],
+              "x-cognitive-string-normalize": "lower_snake_case"
+            },
+            "evidence": { "type": "string" }
+          }
+        }
+      },
+      "rationale": { "type": "string" },
+      "extensions": { "$ref": "#/$defs/extensions" }
+    }
+  },
+  "error": {
+    "type": "object",
+    "required": ["code", "message"],
+    "properties": {
+      "code": {
+        "type": "string",
+        "enum": [
+          "NO_DIFF_OR_CODE",
+          "PARSE_ERROR",
+          "SCHEMA_VALIDATION_FAILED",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "message": { "type": "string" },
+      "recoverable": { "type": "boolean" }
+    }
+  },
+  "$defs": {
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "insights": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["text", "suggested_mapping"],
+            "properties": {
+              "text": { "type": "string" },
+              "suggested_mapping": { "type": "string" },
+              "evidence": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,44 +1,28 @@
-import fs from 'node:fs';
+#!/usr/bin/env node
+import fs from 'node:fs/promises';
 
-const file = process.argv[2];
-if (!file) {
-  console.error('Usage: node scripts/check-risk.mjs <envelope.json>');
-  process.exit(2);
-}
+const file = process.argv[2] || 'cognitive-pr-risk.json';
+const raw = await fs.readFile(file, 'utf8');
+const result = JSON.parse(raw);
 
-const raw = fs.readFileSync(file, 'utf8');
-let env;
-try {
-  env = JSON.parse(raw);
-} catch (e) {
-  console.error('Invalid JSON:', e.message);
-  process.exit(2);
-}
-
-if (!env || typeof env !== 'object') {
-  console.error('Invalid envelope (not an object)');
-  process.exit(2);
-}
-
-if (env.ok !== true) {
-  const msg = env?.error?.message ?? 'module returned ok=false';
-  console.error('Cognitive run failed:', msg);
-  process.exit(2);
-}
-
-const risk = env?.meta?.risk;
-if (risk !== 'none' && risk !== 'low' && risk !== 'medium' && risk !== 'high') {
-  console.error('Invalid meta.risk:', String(risk));
-  process.exit(2);
-}
-
-console.log(`meta.risk=${risk}`);
-
-// Default policy: block only "high".
-if (risk === 'high') {
-  console.error('Blocked: meta.risk=high');
+if (!result || typeof result !== 'object') {
+  console.error('[cognitive-pr-risk] invalid JSON result');
   process.exit(1);
 }
 
-process.exit(0);
+if (result.ok !== true) {
+  const message = result?.error?.message || result?.meta?.explain || 'module returned a non-success envelope';
+  console.error(`[cognitive-pr-risk] gate failed to evaluate PR: ${message}`);
+  process.exit(1);
+}
 
+const risk = String(result?.meta?.risk || 'unknown');
+const blocking = Boolean(result?.data?.blocking);
+const decision = String(result?.data?.decision || 'unknown');
+
+console.log(`[cognitive-pr-risk] decision=${decision} risk=${risk} blocking=${blocking}`);
+
+if (blocking || risk === 'high') {
+  console.error('[cognitive-pr-risk] blocking PR due to high-risk decision contract');
+  process.exit(1);
+}

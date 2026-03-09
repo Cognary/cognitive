@@ -1,0 +1,3 @@
+{
+  "diff": "diff --git a/auth.py b/auth.py\n@@\n-def login(user, password):\n-    query = \"SELECT * FROM users WHERE name = ? AND password = ?\"\n-    return db.execute(query, (user, password)).fetchone()\n+def login(user, password):\n+    query = f\"SELECT * FROM users WHERE name = '{user}' AND password = '{password}'\"\n+    return db.execute(query).fetchone()"
+}

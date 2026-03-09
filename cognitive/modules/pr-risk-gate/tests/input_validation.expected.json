@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "meta": {
+    "risk": "high"
+  },
+  "data": {
+    "decision": "reject_until_validation_added",
+    "blocking": true,
+    "findings": [
+      {
+        "finding_type": "missing_input_validation",
+        "category": "security",
+        "severity": "high",
+        "affected_path": "export_job_input",
+        "remediation": "validate_and_sanitize_request_fields"
+      }
+    ]
+  }
+}

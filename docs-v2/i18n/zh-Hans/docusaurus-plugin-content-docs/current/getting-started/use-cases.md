@@ -48,3 +48,13 @@ sidebar_position: 4
 
 这是 Cognitive 从“工具”走向“工作流合同系统”的关键边界。
 
+## 4) PR 风险门禁（CI）
+
+把 AI 代码审查变成 CI gate：
+
+- 用 `pr-risk-gate` 跑 PR diff
+- 当 `meta.risk === "high"` 或 `data.blocking === true` 时直接阻断合并
+
+从这里开始：
+
+- `getting-started/pr-review-gate`

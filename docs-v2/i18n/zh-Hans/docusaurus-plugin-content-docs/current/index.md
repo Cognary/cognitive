@@ -36,6 +36,7 @@ EOF
 
 如果你希望“协议化”，但只在需要时才引入复杂度：
 
+- [PR 风险门禁](./getting-started/pr-review-gate)
 - [渐进复杂（升级触发器）](./getting-started/progressive-complexity)
 - [Killer Use Case](./getting-started/use-cases)
 - [Roadmap](./roadmap)
@@ -96,6 +97,7 @@ Cognitive 当前按三个阶段推进：
 
 | 模块 | 层级 | 功能 | 示例 |
 |------|------|------|------|
+| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard` |
 | `code-reviewer` | decision | 代码审查 | `npx cogn@2.2.14 run code-reviewer --args "your code"` |
 | `code-simplifier` | decision | 代码简化 | `npx cogn@2.2.14 run code-simplifier --args "complex code"` |
 | `task-prioritizer` | decision | 任务优先级排序 | `npx cogn@2.2.14 run task-prioritizer --args "task1,task2"` |

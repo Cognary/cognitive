@@ -36,6 +36,7 @@ EOF
 
 If you want a "protocol-grade" path, but only when needed:
 
+- [PR Review Gate](./getting-started/pr-review-gate)
 - [Progressive Complexity](./getting-started/progressive-complexity)
 - [Killer Use Cases](./getting-started/use-cases)
 - [Roadmap](./roadmap)
@@ -96,6 +97,7 @@ For the detailed plan and exit criteria, see [Roadmap](./roadmap).
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
+| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard` |
 | `code-reviewer` | decision | Code review | `npx cogn@2.2.14 run code-reviewer --args "your code"` |
 | `code-simplifier` | decision | Code simplification | `npx cogn@2.2.14 run code-simplifier --args "complex code"` |
 | `task-prioritizer` | decision | Task prioritization | `npx cogn@2.2.14 run task-prioritizer --args "task1,task2"` |

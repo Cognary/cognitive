@@ -52,8 +52,8 @@ This is the boundary where Cognitive is no longer "a CLI tool", but "a workflow 
 
 Turn AI code review into a CI gate:
 
-- Run `code-reviewer` on the PR diff
-- Block merges when `meta.risk === "high"`
+- Run `pr-risk-gate` on the PR diff
+- Block merges when `meta.risk === "high"` or `data.blocking === true`
 
 Start here:
 

@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "meta": {
+    "confidence": 0.94,
+    "risk": "high",
+    "explain": "Blocking security issue on the authentication path."
+  },
+  "data": {
+    "decision": "reject_until_security_fix",
+    "blocking": true,
+    "findings": [
+      {
+        "finding_type": "sql_injection",
+        "severity": "high",
+        "category": "security",
+        "affected_path": "authentication_path",
+        "remediation": "parameterized_queries"
+      }
+    ],
+    "rationale": "The change reintroduces direct string interpolation into a login query, making the authentication path vulnerable to SQL injection."
+  }
+}
