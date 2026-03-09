@@ -17,7 +17,7 @@
       "targetSchema": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["issue_type", "severity", "affected_surface", "customer_impact", "next_action"],
+        "required": ["issue_type", "severity", "affected_surface", "impact_scope", "workaround_status", "next_action_code"],
         "properties": {
           "issue_type": {
             "type": "string",
@@ -32,27 +32,42 @@
           },
           "affected_surface": {
             "type": "array",
-            "items": { "type": "string", "x-cognitive-string-normalize": "trim" },
+            "items": {
+              "type": "string",
+              "enum": ["ios", "login", "password_reset"],
+              "x-cognitive-string-normalize": "lower_snake_case"
+            },
             "minItems": 2,
-            "description": "List at least the affected client/platform and the workflow or subsystem.",
+            "description": "Return canonical surface labels only. Use ios for the platform, login for the failed auth path, and password_reset for the triggering workflow.",
             "x-cognitive-unordered": true
           },
-          "customer_impact": {
+          "impact_scope": {
             "type": "string",
-            "description": "State the concrete user-visible impact in one sentence."
+            "enum": ["login_blocked_after_password_reset"],
+            "description": "Use the canonical impact label, not a prose sentence.",
+            "x-cognitive-string-normalize": "lower_snake_case"
           },
-          "next_action": {
+          "workaround_status": {
             "type": "string",
-            "description": "State the next engineering action, ideally naming the token or validation path to inspect."
+            "enum": ["web_client_retry_available"],
+            "description": "Use the canonical workaround label.",
+            "x-cognitive-string-normalize": "lower_snake_case"
+          },
+          "next_action_code": {
+            "type": "string",
+            "enum": ["inspect_reset_token_validation"],
+            "description": "Use the canonical next action label naming the reset token validation path.",
+            "x-cognitive-string-normalize": "lower_snake_case"
           }
         }
       },
       "semanticChecks": [
         { "path": "issue_type", "type": "equals", "value": "password_reset_login_failure" },
         { "path": "severity", "type": "equals", "value": "high" },
-        { "path": "affected_surface", "type": "min_items", "value": 2 },
-        { "path": "customer_impact", "type": "includes_any", "value": ["login", "log in"] },
-        { "path": "next_action", "type": "includes", "value": "token" }
+        { "path": "affected_surface", "type": "array_includes_all", "value": ["ios", "password_reset"] },
+        { "path": "impact_scope", "type": "equals", "value": "login_blocked_after_password_reset" },
+        { "path": "workaround_status", "type": "equals", "value": "web_client_retry_available" },
+        { "path": "next_action_code", "type": "equals", "value": "inspect_reset_token_validation" }
       ]
     },
     {
@@ -100,9 +115,14 @@
       "targetSchema": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["summary", "risk", "blocking", "findings"],
+        "required": ["decision", "risk", "blocking", "findings"],
         "properties": {
-          "summary": { "type": "string", "description": "Summarize the blocking issue in one sentence." },
+          "decision": {
+            "type": "string",
+            "enum": ["reject_until_security_fix"],
+            "description": "Use the canonical gate decision label, not a sentence.",
+            "x-cognitive-string-normalize": "lower_snake_case"
+          },
           "risk": { "type": "string", "enum": ["none", "low", "medium", "high"], "description": "Use high for directly exploitable SQL injection on an authentication path." },
           "blocking": { "type": "boolean", "description": "Must be true when the issue should stop the PR from merging." },
           "findings": {
@@ -112,24 +132,40 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["title", "severity", "category", "action"],
+              "required": ["finding_type", "severity", "category", "affected_path", "remediation"],
               "properties": {
-                "title": { "type": "string" },
+                "finding_type": {
+                  "type": "string",
+                  "enum": ["sql_injection"],
+                  "x-cognitive-string-normalize": "lower_snake_case"
+                },
                 "severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Use high for directly exploitable auth-path security issues." },
                 "category": { "type": "string", "enum": ["security", "correctness", "reliability", "maintainability"] },
-                "action": { "type": "string" }
+                "affected_path": {
+                  "type": "string",
+                  "enum": ["authentication_path"],
+                  "x-cognitive-string-normalize": "lower_snake_case"
+                },
+                "remediation": {
+                  "type": "string",
+                  "enum": ["parameterized_queries"],
+                  "x-cognitive-string-normalize": "lower_snake_case"
+                }
               }
             }
           }
         }
       },
       "semanticChecks": [
+        { "path": "decision", "type": "equals", "value": "reject_until_security_fix" },
         { "path": "risk", "type": "equals", "value": "high" },
         { "path": "blocking", "type": "equals", "value": true },
         { "path": "findings", "type": "min_items", "value": 1 },
         { "path": "findings", "type": "array_object_any", "field": "category", "matcher": "equals", "value": "security" },
         { "path": "findings", "type": "array_object_any", "field": "severity", "matcher": "equals", "value": "high" },
-        { "path": "findings", "type": "array_object_any", "field": "action", "matcher": "includes_any", "value": ["parameterized", "prepared", "bind parameter"] }
+        { "path": "findings", "type": "array_object_any", "field": "finding_type", "matcher": "equals", "value": "sql_injection" },
+        { "path": "findings", "type": "array_object_any", "field": "affected_path", "matcher": "equals", "value": "authentication_path" },
+        { "path": "findings", "type": "array_object_any", "field": "remediation", "matcher": "equals", "value": "parameterized_queries" }
       ]
     },
     {
@@ -143,9 +179,14 @@
       "targetSchema": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["summary", "risk", "requires_changes", "key_issues"],
+        "required": ["decision", "risk", "requires_changes", "key_issues"],
         "properties": {
-          "summary": { "type": "string", "description": "Summarize why the diff should not ship without changes." },
+          "decision": {
+            "type": "string",
+            "enum": ["reject_until_validation_added"],
+            "description": "Use the canonical gate decision label, not a sentence.",
+            "x-cognitive-string-normalize": "lower_snake_case"
+          },
           "risk": { "type": "string", "enum": ["none", "low", "medium", "high"], "description": "Use high when unvalidated input directly affects export jobs or outbound email behavior." },
           "requires_changes": { "type": "boolean", "description": "Must be true if the diff should be blocked pending validation or sanitization." },
           "key_issues": {
@@ -155,23 +196,38 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["title", "severity", "why_it_matters"],
+              "required": ["issue_type", "severity", "impact_surface", "remediation"],
               "properties": {
-                "title": { "type": "string" },
+                "issue_type": {
+                  "type": "string",
+                  "enum": ["missing_input_validation"],
+                  "x-cognitive-string-normalize": "lower_snake_case"
+                },
                 "severity": { "type": "string", "enum": ["low", "medium", "high"], "description": "Use high when the issue can trigger unsafe jobs or notification abuse." },
-                "why_it_matters": { "type": "string", "description": "State the operational or security impact." }
+                "impact_surface": {
+                  "type": "string",
+                  "enum": ["export_job_and_email_input"],
+                  "x-cognitive-string-normalize": "lower_snake_case"
+                },
+                "remediation": {
+                  "type": "string",
+                  "enum": ["validate_and_sanitize_request_fields"],
+                  "x-cognitive-string-normalize": "lower_snake_case"
+                }
               }
             }
           }
         }
       },
       "semanticChecks": [
+        { "path": "decision", "type": "equals", "value": "reject_until_validation_added" },
         { "path": "risk", "type": "equals", "value": "high" },
         { "path": "requires_changes", "type": "equals", "value": true },
         { "path": "key_issues", "type": "min_items", "value": 1 },
-        { "path": "key_issues", "type": "array_object_any", "field": "title", "matcher": "includes_any", "value": ["validation", "unvalidated", "sanitize"] },
+        { "path": "key_issues", "type": "array_object_any", "field": "issue_type", "matcher": "equals", "value": "missing_input_validation" },
         { "path": "key_issues", "type": "array_object_any", "field": "severity", "matcher": "equals", "value": "high" },
-        { "path": "key_issues", "type": "array_object_any", "field": "why_it_matters", "matcher": "includes_any", "value": ["email", "export", "job"] }
+        { "path": "key_issues", "type": "array_object_any", "field": "impact_surface", "matcher": "equals", "value": "export_job_and_email_input" },
+        { "path": "key_issues", "type": "array_object_any", "field": "remediation", "matcher": "equals", "value": "validate_and_sanitize_request_fields" }
       ]
     }
   ]

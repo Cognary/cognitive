@@ -268,6 +268,15 @@ function evaluateSemanticChecks(normalized, checks = []) {
           failures.push({ check, actual });
         }
         break;
+      case 'array_includes_all':
+        if (
+          !Array.isArray(actual) ||
+          !Array.isArray(check.value) ||
+          !check.value.every((expected) => actual.includes(expected))
+        ) {
+          failures.push({ check, actual });
+        }
+        break;
       case 'array_object_any': {
         if (!Array.isArray(actual)) {
           failures.push({ check, actual });
