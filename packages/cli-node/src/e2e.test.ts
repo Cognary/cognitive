@@ -391,6 +391,89 @@ describe('E2E: Module Loading', () => {
 // =============================================================================
 
 describe('E2E: Module Execution', () => {
+  it('should validate a v2 module data schema that uses local $defs refs', async () => {
+    const modulePath = path.join(tempDir, 'defs-ref-module');
+    await fs.mkdir(modulePath, { recursive: true });
+    await fs.writeFile(
+      path.join(modulePath, 'module.yaml'),
+      [
+        'name: defs-ref-module',
+        'version: 1.0.0',
+        'responsibility: Validate local $defs refs in module schema',
+        'tier: decision',
+      ].join('\n'),
+    );
+    await fs.writeFile(
+      path.join(modulePath, 'prompt.md'),
+      'Return a valid v2.2 envelope JSON.'
+    );
+    await fs.writeFile(
+      path.join(modulePath, 'schema.json'),
+      JSON.stringify(
+        {
+          $schema: 'https://json-schema.org/draft/2020-12/schema',
+          type: 'object',
+          data: {
+            type: 'object',
+            required: ['decision', 'extensions', 'rationale'],
+            properties: {
+              decision: { type: 'string' },
+              rationale: { type: 'string' },
+              extensions: { $ref: '#/$defs/extensions' },
+            },
+          },
+          $defs: {
+            extensions: {
+              type: 'object',
+              properties: {
+                insights: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    required: ['text', 'suggested_mapping'],
+                    properties: {
+                      text: { type: 'string' },
+                      suggested_mapping: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    const module = await loadModule(modulePath);
+    mockProvider.setDefaultResponse({
+      ok: true,
+      meta: {
+        confidence: 0.95,
+        risk: 'low',
+        explain: 'Used local defs ref successfully',
+      },
+      data: {
+        decision: 'allow',
+        rationale: 'Schema refs resolved.',
+        extensions: {
+          insights: [
+            {
+              text: 'extra note',
+              suggested_mapping: 'custom',
+            },
+          ],
+        },
+      },
+    });
+
+    const result = await runModule(module, mockProvider, { input: { query: 'hello' }, validateOutput: true });
+
+    expect(result.ok).toBe(true);
+    expect(result.data?.decision).toBe('allow');
+  });
+
   it('should execute module and return valid envelope', async () => {
     const modulePath = await createTestModule('exec-test');
     const module = await loadModule(modulePath);

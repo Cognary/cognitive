@@ -72,6 +72,29 @@ function detectV2Version(manifest: Record<string, unknown>): string {
   return 'v2.0';
 }
 
+function withLocalSchemaDefinitions<T extends object | undefined>(
+  subSchema: T,
+  rootSchema: Record<string, unknown>,
+): T {
+  if (!subSchema || typeof subSchema !== 'object') return subSchema;
+
+  const defs = rootSchema.$defs;
+  const definitions = rootSchema.definitions;
+
+  if (defs === undefined && definitions === undefined) {
+    return subSchema;
+  }
+
+  const normalized = { ...(subSchema as Record<string, unknown>) };
+  if (normalized.$defs === undefined && defs !== undefined) {
+    normalized.$defs = defs;
+  }
+  if (normalized.definitions === undefined && definitions !== undefined) {
+    normalized.definitions = definitions;
+  }
+  return normalized as T;
+}
+
 /**
  * Load v2 format module (module.yaml + prompt.md)
  */
@@ -105,13 +128,13 @@ async function loadModuleV2(modulePath: string): Promise<CognitiveModule> {
   
   try {
     const schemaContent = await fs.readFile(schemaFile, 'utf-8');
-    const schema = JSON.parse(schemaContent);
-    inputSchema = schema.input;
+    const schema = JSON.parse(schemaContent) as Record<string, unknown>;
+    inputSchema = withLocalSchemaDefinitions(schema.input as object | undefined, schema);
     // Support both "data" (v2.2) and "output" (v2.1) aliases
-    dataSchema = schema.data || schema.output;
+    dataSchema = withLocalSchemaDefinitions((schema.data || schema.output) as object | undefined, schema);
     outputSchema = dataSchema; // Backward compat
-    metaSchema = schema.meta;
-    errorSchema = schema.error;
+    metaSchema = withLocalSchemaDefinitions(schema.meta as object | undefined, schema);
+    errorSchema = withLocalSchemaDefinitions(schema.error as object | undefined, schema);
   } catch {
     // Schema file is optional but recommended
   }
