@@ -340,9 +340,9 @@ function HomepageKillerUseCase() {
               Open PR Risk Gate →
             </Translate>
           </Link>
-          <Link className={styles.killerUseCaseSecondary} to="/docs/integration/providers">
+          <Link className={styles.killerUseCaseSecondary} to="/docs/getting-started/benchmark-evidence">
             <Translate id="homepage.killer.providersCta" description="Homepage killer use case providers CTA">
-              Provider stability rules →
+              Benchmark evidence →
             </Translate>
           </Link>
         </div>

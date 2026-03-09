@@ -37,6 +37,7 @@ EOF
 If you want a "protocol-grade" path, but only when needed:
 
 - [PR Review Gate](./getting-started/pr-review-gate)
+- [Benchmark Evidence](./getting-started/benchmark-evidence)
 - [Progressive Complexity](./getting-started/progressive-complexity)
 - [Killer Use Cases](./getting-started/use-cases)
 - [Roadmap](./roadmap)

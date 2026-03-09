@@ -157,9 +157,9 @@ npm run bench:cognitive-vs-raw -- --provider gemini --model gemini-3-pro-preview
 
 相关文件：
 
-- `/Users/lucio/Desktop/cognitve/cognitive-demo/packages/cli-node/benchmarks/cognitive-vs-raw/README.md`
-- `/Users/lucio/Desktop/cognitve/cognitive-demo/packages/cli-node/benchmarks/cognitive-vs-raw/suite.example.json`
-- `/Users/lucio/Desktop/cognitve/cognitive-demo/packages/cli-node/benchmarks/cognitive-vs-raw/report-template.md`
+- `benchmarks/cognitive-vs-raw/README.md`
+- `benchmarks/cognitive-vs-raw/suite.example.json`
+- `benchmarks/cognitive-vs-raw/report-template.md`
 
 ## License
 

@@ -58,3 +58,4 @@ Turn AI code review into a CI gate:
 Start here:
 
 - `getting-started/pr-review-gate`
+- `getting-started/benchmark-evidence`

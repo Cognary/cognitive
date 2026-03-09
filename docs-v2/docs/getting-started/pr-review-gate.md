@@ -48,8 +48,8 @@ In a PR workflow, you typically:
 
 We now ship a copy-paste template:
 
-- Module: `/Users/lucio/Desktop/cognitve/cognitive-demo/cognitive/modules/pr-risk-gate`
-- Workflow + script: `/Users/lucio/Desktop/cognitve/cognitive-demo/templates/use-cases/pr-review-gate`
+- Module: `cognitive/modules/pr-risk-gate`
+- Workflow + script: `templates/use-cases/pr-review-gate`
 
 ### Recommended Policy Defaults
 
@@ -69,3 +69,7 @@ npx cogn@2.2.14 pipe --module pr-risk-gate --pretty --profile standard --structu
 - Providers have different schema/JSON mode behavior. Cognitive normalizes to one contract and records decisions.
 - `meta.risk` + canonical `data.decision` gives you a routing primitive: allow, require review, block.
 - The contract is benchmarked against raw prompting. `raw-text` fails; `core` and `standard` stay stable.
+
+See also:
+
+- [Benchmark Evidence](./benchmark-evidence)

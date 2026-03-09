@@ -48,8 +48,8 @@ EOF
 
 仓库里已经附了可直接复制的模板：
 
-- 模块：`/Users/lucio/Desktop/cognitve/cognitive-demo/cognitive/modules/pr-risk-gate`
-- Workflow + 脚本：`/Users/lucio/Desktop/cognitve/cognitive-demo/templates/use-cases/pr-review-gate`
+- 模块：`cognitive/modules/pr-risk-gate`
+- Workflow + 脚本：`templates/use-cases/pr-review-gate`
 
 ## 推荐默认策略
 
@@ -69,3 +69,7 @@ npx cogn@2.2.14 pipe --module pr-risk-gate --pretty --profile standard --structu
 - provider 的 JSON/schema 能力不一致，Cognitive 会统一合同并记录降级原因
 - `meta.risk` + `data.decision` 可以直接驱动 allow / review / block
 - 这个合同已经通过 benchmark 对比过 `raw-text`、`raw-schema`、`cognitive-core`、`cognitive-standard`
+
+另见：
+
+- [Benchmark 证据](./benchmark-evidence)

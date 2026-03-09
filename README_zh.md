@@ -105,9 +105,15 @@ EOF
 
 模板位置：
 
-- 模块：`/Users/lucio/Desktop/cognitve/cognitive-demo/cognitive/modules/pr-risk-gate`
-- Workflow + CI 脚本：`/Users/lucio/Desktop/cognitve/cognitive-demo/templates/use-cases/pr-review-gate`
-- 文档入口：`/Users/lucio/Desktop/cognitve/cognitive-demo/docs-v2/docs/getting-started/pr-review-gate.md`
+- 模块：`cognitive/modules/pr-risk-gate`
+- Workflow + CI 脚本：`templates/use-cases/pr-review-gate`
+- 文档入口：`docs-v2/docs/getting-started/pr-review-gate.md`
+
+Benchmark 证据：
+
+- `raw-text` 在 Gemini 和 MiniMax 跑法里都无法稳定满足合同
+- `cognitive-core` 和 `cognitive-standard` 已达到 `schema=1`、`semantic=1`、`stability=1`
+- 详见：`docs-v2/docs/getting-started/benchmark-evidence.md`
 
 ## v2.2 响应格式
 

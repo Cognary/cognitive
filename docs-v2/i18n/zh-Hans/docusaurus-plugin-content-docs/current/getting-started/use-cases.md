@@ -58,3 +58,4 @@ sidebar_position: 4
 从这里开始：
 
 - `getting-started/pr-review-gate`
+- `getting-started/benchmark-evidence`

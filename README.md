@@ -105,9 +105,15 @@ EOF
 
 Template assets:
 
-- Module: `/Users/lucio/Desktop/cognitve/cognitive-demo/cognitive/modules/pr-risk-gate`
-- Workflow + CI script: `/Users/lucio/Desktop/cognitve/cognitive-demo/templates/use-cases/pr-review-gate`
-- Docs entry: `/Users/lucio/Desktop/cognitve/cognitive-demo/docs-v2/docs/getting-started/pr-review-gate.md`
+- Module: `cognitive/modules/pr-risk-gate`
+- Workflow + CI script: `templates/use-cases/pr-review-gate`
+- Docs entry: `docs-v2/docs/getting-started/pr-review-gate.md`
+
+Benchmark evidence:
+
+- `raw-text` fails the contract baseline in our Gemini and MiniMax runs
+- `cognitive-core` and `cognitive-standard` reached `schema=1`, `semantic=1`, `stability=1`
+- See `docs-v2/docs/getting-started/benchmark-evidence.md`
 
 ## v2.2 Response Format
 

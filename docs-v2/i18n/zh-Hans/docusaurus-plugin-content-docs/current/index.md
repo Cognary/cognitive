@@ -37,6 +37,7 @@ EOF
 如果你希望“协议化”，但只在需要时才引入复杂度：
 
 - [PR 风险门禁](./getting-started/pr-review-gate)
+- [Benchmark 证据](./getting-started/benchmark-evidence)
 - [渐进复杂（升级触发器）](./getting-started/progressive-complexity)
 - [Killer Use Case](./getting-started/use-cases)
 - [Roadmap](./roadmap)
