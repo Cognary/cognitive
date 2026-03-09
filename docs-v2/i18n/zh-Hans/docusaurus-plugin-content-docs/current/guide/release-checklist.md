@@ -114,6 +114,12 @@ EOF
 - `data.blocking = true`
 - 至少一个 finding 的 `finding_type = sql_injection`
 
+ChatGPT / OpenAI 示例：
+
+```bash
+npm run release:smoke -- --provider openai --model gpt-5.2
+```
+
 ## 备注
 
 - 如果环境里没有对应 provider 的 API key，`release:smoke` 会跳过 `pr-risk-gate` 冒烟。

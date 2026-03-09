@@ -31,6 +31,23 @@ diff --git a/auth.py b/auth.py
 EOF
 ```
 
+ChatGPT / OpenAI 变体：
+
+```bash
+export OPENAI_API_KEY=sk-xxx
+
+cat <<'EOF' | npx cogn@2.2.16 pipe --module pr-risk-gate --pretty --profile standard --provider openai --model gpt-5.2
+diff --git a/auth.py b/auth.py
+@@
+-def login(user, password):
+-    query = "SELECT * FROM users WHERE name = ? AND password = ?"
+-    return db.execute(query, (user, password)).fetchone()
++def login(user, password):
++    query = f"SELECT * FROM users WHERE name = '{user}' AND password = '{password}'"
++    return db.execute(query).fetchone()
+EOF
+```
+
 重点看：
 
 - `meta.risk` 应该是 `high`

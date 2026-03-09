@@ -114,6 +114,12 @@ Expected:
 - `data.blocking = true`
 - at least one finding with `finding_type = sql_injection`
 
+Example with ChatGPT / OpenAI:
+
+```bash
+npm run release:smoke -- --provider openai --model gpt-5.2
+```
+
 ## Notes
 
 - `release:smoke` skips the PR Risk Gate example if the required provider API key is missing.

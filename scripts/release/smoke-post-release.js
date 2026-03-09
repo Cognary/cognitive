@@ -57,7 +57,15 @@ function assertEquals(label, actual, expected) {
 function main() {
   const version = resolveVersion();
   const provider = findArgValue(process.argv, '--provider') || 'gemini';
-  const model = findArgValue(process.argv, '--model') || 'gemini-3-pro-preview';
+  const defaultModels = {
+    openai: 'gpt-5.2',
+    anthropic: 'claude-sonnet-4.5',
+    gemini: 'gemini-3-pro-preview',
+    minimax: 'MiniMax-M2.1',
+    deepseek: 'deepseek-chat',
+    qwen: 'qwen3-max',
+  };
+  const model = findArgValue(process.argv, '--model') || defaultModels[provider] || 'gemini-3-pro-preview';
 
   const cliView = mustRun(
     'npm view cognitive-modules-cli version',
@@ -143,12 +151,17 @@ function main() {
   }
   console.log('[release:smoke] OK core envelope smoke');
 
-  if (provider === 'gemini' && !process.env.GEMINI_API_KEY) {
-    console.log('[release:smoke] SKIP pr-risk-gate smoke (GEMINI_API_KEY missing)');
-    return;
-  }
-  if (provider === 'minimax' && !process.env.MINIMAX_API_KEY) {
-    console.log('[release:smoke] SKIP pr-risk-gate smoke (MINIMAX_API_KEY missing)');
+  const providerEnv = {
+    openai: 'OPENAI_API_KEY',
+    anthropic: 'ANTHROPIC_API_KEY',
+    gemini: 'GEMINI_API_KEY',
+    minimax: 'MINIMAX_API_KEY',
+    deepseek: 'DEEPSEEK_API_KEY',
+    qwen: 'QWEN_API_KEY',
+  };
+  const requiredEnv = providerEnv[provider];
+  if (requiredEnv && !process.env[requiredEnv]) {
+    console.log(`[release:smoke] SKIP pr-risk-gate smoke (${requiredEnv} missing)`);
     return;
   }
 
