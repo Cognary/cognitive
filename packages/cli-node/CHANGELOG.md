@@ -2,6 +2,12 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.15 - 2026-03-09
+
+- Runtime: add schema-guided output canonicalization so enum labels and unordered arrays can be normalized before validation/repair.
+- Benchmarks: tighten gate/extraction contracts around canonical labels and publish `Benchmark Evidence` showing Gemini + MiniMax contract stability.
+- Use case: add the official `pr-risk-gate` module plus a copy-paste GitHub Actions template for blocking risky PRs in CI.
+
 ## 2.2.14 - 2026-03-08
 
 - Release: add docs build to `release:check`, so docs regressions fail before npm publish.

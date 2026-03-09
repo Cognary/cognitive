@@ -27,16 +27,16 @@ Cognitive 把下列概念分开：
 
 ## 快速检查
 
-用 `npx cogn@2.2.14 providers` 查看当前环境能力（默认只列出稳定支持面）：
+用 `npx cogn@2.2.15 providers` 查看当前环境能力（默认只列出稳定支持面）：
 
 ```bash
-npx cogn@2.2.14 providers
+npx cogn@2.2.15 providers
 ```
 
 如需查看全部 provider（含实验/社区）：
 
 ```bash
-npx cogn@2.2.14 providers --all
+npx cogn@2.2.15 providers --all
 ```
 
 典型字段：
@@ -51,7 +51,7 @@ npx cogn@2.2.14 providers --all
 为了让 v2.2 envelope 在协议层稳定，Cognitive 提供统一开关：
 
 ```bash
-npx cogn@2.2.14 run <module> --args "..." --structured auto|off|prompt|native
+npx cogn@2.2.15 run <module> --args "..." --structured auto|off|prompt|native
 ```
 
 含义：
@@ -85,7 +85,7 @@ Gemini 可能拒绝其他 provider 常见的 JSON Schema 关键词。
 如果你看到类似 `const`、布尔枚举、空对象 schema 等错误，建议：
 
 ```bash
-npx cogn@2.2.14 run <module> --args "..." --structured prompt
+npx cogn@2.2.15 run <module> --args "..." --structured prompt
 ```
 
 这样能保持 envelope 合同稳定，同时绕开 provider 原生 schema 的限制。

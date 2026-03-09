@@ -18,7 +18,7 @@ Cognitive Modules is a specification and runtime for **verifiable, structured AI
 
 ## Version
 
-- **Runtime (npm)**: `2.2.14`
+- **Runtime (npm)**: `2.2.15`
 - **Spec**: v2.2
 
 ## Roadmap
@@ -33,14 +33,14 @@ The product direction and release plan are tracked in [`ROADMAP.md`](ROADMAP.md)
 
 ```bash
 # Zero-install quick start
-npx cogn@2.2.14 --help
+npx cogn@2.2.15 --help
 
 # Or use the full package name
-npx cognitive-modules-cli@2.2.14 --help
+npx cognitive-modules-cli@2.2.15 --help
 
 # Global installation
-npm install -g cogn@2.2.14
-# or: npm install -g cognitive-modules-cli@2.2.14
+npm install -g cogn@2.2.15
+# or: npm install -g cognitive-modules-cli@2.2.15
 ```
 
 > `cogn` is an alias package for `cognitive-modules-cli`. Docs use `npx cogn@<version> ...` as the canonical entrypoint.
@@ -71,14 +71,14 @@ Override via:
 export OPENAI_API_KEY=sk-xxx
 
 # 5-minute path: run a one-file "Core" module from stdin (prints a v2.2 envelope)
-cat <<'EOF' | npx cogn@2.2.14 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.15 core run --stdin --args "hello" --pretty
 Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
 EOF
 ```
 
 Notes:
 
-- The recommended, unambiguous entrypoint is `npx cogn@2.2.14 ...` (avoids any `cog` binary conflicts on your machine).
+- The recommended, unambiguous entrypoint is `npx cogn@2.2.15 ...` (avoids any `cog` binary conflicts on your machine).
 - When passing `--provider/--model`, put them after the command, e.g. `... core run --stdin --provider minimax --model MiniMax-M2.1 ...`.
 - If multiple provider API keys are set, the CLI auto-selects a provider by priority order. Use `--provider ...` (recommended) or `unset GEMINI_API_KEY` (etc.) to avoid surprises.
 
@@ -91,7 +91,7 @@ Local demo:
 ```bash
 export GEMINI_API_KEY=sk-xxx
 
-cat <<'EOF' | npx cogn@2.2.14 pipe --module pr-risk-gate --pretty --profile standard --provider gemini --model gemini-3-pro-preview
+cat <<'EOF' | npx cogn@2.2.15 pipe --module pr-risk-gate --pretty --profile standard --provider gemini --model gemini-3-pro-preview
 diff --git a/auth.py b/auth.py
 @@
 -def login(user, password):
@@ -156,49 +156,49 @@ All modules return the unified v2.2 envelope format:
 
 ```bash
 # Recommended (no global install needed):
-# npx cogn@2.2.14 <command> ...
+# npx cogn@2.2.15 <command> ...
 
 # Module management
-npx cogn@2.2.14 list
-npx cogn@2.2.14 add <url> --module <path>
-npx cogn@2.2.14 update <module>
-npx cogn@2.2.14 remove <module>
-npx cogn@2.2.14 versions <url>
+npx cogn@2.2.15 list
+npx cogn@2.2.15 add <url> --module <path>
+npx cogn@2.2.15 update <module>
+npx cogn@2.2.15 remove <module>
+npx cogn@2.2.15 versions <url>
 
 # Run modules
-npx cogn@2.2.14 run <module> --args "..."
-npx cogn@2.2.14 run <module> --input '{"query":"..."}'
+npx cogn@2.2.15 run <module> --args "..."
+npx cogn@2.2.15 run <module> --input '{"query":"..."}'
 
 # Composition
-npx cogn@2.2.14 compose <module> --args "..."
-npx cogn@2.2.14 compose-info <module>
+npx cogn@2.2.15 compose <module> --args "..."
+npx cogn@2.2.15 compose-info <module>
 
 # Validation & migration
-npx cogn@2.2.14 validate <module> --v22
-npx cogn@2.2.14 validate --all
-npx cogn@2.2.14 migrate <module> --dry-run
-npx cogn@2.2.14 migrate --all --no-backup
+npx cogn@2.2.15 validate <module> --v22
+npx cogn@2.2.15 validate --all
+npx cogn@2.2.15 migrate <module> --dry-run
+npx cogn@2.2.15 migrate --all --no-backup
 
 # Other
-npx cogn@2.2.14 pipe --module <name>
-npx cogn@2.2.14 init [name]
-npx cogn@2.2.14 doctor
-npx cogn@2.2.14 serve --port 8000
-npx cogn@2.2.14 mcp
+npx cogn@2.2.15 pipe --module <name>
+npx cogn@2.2.15 init [name]
+npx cogn@2.2.15 doctor
+npx cogn@2.2.15 serve --port 8000
+npx cogn@2.2.15 mcp
 ```
 
 ## Built-in Modules (Repository)
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
-| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard` |
-| `code-reviewer` | decision | Code review | `npx cogn@2.2.14 run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.14 run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | Task priority sorting | `npx cogn@2.2.14 run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API design | `npx cogn@2.2.14 run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.14 run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.14 run ui-component-generator --args "button component"` |
-| `product-analyzer` | exploration | Product analysis | `npx cogn@2.2.14 run product-analyzer --args "health product"` |
+| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.15 pipe --module pr-risk-gate --profile standard` |
+| `code-reviewer` | decision | Code review | `npx cogn@2.2.15 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.15 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | Task priority sorting | `npx cogn@2.2.15 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API design | `npx cogn@2.2.15 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.15 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.15 run ui-component-generator --args "button component"` |
+| `product-analyzer` | exploration | Product analysis | `npx cogn@2.2.15 run product-analyzer --args "health product"` |
 
 ## Module Format (v2.2)
 
@@ -276,7 +276,7 @@ See `docs-v2/docs/integration/providers.md`.
 Check config:
 
 ```bash
-npx cogn@2.2.14 doctor
+npx cogn@2.2.15 doctor
 ```
 
 ## Development (Node.js)

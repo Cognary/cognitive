@@ -105,6 +105,8 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       items: [
         'release-notes/index',
+        'release-notes/v2.2.15',
+        'release-notes/v2.2.14',
         'release-notes/v2.2.7',
       ],
     },

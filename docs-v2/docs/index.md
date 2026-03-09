@@ -29,7 +29,7 @@ Cognitive Modules is a specification and runtime for **structured, verifiable AI
 export OPENAI_API_KEY=sk-xxx
 
 # 5-minute path: run a one-file "Core" module from stdin (prints a v2.2 envelope)
-cat <<'EOF' | npx cogn@2.2.14 core run --stdin --args "hello" --pretty
+cat <<'EOF' | npx cogn@2.2.15 core run --stdin --args "hello" --pretty
 Return a valid v2.2 envelope (meta + data). Put your answer in data.result.
 EOF
 ```
@@ -98,13 +98,13 @@ For the detailed plan and exit criteria, see [Roadmap](./roadmap).
 
 | Module | Tier | Function | Example |
 |--------|------|----------|---------|
-| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.14 pipe --module pr-risk-gate --profile standard` |
-| `code-reviewer` | decision | Code review | `npx cogn@2.2.14 run code-reviewer --args "your code"` |
-| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.14 run code-simplifier --args "complex code"` |
-| `task-prioritizer` | decision | Task prioritization | `npx cogn@2.2.14 run task-prioritizer --args "task1,task2"` |
-| `api-designer` | decision | REST API design | `npx cogn@2.2.14 run api-designer --args "order system"` |
-| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.14 run ui-spec-generator --args "e-commerce homepage"` |
-| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.14 run ui-component-generator --args "button component"` |
+| `pr-risk-gate` | decision | PR merge gate contract | `npx cogn@2.2.15 pipe --module pr-risk-gate --profile standard` |
+| `code-reviewer` | decision | Code review | `npx cogn@2.2.15 run code-reviewer --args "your code"` |
+| `code-simplifier` | decision | Code simplification | `npx cogn@2.2.15 run code-simplifier --args "complex code"` |
+| `task-prioritizer` | decision | Task prioritization | `npx cogn@2.2.15 run task-prioritizer --args "task1,task2"` |
+| `api-designer` | decision | REST API design | `npx cogn@2.2.15 run api-designer --args "order system"` |
+| `ui-spec-generator` | exploration | UI spec generation | `npx cogn@2.2.15 run ui-spec-generator --args "e-commerce homepage"` |
+| `ui-component-generator` | exploration | UI component spec | `npx cogn@2.2.15 run ui-component-generator --args "button component"` |
 
 ---
 

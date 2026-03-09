@@ -9,7 +9,7 @@ sidebar_position: 2
 ## 语法
 
 ```bash
-npx cogn@2.2.14 run <module> [options]
+npx cogn@2.2.15 run <module> [options]
 ```
 
 ## 选项
@@ -31,9 +31,9 @@ npx cogn@2.2.14 run <module> [options]
 ## 示例
 
 ```bash
-npx cogn@2.2.14 run code-reviewer --args "def foo(): pass" --pretty
-npx cogn@2.2.14 run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
-npx cogn@2.2.14 run code-reviewer --provider openai --model gpt-4o --args "code"
+npx cogn@2.2.15 run code-reviewer --args "def foo(): pass" --pretty
+npx cogn@2.2.15 run ui-spec-generator --input '{"query":"e-commerce homepage"}' --pretty
+npx cogn@2.2.15 run code-reviewer --provider openai --model gpt-4o --args "code"
 ```
 
 ## 输出

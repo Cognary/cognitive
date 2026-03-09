@@ -1,6 +1,6 @@
 ---
 name: pr-risk-gate
-version: 2.2.14
+version: 2.2.15
 responsibility: Returns a merge-gate decision contract for risky PR diffs
 ---
 

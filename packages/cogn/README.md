@@ -1,27 +1,27 @@
 # cogn
 
-Cognitive Modules Node.js CLI 的短名别名包。文档统一使用明确入口 `npx cogn@2.2.14 ...`，避免本机 PATH 上存在其他同名命令导致的错觉。
+Cognitive Modules Node.js CLI 的短名别名包。文档统一使用明确入口 `npx cogn@2.2.15 ...`，避免本机 PATH 上存在其他同名命令导致的错觉。
 
 ## 一行代码使用
 
 ```bash
 # 零安装运行
-npx cogn@2.2.14 run code-reviewer --args "def login(u,p): pass"
+npx cogn@2.2.15 run code-reviewer --args "def login(u,p): pass"
 
 # 列出模块
-npx cogn@2.2.14 list
+npx cogn@2.2.15 list
 
 # 查看帮助
-npx cogn@2.2.14 --help
+npx cogn@2.2.15 --help
 ```
 
 ## 全局安装
 
 ```bash
-npm install -g cogn@2.2.14
+npm install -g cogn@2.2.15
 
 # 然后使用（推荐仍保持 npx 入口，避免命令名冲突）
-npx cogn@2.2.14 run code-reviewer --args "..."
+npx cogn@2.2.15 run code-reviewer --args "..."
 ```
 
 ## 更多信息

@@ -1,6 +1,6 @@
 # Cognitive Module Manifest v2.2
 name: pr-risk-gate
-version: 2.2.14
+version: 2.2.15
 responsibility: Reviews PR diffs or code snippets and returns a merge-gate decision contract
 
 tier: decision
