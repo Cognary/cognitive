@@ -49,6 +49,81 @@ function safeSnippet(s: string, max = 500): string {
   return raw.slice(0, max) + `…(+${raw.length - max} chars)`;
 }
 
+function stableCanonicalKey(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableCanonicalKey(item)).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    return `{${Object.keys(obj).sort().map((key) => `${JSON.stringify(key)}:${stableCanonicalKey(obj[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function normalizeStringValue(value: string, hint?: string): string {
+  let normalized = value.trim().replace(/\s+/g, ' ');
+  switch (hint) {
+    case 'lowercase':
+      normalized = normalized.toLowerCase();
+      break;
+    case 'lower_snake_case':
+      normalized = normalized
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+      break;
+    default:
+      break;
+  }
+  return normalized;
+}
+
+function canonicalizeDataBySchema(value: unknown, schema: unknown): unknown {
+  if (!schema || typeof schema !== 'object' || schema === null) {
+    return typeof value === 'string' ? normalizeStringValue(value) : value;
+  }
+
+  const schemaObj = schema as Record<string, unknown>;
+  const type = schemaObj.type;
+
+  if (typeof value === 'string') {
+    const hint = typeof schemaObj['x-cognitive-string-normalize'] === 'string'
+      ? String(schemaObj['x-cognitive-string-normalize'])
+      : undefined;
+    const normalized = normalizeStringValue(value, hint);
+    if (Array.isArray(schemaObj.enum)) {
+      const enumMatch = (schemaObj.enum as unknown[]).find((candidate) => {
+        if (typeof candidate !== 'string') return false;
+        return normalizeStringValue(candidate, hint).toLowerCase() === normalized.toLowerCase();
+      });
+      return enumMatch ?? normalized;
+    }
+    return normalized;
+  }
+
+  if (Array.isArray(value)) {
+    const itemSchema = schemaObj.items;
+    const normalizedItems = value.map((item) => canonicalizeDataBySchema(item, itemSchema));
+    if (schemaObj['x-cognitive-unordered'] === true) {
+      normalizedItems.sort((a, b) => stableCanonicalKey(a).localeCompare(stableCanonicalKey(b)));
+    }
+    return normalizedItems;
+  }
+
+  if (value && typeof value === 'object' && !Array.isArray(value) && type === 'object') {
+    const properties = (schemaObj.properties && typeof schemaObj.properties === 'object')
+      ? (schemaObj.properties as Record<string, unknown>)
+      : {};
+    const normalized: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      normalized[key] = canonicalizeDataBySchema(child, properties[key]);
+    }
+    return normalized;
+  }
+
+  return value;
+}
+
 function parseJsonWithCandidates(raw: string): { parsed: unknown; extracted: JsonExtractResult; attempts: JsonParseAttempt[] } {
   const candidates = extractJsonCandidates(raw);
   const attempts: JsonParseAttempt[] = [];
@@ -2226,6 +2301,12 @@ export async function runModule(
       // Get data schema (support both "data" and "output" aliases)
       const dataSchema = module.dataSchema || module.outputSchema;
       const metaSchema = module.metaSchema;
+      if (dataSchema) {
+        (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data = canonicalizeDataBySchema(
+          (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {},
+          dataSchema,
+        );
+      }
       const dataToValidate = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
       
       if (dataSchema && Object.keys(dataSchema).length > 0) {
@@ -2240,7 +2321,11 @@ export async function runModule(
           response.version = ENVELOPE_VERSION;
           
           // Re-validate after repair
-          const repairedData = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
+          const repairedData = canonicalizeDataBySchema(
+            (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {},
+            dataSchema,
+          );
+          (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data = repairedData;
           dataErrors = validateData(repairedData, dataSchema, 'Data');
         }
         
@@ -2775,15 +2860,21 @@ export async function* runModuleStream(
       const metaSchema = module.metaSchema;
       
       if (dataSchema && Object.keys(dataSchema).length > 0) {
-        let dataToValidate = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
+        let dataToValidate: unknown = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
+        dataToValidate = canonicalizeDataBySchema(dataToValidate, dataSchema);
+        (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data = dataToValidate;
         let dataErrors = validateData(dataToValidate, dataSchema, 'Data');
         
         if (dataErrors.length > 0 && enableRepair) {
           response = repairEnvelope(response as unknown as Record<string, unknown>, riskRule);
           response.version = ENVELOPE_VERSION;
           // Re-validate after repair
-          const repairedData = (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {};
-          dataToValidate = repairedData;
+          const repairedData = canonicalizeDataBySchema(
+            (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data ?? {},
+            dataSchema,
+          );
+          (response as EnvelopeResponseV22<unknown> & { data?: unknown }).data = repairedData;
+          dataToValidate = repairedData as unknown;
           dataErrors = validateData(repairedData, dataSchema, 'Data');
         }
         

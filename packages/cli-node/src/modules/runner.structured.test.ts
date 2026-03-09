@@ -399,4 +399,99 @@ describe('runner structured output preference', () => {
     expect((res as any).data?.audience).toBe('urban professionals');
     expect((res as any).error).toBeUndefined();
   });
+
+  it('canonicalizes string enums and schema-guided string formats before validation', async () => {
+    class CanonicalProvider implements Provider {
+      name = 'canonical';
+      isConfigured(): boolean {
+        return true;
+      }
+      async invoke(_params: InvokeParams): Promise<InvokeResult> {
+        return {
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 0.9, risk: 'Low', explain: 'ok' },
+            data: {
+              issue_type: 'Password Reset Login Failure',
+              rationale: 'r',
+            },
+          }),
+        };
+      }
+    }
+
+    const provider = new CanonicalProvider();
+    const module = makeModule();
+    module.outputSchema = {
+      type: 'object',
+      required: ['issue_type', 'rationale'],
+      additionalProperties: false,
+      properties: {
+        issue_type: {
+          type: 'string',
+          enum: ['password_reset_login_failure'],
+          'x-cognitive-string-normalize': 'lower_snake_case',
+        },
+        rationale: { type: 'string' },
+      },
+    };
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      validateOutput: true,
+      policy: makePolicy(),
+    });
+
+    expect(res.ok).toBe(true);
+    expect((res as any).data?.issue_type).toBe('password_reset_login_failure');
+  });
+
+  it('canonicalizes orderless arrays using schema hints before validation', async () => {
+    class OrderlessProvider implements Provider {
+      name = 'orderless';
+      isConfigured(): boolean {
+        return true;
+      }
+      async invoke(_params: InvokeParams): Promise<InvokeResult> {
+        return {
+          content: JSON.stringify({
+            ok: true,
+            meta: { confidence: 0.9, risk: 'low', explain: 'ok' },
+            data: {
+              tags: ['Beta', 'alpha'],
+              rationale: 'r',
+            },
+          }),
+        };
+      }
+    }
+
+    const provider = new OrderlessProvider();
+    const module = makeModule();
+    module.outputSchema = {
+      type: 'object',
+      required: ['tags', 'rationale'],
+      additionalProperties: false,
+      properties: {
+        tags: {
+          type: 'array',
+          minItems: 2,
+          'x-cognitive-unordered': true,
+          items: { type: 'string', 'x-cognitive-string-normalize': 'lowercase' },
+        },
+        rationale: { type: 'string' },
+      },
+    };
+
+    const res = await runModule(module, provider, {
+      args: 'hello',
+      useV22: true,
+      validateOutput: true,
+      policy: makePolicy(),
+    });
+
+    expect(res.ok).toBe(true);
+    expect((res as any).data?.tags).toEqual(['alpha', 'beta']);
+  });
 });

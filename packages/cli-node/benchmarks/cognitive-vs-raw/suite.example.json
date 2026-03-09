@@ -22,7 +22,8 @@
           "issue_type": {
             "type": "string",
             "enum": ["password_reset_login_failure"],
-            "description": "Use the canonical triage taxonomy label, not a free-form sentence."
+            "description": "Use the canonical triage taxonomy label, not a free-form sentence.",
+            "x-cognitive-string-normalize": "lower_snake_case"
           },
           "severity": {
             "type": "string",
@@ -31,9 +32,10 @@
           },
           "affected_surface": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": { "type": "string", "x-cognitive-string-normalize": "trim" },
             "minItems": 2,
-            "description": "List at least the affected client/platform and the workflow or subsystem."
+            "description": "List at least the affected client/platform and the workflow or subsystem.",
+            "x-cognitive-unordered": true
           },
           "customer_impact": {
             "type": "string",
@@ -68,8 +70,18 @@
         "properties": {
           "audience": { "type": "string" },
           "primary_goal": { "type": "string" },
-          "proof_points": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
-          "constraints": { "type": "array", "items": { "type": "string" }, "minItems": 2 }
+          "proof_points": {
+            "type": "array",
+            "items": { "type": "string", "x-cognitive-string-normalize": "lowercase" },
+            "minItems": 2,
+            "x-cognitive-unordered": true
+          },
+          "constraints": {
+            "type": "array",
+            "items": { "type": "string", "x-cognitive-string-normalize": "lowercase" },
+            "minItems": 2,
+            "x-cognitive-unordered": true
+          }
         }
       },
       "semanticChecks": [
@@ -96,6 +108,7 @@
           "findings": {
             "type": "array",
             "minItems": 1,
+            "x-cognitive-unordered": true,
             "items": {
               "type": "object",
               "additionalProperties": false,
@@ -138,6 +151,7 @@
           "key_issues": {
             "type": "array",
             "minItems": 1,
+            "x-cognitive-unordered": true,
             "items": {
               "type": "object",
               "additionalProperties": false,
