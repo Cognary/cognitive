@@ -27,6 +27,7 @@
     "bench:cognitive-vs-raw": "node benchmarks/cognitive-vs-raw/run.mjs",
     "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache",
     "release:check": "node ../../scripts/release/check-docs-build.js && npm run build && npm test && npm run pack:check",
+    "release:smoke": "node ../../scripts/release/smoke-post-release.js --package packages/cli-node",
     "prepublishOnly": "npm run release:check"
   },
   "keywords": [

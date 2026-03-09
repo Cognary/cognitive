@@ -9,6 +9,7 @@
   "scripts": {
     "pack:check": "npm pack --dry-run --json --cache ../../.npm-cache",
     "release:check": "npm --prefix ../cli-node run release:check && node ../../scripts/release/check-npm-package.js --package packages/cogn && npm run pack:check",
+    "release:smoke": "node ../../scripts/release/smoke-post-release.js --package packages/cogn",
     "prepublishOnly": "npm run release:check"
   },
   "keywords": [

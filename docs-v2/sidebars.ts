@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
         'guide/typescript-runtime',
         'guide/programmatic-api',
         'guide/testing',
+        'guide/release-checklist',
         'guide/extending-providers',
       ],
     },
