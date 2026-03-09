@@ -24,7 +24,7 @@ Design REST API specifications.
 ## Usage
 
 ```bash
-npx cogn@2.2.15 run api-designer --args "user management system with registration, login, profile CRUD" --pretty
+npx cogn@2.2.16 run api-designer --args "user management system with registration, login, profile CRUD" --pretty
 ```
 
 ## Output Example

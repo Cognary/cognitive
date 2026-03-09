@@ -19,7 +19,7 @@ sidebar_position: 5
 ```bash
 export GEMINI_API_KEY=sk-xxx
 
-cat <<'EOF' | npx cogn@2.2.15 pipe --module pr-risk-gate --pretty --profile standard --provider gemini --model gemini-3-pro-preview
+cat <<'EOF' | npx cogn@2.2.16 pipe --module pr-risk-gate --pretty --profile standard --provider gemini --model gemini-3-pro-preview
 diff --git a/auth.py b/auth.py
 @@
 -def login(user, password):
@@ -60,7 +60,7 @@ EOF
 示例：
 
 ```bash
-npx cogn@2.2.15 pipe --module pr-risk-gate --pretty --profile standard --structured auto
+npx cogn@2.2.16 pipe --module pr-risk-gate --pretty --profile standard --structured auto
 ```
 
 ## 为什么它比“直接 Prompt”更可靠

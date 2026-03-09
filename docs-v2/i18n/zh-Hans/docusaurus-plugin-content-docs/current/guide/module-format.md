@@ -111,4 +111,4 @@ my-module/
 └── schema.json
 ```
 
-可使用 `npx cogn@2.2.15 migrate` 迁移到 v2.2。
+可使用 `npx cogn@2.2.16 migrate` 迁移到 v2.2。

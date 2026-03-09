@@ -8,15 +8,15 @@ sidebar_position: 3
 
 推荐（明确入口）：
 
-- `npx cogn@2.2.15 validate ...`
+- `npx cogn@2.2.16 validate ...`
 
 如果你看到 `No such option: --all`，说明你机器上可能有命令冲突（PATH/二进制冲突）。请使用上面的 `npx` 形式。
 
 ## 语法
 
 ```bash
-npx cogn@2.2.15 validate <module> [--v22] [--format text|json]
-npx cogn@2.2.15 validate --all [--v22] [--format text|json]
+npx cogn@2.2.16 validate <module> [--v22] [--format text|json]
+npx cogn@2.2.16 validate --all [--v22] [--format text|json]
 ```
 
 ## 选项
@@ -30,15 +30,15 @@ npx cogn@2.2.15 validate --all [--v22] [--format text|json]
 ## 示例
 
 ```bash
-npx cogn@2.2.15 validate code-reviewer
-npx cogn@2.2.15 validate code-reviewer --v22
-npx cogn@2.2.15 validate --all --v22 --format json
+npx cogn@2.2.16 validate code-reviewer
+npx cogn@2.2.16 validate code-reviewer --v22
+npx cogn@2.2.16 validate --all --v22 --format json
 ```
 
 ## 迁移建议
 
 ```bash
-npx cogn@2.2.15 migrate code-reviewer --dry-run
-npx cogn@2.2.15 migrate code-reviewer
-npx cogn@2.2.15 validate code-reviewer --v22
+npx cogn@2.2.16 migrate code-reviewer --dry-run
+npx cogn@2.2.16 migrate code-reviewer
+npx cogn@2.2.16 validate code-reviewer --v22
 ```

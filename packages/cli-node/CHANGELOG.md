@@ -2,6 +2,11 @@
 
 All notable changes to this package are documented in this file.
 
+## 2.2.16 - 2026-03-09
+
+- Fix: preserve module-local `$defs` / `definitions` when loading `schema.json`, so runtime validation can resolve internal references inside `data`, `meta`, and `error` sub-schemas.
+- Hardening: restore the official `pr-risk-gate` smoke path; schema validation now succeeds for contracts that include local schema references such as `extensions`.
+
 ## 2.2.15 - 2026-03-09
 
 - Runtime: add schema-guided output canonicalization so enum labels and unordered arrays can be normalized before validation/repair.

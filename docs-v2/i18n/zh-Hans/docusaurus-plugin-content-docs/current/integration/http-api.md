@@ -9,7 +9,7 @@ sidebar_position: 1
 ## 启动服务
 
 ```bash
-npx cogn@2.2.15 serve --host 0.0.0.0 --port 8000
+npx cogn@2.2.16 serve --host 0.0.0.0 --port 8000
 ```
 
 ## 可选鉴权

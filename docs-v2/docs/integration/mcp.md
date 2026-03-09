@@ -9,14 +9,14 @@ MCP (Model Context Protocol) integration for Claude Code, Cursor, etc.
 ## Install
 
 ```bash
-npm install -g cogn@2.2.15
+npm install -g cogn@2.2.16
 npm install @modelcontextprotocol/sdk
 ```
 
 ## Start
 
 ```bash
-npx cogn@2.2.15 mcp
+npx cogn@2.2.16 mcp
 ```
 
 ## Claude Desktop Config
@@ -26,7 +26,7 @@ npx cogn@2.2.15 mcp
   "mcpServers": {
     "cognitive": {
       "command": "npx",
-      "args": ["cogn@2.2.15", "mcp"],
+      "args": ["cogn@2.2.16", "mcp"],
       "env": {
         "OPENAI_API_KEY": "sk-xxx"
       }
