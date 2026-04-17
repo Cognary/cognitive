@@ -45,7 +45,7 @@ jobs:
             --assets-dir dist/registry-assets
 
       - name: Upload release assets (tarballs + registry index)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/registry-assets/*.tar.gz
